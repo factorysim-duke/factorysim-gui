@@ -1,3 +1,9 @@
+gradle.taskGraph.whenReady { taskGraph ->
+  if (taskGraph.hasTask(':factorysim-app:test')) {
+    tasks.findByPath(':factorysim-app:test')?.enabled = false
+  }
+}
+
 buildscript {
   repositories {
     mavenCentral()

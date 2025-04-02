@@ -1,0 +1,3 @@
+[submodule "external/factorysim"]
+	path = external/factorysim
+	url = git@gitlab.oit.duke.edu:651group10/factorysim.git
