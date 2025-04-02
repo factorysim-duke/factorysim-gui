@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
+import java.util.HashMap;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class FactoryGame extends ApplicationAdapter {
@@ -16,6 +17,16 @@ public class FactoryGame extends ApplicationAdapter {
     public void create() {
         batch = new SpriteBatch();
         image = new Texture("libgdx.png");
+
+        String jsonPath = "doors1.json";
+        Logger logger = new StreamLogger(System.out);
+        Simulation sim = new Simulation(jsonPath, 1, logger);
+
+        Item iron = new Item("iron");
+        Recipe miningRecipe = new Recipe(iron, new HashMap<>(), 1);
+
+        MineBuilding mine = new MineBuilding(miningRecipe, "ironMine", sim);
+        System.out.println(mine.getName());
     }
 
     @Override
