@@ -1,45 +1,59 @@
 package edu.duke.ece651.factorysim;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
-import java.util.HashMap;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class FactoryGame extends ApplicationAdapter {
-    private SpriteBatch batch;
-    private Texture image;
+public class FactoryGame extends Game {
+    private SpriteBatch spriteBatch;
+    private OrthographicCamera camera;
+    private Viewport viewport;
+
+    private Texture cellTexture;
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        image = new Texture("libgdx.png");
+        spriteBatch = new SpriteBatch();
 
-        String jsonPath = "doors1.json";
-        Logger logger = new StreamLogger(System.out);
-        Simulation sim = new Simulation(jsonPath, 1, logger);
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+        viewport.apply();
+        camera.position.set(Constants.VIEW_WIDTH / 2f, Constants.VIEW_HEIGHT / 2f, 0);
 
-        Item iron = new Item("iron");
-        Recipe miningRecipe = new Recipe(iron, new HashMap<>(), 1);
+        actor = new BuildingActor(new Texture("cell.png"));
+    }
 
-        MineBuilding mine = new MineBuilding(miningRecipe, "ironMine", sim);
-        System.out.println(mine.getName());
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height, true);
     }
 
     @Override
     public void render() {
-        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-        batch.begin();
-        batch.draw(image, 140, 210);
-        batch.end();
+        ScreenUtils.clear(0f, 0f, 0f, 1f);
+
+        // Update camera
+        camera.update();
+        spriteBatch.setProjectionMatrix(camera.combined);
+
+
+        spriteBatch.begin();
+        actor.draw(spriteBatch);
+        spriteBatch.end();
     }
 
     @Override
     public void dispose() {
-        batch.dispose();
-        image.dispose();
+        spriteBatch.dispose();
+
+        cellTexture.dispose();
+    }
+
+    private void renderGrid() {
+
     }
 }
