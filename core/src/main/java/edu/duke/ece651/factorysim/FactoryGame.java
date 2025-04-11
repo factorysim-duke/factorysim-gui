@@ -2,19 +2,19 @@ package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class FactoryGame extends Game {
+    // Rendering
     private SpriteBatch spriteBatch;
     private OrthographicCamera camera;
     private Viewport viewport;
 
-    private Texture cellTexture;
-    private GridActor grid;
+    // Game World
+    private WorldActor world;
 
     @Override
     public void create() {
@@ -26,8 +26,9 @@ public class FactoryGame extends Game {
         camera.update();
         viewport.apply();
 
-        cellTexture = new Texture("cell.png");
-        grid = new GridActor(0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, cellTexture);
+        int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
+        int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
+        world = new WorldActor(cols, rows, Constants.CELL_SIZE, 0f, 0f);
     }
 
     @Override
@@ -43,20 +44,15 @@ public class FactoryGame extends Game {
         camera.update();
         spriteBatch.setProjectionMatrix(camera.combined);
 
-        // Begin drawing
+        // Draw the world
         spriteBatch.begin();
-
-        // Draw the background grid
-        grid.draw(spriteBatch);
-
-        // End drawing
+        world.draw(spriteBatch);
         spriteBatch.end();
     }
 
     @Override
     public void dispose() {
         spriteBatch.dispose();
-
-        cellTexture.dispose();
+        world.dispose();
     }
 }
