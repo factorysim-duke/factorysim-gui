@@ -15,6 +15,14 @@ public class FactoryGame extends Game {
         this.sim.load(jsonPath);
     }
 
+    public int getCurrentStep() {
+        return this.sim.getCurrentTime();
+    }
+
+    public void step(int n) {
+        this.sim.step(n);
+    }
+
     @Override
     public void create() {
         SimulationScreen simulationScreen = new SimulationScreen(this);

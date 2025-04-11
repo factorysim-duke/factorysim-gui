@@ -8,19 +8,19 @@ public class TopBar extends VisTable {
     private VisTextButton saveButton;
     private VisTextButton loadButton;
 
-    public TopBar() {
+    public TopBar(int initialStep) {
         super();
-        init();
+        init(initialStep);
     }
 
-    private void init() {
+    private void init(int currentStep) {
         // title
         VisLabel titleLabel = new VisLabel("Factorysim");
         titleLabel.setFontScale(2.2f);
         titleLabel.setColor(Color.BLACK);
 
         // step count
-        stepCountLabel = new VisLabel("Current Step: 0");
+        stepCountLabel = new VisLabel("Current Step: " + currentStep);
         stepCountLabel.setColor(Color.BLACK);
 
         // save button
@@ -43,8 +43,8 @@ public class TopBar extends VisTable {
         add(rightButtons).right();
     }
 
-    public void updateStepCount(int step) {
-        stepCountLabel.setText("Current Step: " + step);
+    public void updateStepCount(int currentStep) {
+        stepCountLabel.setText("Current Step: " + currentStep);
     }
 
     public VisTextButton getSaveButton() {

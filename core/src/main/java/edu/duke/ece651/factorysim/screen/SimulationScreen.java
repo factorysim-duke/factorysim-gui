@@ -7,6 +7,8 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.VisUI;
@@ -60,19 +62,33 @@ public class SimulationScreen implements Screen {
         stage.addActor(root);
 
         // Initialize top bar
-        topBar = new TopBar();
+        topBar = new TopBar(currentStep);
         topBar.getLoadButton().addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 // Display file chooser
                 stage.addActor(fileChooser.fadeIn());
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
             }
         });
 
         // Initialize other UI panels
         logPanel = new LogPanel();
         infoPanel = new InfoPanel();
+
+        // Initialize control panel
         controlPanel = new ControlPanel();
+        controlPanel.getStepButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                int stepsToMove = controlPanel.getStepCount();
+                game.step(stepsToMove);
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
+            }
+        });
+
 
         // Assemble the layout
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
