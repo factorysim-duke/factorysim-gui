@@ -28,7 +28,7 @@ public class InfoPanel extends VisTable {
         // Policy controls
         VisLabel policyLabel = new VisLabel("Policy:");
         policyLabel.setColor(Color.BLACK);
-        policyBox = new VisSelectBox<>();
+        policyBox = new VisSelectBox<>("blue");
         policyBox.setItems("FIFO");
 
         // Outputs label

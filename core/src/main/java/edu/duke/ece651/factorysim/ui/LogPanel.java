@@ -22,7 +22,7 @@ public class LogPanel extends VisTable {
         logsLabel.setColor(Color.BLACK);
 
         // Verbosity controls
-        verbosityBox = new VisSelectBox<>();
+        verbosityBox = new VisSelectBox<>("blue");
         verbosityBox.setItems("0", "1", "2");
 
         VisTable verboseTable = new VisTable();

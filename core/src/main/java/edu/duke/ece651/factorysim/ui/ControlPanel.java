@@ -28,9 +28,6 @@ public class ControlPanel extends VisTable {
         VisLabel controlLabel = new VisLabel("Control");
         controlLabel.setColor(Color.BLACK);
 
-        // Create circular step button container
-        VisTable stepContainer = new VisTable();
-
         // Step spinner
         IntSpinnerModel spinnerModel = new IntSpinnerModel(1, 1, 100, 1);
         stepSpinner = new Spinner("", spinnerModel);
@@ -52,27 +49,27 @@ public class ControlPanel extends VisTable {
             }
         });
 
-        // Finish button
-        finishButton = new VisTextButton("Finish", "red");
-        finishButton.pad(5, 10, 5, 10);
-
         // Layout the step container
+        VisTable stepContainer = new VisTable();
         VisLabel stepLabel = new VisLabel("Step");
         stepContainer.center();  // Center the container itself
         stepContainer.add(stepLabel).center().padBottom(5).row();
         stepContainer.add(stepSpinner).center().width(40).row();
 
-        // Create the actual step button that will receive click events
+        // Create the step button that will receive click events
         stepButton = new VisTextButton("", "blue");
 
-        // 用Table包裹stepContainer，让它在stepButton中垂直居中
+        // Wrap stepContainer in a Table to center it
         Table wrapper = new Table();
         wrapper.add(stepContainer).center();
         wrapper.center();
 
-        stepButton.clearChildren(); // 清除原有内容
+        stepButton.clearChildren(); // Clear existing content
         stepButton.add(wrapper).expand().fill().center();
 
+        // Finish button
+        finishButton = new VisTextButton("Finish", "red");
+        finishButton.pad(5, 10, 5, 10);
 
         // Add all to panel
         add(controlLabel).colspan(2).padBottom(5).row();

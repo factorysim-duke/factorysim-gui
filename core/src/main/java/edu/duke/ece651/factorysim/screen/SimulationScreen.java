@@ -13,6 +13,7 @@ import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.ui.style.UIButtonStyle;
+import edu.duke.ece651.factorysim.ui.style.UISelectBoxStyle;
 import edu.duke.ece651.factorysim.ui.TopBar;
 import edu.duke.ece651.factorysim.ui.LogPanel;
 import edu.duke.ece651.factorysim.ui.InfoPanel;
@@ -40,6 +41,7 @@ public class SimulationScreen implements Screen {
             VisUI.load();
         }
         UIButtonStyle.registerCustomStyles();
+        UISelectBoxStyle.registerCustomStyles();
 
         VisTable root = new VisTable();
         root.setFillParent(true);
