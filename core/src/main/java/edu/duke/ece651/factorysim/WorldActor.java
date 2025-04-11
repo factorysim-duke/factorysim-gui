@@ -232,7 +232,7 @@ public class WorldActor extends Actor2D implements Disposable {
     public BuildingActor buildStorage(String name, Item storageItem, int maxCapacity,
                                       double priority, Coordinate coordinate) {
         StorageBuilding factory = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
-        return buildBuilding(factory, factoryAnimation, coordinate);
+        return buildBuilding(factory, storageAnimation, coordinate);
     }
 
     public PathActor buildPath(BuildingActor from, BuildingActor to) {
