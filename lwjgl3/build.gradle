@@ -32,7 +32,7 @@ dependencies {
   implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
   implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
   implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-  implementation "com.kotcrab.vis:vis-ui:1.5.3"
+  implementation "com.kotcrab.vis:vis-ui:1.5.5"
   implementation project(':core')
 
   if(enableGraalNative == 'true') {
