@@ -14,6 +14,7 @@ public class FactoryGame extends Game {
     private Viewport viewport;
 
     private Texture cellTexture;
+    private Grid grid;
 
     @Override
     public void create() {
@@ -21,15 +22,17 @@ public class FactoryGame extends Game {
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+        camera.position.set(0f, 0f, 0f);
+        camera.update();
         viewport.apply();
-        camera.position.set(Constants.VIEW_WIDTH / 2f, Constants.VIEW_HEIGHT / 2f, 0);
 
-        actor = new BuildingActor(new Texture("cell.png"));
+        cellTexture = new Texture("cell.png");
+        grid = new Grid(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, cellTexture);
     }
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        viewport.update(width, height, false);
     }
 
     @Override
@@ -40,9 +43,13 @@ public class FactoryGame extends Game {
         camera.update();
         spriteBatch.setProjectionMatrix(camera.combined);
 
-
+        // Begin drawing
         spriteBatch.begin();
-        actor.draw(spriteBatch);
+
+        // Draw the background grid
+        grid.draw(spriteBatch);
+
+        // End drawing
         spriteBatch.end();
     }
 
@@ -51,9 +58,5 @@ public class FactoryGame extends Game {
         spriteBatch.dispose();
 
         cellTexture.dispose();
-    }
-
-    private void renderGrid() {
-
     }
 }
