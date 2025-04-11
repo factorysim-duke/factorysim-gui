@@ -108,9 +108,11 @@ public class WorldActor extends Actor2D implements Disposable {
      * @return converted global position.
      */
     public Vector2 coordinateToWorld(Coordinate coordinate) {
+        int clampedX = Math.max(0, Math.min(coordinate.getX(), grid.getCols() - 1));
+        int clampedY = Math.max(0, Math.min(coordinate.getY(), grid.getRows() - 1));
         return new Vector2(
-            grid.position.x + coordinate.getX() * cellSize,
-            grid.position.y + coordinate.getY() * cellSize
+            grid.position.x + clampedX * cellSize,
+            grid.position.y + clampedY * cellSize
         );
     }
 
@@ -121,10 +123,11 @@ public class WorldActor extends Actor2D implements Disposable {
      * @return converted coordinate on the grid.
      */
     public Coordinate worldToCoordinate(Vector2 worldPos) {
-        return new Coordinate(
-            (int)((worldPos.x - grid.position.x) / cellSize),
-            (int)((worldPos.y - grid.position.y) / cellSize)
-        );
+        int x = (int)((worldPos.x - grid.position.x) / cellSize);
+        int y = (int)((worldPos.y - grid.position.y) / cellSize);
+        int clampedX = Math.max(0, Math.min(x, grid.getCols() - 1));
+        int clampedY = Math.max(0, Math.min(y, grid.getRows() - 1));
+        return new Coordinate(clampedX, clampedY);
     }
 
     /**

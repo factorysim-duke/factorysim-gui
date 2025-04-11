@@ -12,6 +12,24 @@ public class GridActor extends Actor2D {
     private final Texture cellTexture;
 
     /**
+     * Get the number of columns in the grid.
+     *
+     * @return the number of columns in the grid
+     */
+    public int getCols() {
+        return cols;
+    }
+
+    /**
+     * Get the number of rows in the grid.
+     *
+     * @return the number of rows in the grid
+     */
+    public int getRows() {
+        return rows;
+    }
+
+    /**
      * Constructs a `GridActor` instance based on grid dimension, texture, and <b>bottom-left</b> absolute position of
      * the actor.
      *
