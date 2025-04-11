@@ -3,20 +3,23 @@ package edu.duke.ece651.factorysim.screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import edu.duke.ece651.factorysim.FactoryGame;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.kotcrab.vis.ui.widget.VisTextButton.VisTextButtonStyle;
+
+
+import com.kotcrab.vis.ui.VisUI;
+import com.kotcrab.vis.ui.widget.*;
+
+
+
+import edu.duke.ece651.factorysim.FactoryGame;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
-    private Skin skin;
     private FactoryGame game;
-    private Label stepCountLabel;
+    private VisLabel stepCountLabel;
     private int currentStep = 0;
 
     public SimulationScreen(FactoryGame game) {
@@ -27,69 +30,94 @@ public class SimulationScreen implements Screen {
     public void show() {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
 
-        Table root = new Table();
+        if (!VisUI.isLoaded()) {
+            VisUI.load(); // 加载 VisUI 默认皮肤
+        }
+
+        VisTable root = new VisTable();
         root.setFillParent(true);
         stage.addActor(root);
 
         // header table
-        Table headerTable = new Table();
-        Label titleLabel = new Label("Factorysim", skin);
-        titleLabel.setFontScale(1.5f);
-        stepCountLabel = new Label("Current Step: " + currentStep, skin);
-        TextButton saveButton = new TextButton("Save", skin);
-        TextButton loadButton = new TextButton("Load", skin);
+        VisTable headerTable = new VisTable();
+        VisLabel titleLabel = new VisLabel("Factorysim");
+        titleLabel.setFontScale(2.5f);
 
-        headerTable.add(titleLabel).left();
+        stepCountLabel = new VisLabel("Current Step: " + currentStep);
+        VisTextButtonStyle redStyle = new VisTextButtonStyle(
+        VisUI.getSkin().get(VisTextButtonStyle.class));
+        redStyle.up = VisUI.getSkin().newDrawable("white", Color.ORANGE);
+        redStyle.down = VisUI.getSkin().newDrawable("white", new Color(1.0f, 0.5f, 0.1f, 1));
+        redStyle.over = VisUI.getSkin().newDrawable("white", new Color(1.0f, 0.6f, 0.2f, 1));
+
+        VisUI.getSkin().add("red", redStyle);
+
+
+        VisTextButton saveButton = new VisTextButton("Save", "red");
+        VisTextButton loadButton = new VisTextButton("Load");
+
+        saveButton.pad(5, 10, 5, 10);
+        loadButton.pad(5, 10, 5, 10);
+
+        headerTable.add(titleLabel).left().padLeft(20);
         headerTable.add(stepCountLabel).center().expandX();
-        Table rightButtons = new Table();
+        VisTable rightButtons = new VisTable();
         rightButtons.add(saveButton).padRight(20);
         rightButtons.add(loadButton);
         headerTable.add(rightButtons).right();
 
         // log panel
-        Table logPanel = new Table();
+        VisTable logPanel = new VisTable();
+        logPanel.setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
         logPanel.top();
-        Label logsLabel = new Label("Logs", skin);
-        SelectBox<String> verbosityBox = new SelectBox<>(skin);
+        VisLabel logsLabel = new VisLabel("Logs");
+
+        VisSelectBox<String> verbosityBox = new VisSelectBox<>();
         verbosityBox.setItems("0", "1", "2");
-        TextArea logArea = new TextArea("", skin);
+
+        VisTextArea logArea = new VisTextArea("");
         logArea.setDisabled(true);
 
-        logPanel.add(logsLabel).left().row();
-        logPanel.add(new Label("verbose:", skin)).left();
-        logPanel.add(verbosityBox).left().row();
-        logPanel.add(logArea).expand().fill().colspan(2);
+        VisTable verboseTable = new VisTable();
+        VisLabel verboseLabel = new VisLabel("verbose:");
+        verboseTable.add(verboseLabel).left();
+        verboseTable.add(verbosityBox).left().padLeft(5).pad(5, 10, 5, 10);
+
+        logPanel.add(logsLabel).left().padLeft(10).padTop(10).row();
+        logPanel.add(verboseTable).left().padLeft(10).padTop(5).row();
+        logPanel.add(logArea).expand().fill().pad(10);
 
         // right info panel
-        Table rightPanel = new Table();
+        VisTable rightPanel = new VisTable();
+        rightPanel.setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
         rightPanel.top();
 
-        Label buildingLabel = new Label("Building 'D'", skin);
-        Label policyLabel = new Label("Policy:", skin);
-        SelectBox<String> policyBox = new SelectBox<>(skin);
+        VisLabel buildingLabel = new VisLabel("Building 'D'");
+        VisLabel policyLabel = new VisLabel("Policy:");
+        VisSelectBox<String> policyBox = new VisSelectBox<>();
         policyBox.setItems("FIFO");
 
-        Label outputsLabel = new Label("Outputs: door", skin);
-        Label sourcesLabel = new Label("Sources:", skin);
-        Label queueLabel = new Label("Request Queue:", skin);
-        TextButton newRequestButton = new TextButton("New Request", skin);
+        VisLabel outputsLabel = new VisLabel("Outputs: door");
+        VisLabel sourcesLabel = new VisLabel("Sources:");
+        VisLabel queueLabel = new VisLabel("Request Queue:");
+        VisTextButton newRequestButton = new VisTextButton("New Request");
 
-        rightPanel.add(buildingLabel).left().row();
-        rightPanel.add(policyLabel).left();
-        rightPanel.add(policyBox).left().row();
-        rightPanel.add(outputsLabel).left().row();
-        rightPanel.add(sourcesLabel).left().row();
-        rightPanel.add(queueLabel).left().row();
-        rightPanel.add(newRequestButton).fillX().row();
+        rightPanel.add(buildingLabel).left().padLeft(10).padTop(10).row();
+        rightPanel.add(policyLabel).left().padLeft(10).padTop(5);
+        rightPanel.add(policyBox).left().padLeft(5).pad(5, 10, 5, 10).row();
+        rightPanel.add(outputsLabel).left().padLeft(10).padTop(5).row();
+        rightPanel.add(sourcesLabel).left().padLeft(10).padTop(5).row();
+        rightPanel.add(queueLabel).left().padLeft(10).padTop(5).row();
+        rightPanel.add(newRequestButton).fillX().pad(10).row();
 
         // control button area
-        Table controlPanel = new Table();
-        TextButton stepButton = new TextButton("Step", skin);
-        TextButton finishButton = new TextButton("Finish", skin);
-        controlPanel.add(stepButton).padRight(20);
-        controlPanel.add(finishButton);
+        VisTable controlPanel = new VisTable();
+        controlPanel.setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
+        VisTextButton stepButton = new VisTextButton("Step", "blue");
+        VisTextButton finishButton = new VisTextButton("Finish", "blue");
+        controlPanel.add(stepButton).padRight(20).padLeft(10).padTop(5).padBottom(5);
+        controlPanel.add(finishButton).padRight(10).padTop(5).padBottom(5);
 
         // add all panels to root
         root.add(headerTable).colspan(3).expandX().fillX().pad(10).row();
@@ -102,8 +130,8 @@ public class SimulationScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1);
-
+        Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
     }
@@ -127,6 +155,8 @@ public class SimulationScreen implements Screen {
     @Override
     public void dispose() {
         stage.dispose();
-        skin.dispose();
+        if (VisUI.isLoaded()) {
+            VisUI.dispose();
+        }
     }
 }
