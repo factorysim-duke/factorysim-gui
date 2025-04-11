@@ -4,27 +4,33 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class GridActor extends Actor2D {
-    private final int width;
-    private final int height;
+    private final int cols;
+    private final int rows;
     private final Texture cellTexture;
 
-    public GridActor(float x, float y, int width, int height, Texture cellTexture) {
+    /**
+     *
+     * @param cols
+     * @param rows
+     * @param cellTexture
+     * @param x is the <b>bottom-left</b> x coordinate value of the actor's position.
+     * @param y is the <b>bottom-left</b> y coordinate value of the actor's position.
+     */
+    public GridActor(int cols, int rows, Texture cellTexture, float x, float y) {
         super(x, y);
-        this.width = width;
-        this.height = height;
+        this.cols = cols;
+        this.rows = rows;
         this.cellTexture = cellTexture;
-    }
-
-    public GridActor(int width, int height, Texture cellTexture) {
-        this(0f, 0f, width, height, cellTexture);
     }
 
     public void draw(SpriteBatch spriteBatch) {
         int cellWidth = cellTexture.getWidth();
         int cellHeight = cellTexture.getHeight();
-        for (int y = -height; y < height; y += cellHeight) {
-            for (int x = -width; x < width; x += cellWidth) {
-                spriteBatch.draw(cellTexture, position.x + x, position.y + y);
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                float x = position.x + col * cellWidth;
+                float y = position.y + row * cellHeight;
+                spriteBatch.draw(cellTexture, x, y);
             }
         }
     }
