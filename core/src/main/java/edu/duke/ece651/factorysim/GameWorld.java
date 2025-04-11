@@ -27,11 +27,12 @@ public class GameWorld implements Disposable {
     private final Texture pathCornerTexture;
     private final Texture selectTexture;
 
+    // Animation
     private final Animation<TextureRegion> mineAnimation;
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
-    private final Animation<TextureRegion> pathAnimation;
-    private final Animation<TextureRegion> pathCornerAnimation;
+    private final Animator<TextureRegion> pathAnimator;
+    private final Animator<TextureRegion> pathCornerAnimator;
 
     // Actors
     private final GridActor grid;
@@ -66,10 +67,10 @@ public class GameWorld implements Disposable {
             factoryTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.storageAnimation = createAnimation(storageTexture, storageTexture.getHeight(),
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
-        this.pathAnimation = createAnimation(pathTexture, pathTexture.getHeight(),
-            pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
-        this.pathCornerAnimation = createAnimation(pathCornerTexture, pathCornerTexture.getHeight(),
-            pathCornerTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
+            pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
+        this.pathCornerAnimator = new Animator<>(createAnimation(pathCornerTexture, pathCornerTexture.getHeight(),
+            pathCornerTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
         // Create empty world and simulation
         // TODO: Replace with GUI logger
