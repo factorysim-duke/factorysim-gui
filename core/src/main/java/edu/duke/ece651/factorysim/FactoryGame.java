@@ -1,7 +1,7 @@
 package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.Game;
-
+import edu.duke.ece651.factorysim.screen.SimulationScreen;
 public class FactoryGame extends Game {
     private Simulation sim;
 
@@ -11,6 +11,8 @@ public class FactoryGame extends Game {
 
     @Override
     public void create() {
+        SimulationScreen simulationScreen = new SimulationScreen(this);
+        this.setScreen(simulationScreen);
     }
 
     @Override
