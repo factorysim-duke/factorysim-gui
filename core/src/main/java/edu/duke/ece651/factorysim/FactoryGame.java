@@ -14,7 +14,7 @@ public class FactoryGame extends Game {
     private Viewport viewport;
 
     private Texture cellTexture;
-    private Grid grid;
+    private GridActor grid;
 
     @Override
     public void create() {
@@ -27,7 +27,7 @@ public class FactoryGame extends Game {
         viewport.apply();
 
         cellTexture = new Texture("cell.png");
-        grid = new Grid(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, cellTexture);
+        grid = new GridActor(0f, 0f, Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, cellTexture);
     }
 
     @Override
