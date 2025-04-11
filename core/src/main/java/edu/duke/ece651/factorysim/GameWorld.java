@@ -1,5 +1,6 @@
 package edu.duke.ece651.factorysim;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
@@ -10,12 +11,9 @@ import java.util.*;
  * Represents a central game world manager that manages resources and other actors.
  * Instances need to be explicitly disposed with `dispose` method after use.
  */
-public class WorldActor extends Actor2D implements Disposable {
+public class GameWorld implements Disposable {
     // Dimension
     private final int cellSize;
-
-    // Mouse Input
-    private final MouseEventHandler mouseEventHandler;
 
     // Simulation
     private final Simulation sim;
@@ -27,6 +25,7 @@ public class WorldActor extends Actor2D implements Disposable {
     private final Texture storageTexture;
     private final Texture pathTexture;
     private final Texture pathCornerTexture;
+    private final Texture selectTexture;
 
     private final Animation<TextureRegion> mineAnimation;
     private final Animation<TextureRegion> factoryAnimation;
@@ -45,15 +44,11 @@ public class WorldActor extends Actor2D implements Disposable {
      * @param gridCols number of columns in the grid.
      * @param gridRows number of rows in the grid.
      */
-    public WorldActor(int gridCols, int gridRows, int cellSize, MouseEventHandler mouseEventHandler,
-                      float x, float y) {
-        super(x, y);
-
+    public GameWorld(int gridCols, int gridRows, int cellSize, MouseEventHandler mouseEventHandler,
+                     float x, float y) {
         this.cellSize = cellSize;
         int width = gridCols * cellSize;
         int height = gridRows * cellSize;
-
-        this.mouseEventHandler = mouseEventHandler;
 
         // Load textures
         this.cellTexture = new Texture("cell.png");
@@ -62,6 +57,7 @@ public class WorldActor extends Actor2D implements Disposable {
         this.storageTexture = new Texture("storage.png");
         this.pathTexture = new Texture("path.png");
         this.pathCornerTexture = new Texture("path_corner.png");
+        this.selectTexture = new Texture("select.png");
 
         // Create animations
         this.mineAnimation = createAnimation(mineTexture, mineTexture.getHeight(),
@@ -81,6 +77,7 @@ public class WorldActor extends Actor2D implements Disposable {
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture,
+            this.selectTexture, Color.WHITE,
             x - (width / 2f), y - (height / 2f));
         mouseEventHandler.subscribe(grid);
     }
@@ -127,8 +124,7 @@ public class WorldActor extends Actor2D implements Disposable {
         return world;
     }
 
-    @Override
-    public void draw(SpriteBatch spriteBatch) {
+    public void render(SpriteBatch spriteBatch) {
         // Draw background grid
         grid.draw(spriteBatch);
 
@@ -141,6 +137,9 @@ public class WorldActor extends Actor2D implements Disposable {
         for (BuildingActor building : buildings) {
             building.draw(spriteBatch);
         }
+
+        // Draw grid selection box
+        grid.drawSelectionBox(spriteBatch);
     }
 
     @Override
@@ -151,6 +150,7 @@ public class WorldActor extends Actor2D implements Disposable {
         storageTexture.dispose();
         pathTexture.dispose();
         pathCornerTexture.dispose();
+        selectTexture.dispose();
     }
 
     /**

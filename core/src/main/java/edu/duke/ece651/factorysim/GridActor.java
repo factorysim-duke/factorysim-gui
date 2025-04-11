@@ -2,6 +2,7 @@ package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
 
 /**
  * Represents a grid entity.
@@ -12,29 +13,52 @@ public class GridActor extends Actor2D implements MouseListener {
     private final int cellSize;
 
     private final Texture cellTexture;
+    private Texture selectionBoxTexture;
+    private final Color selectionBoxColor;
 
-    private final float unselectedFactor;
-
-    private Float mouseX = null;
-    private Float mouseY = null;
+    private Vector2 mousePos = null;
 
     /**
      * Get the number of columns in the grid.
      *
      * @return the number of columns in the grid
      */
-    public int getCols() {
-        return cols;
-    }
+    public int getCols() { return this.cols; }
 
     /**
      * Get the number of rows in the grid.
      *
      * @return the number of rows in the grid
      */
-    public int getRows() {
-        return rows;
-    }
+    public int getRows() { return this.rows; }
+
+    /**
+     * Gets the reference of the current texture of the selection box.
+     *
+     * @return the reference of the current texture of the selection box.
+     */
+    public Texture getSelectionBoxTexture() { return this.selectionBoxTexture; }
+
+    /**
+     * Sets a new texture for the selection box.
+     *
+     * @param t the new selection box texture.
+     */
+    public void setSelectionBoxTexture(Texture t) { this.selectionBoxTexture = t; }
+
+    /**
+     * Gets a copy of the current selection box color.
+     *
+     * @return a copy of the current selection box color.
+     */
+    public Color getSelectionBoxColor() { return this.selectionBoxColor.cpy(); }
+
+    /**
+     * Sets a new color for the selection box (doesn't take ownership of the reference).
+     *
+     * @param c the color to set.
+     */
+    public void setSelectionBoxColor(Color c) { this.selectionBoxColor.set(c); }
 
     /**
      * Constructs a `GridActor` instance based on grid dimension, texture, and <b>bottom-left</b> absolute position of
@@ -44,56 +68,60 @@ public class GridActor extends Actor2D implements MouseListener {
      * @param rows is the number of cells vertically.
      * @param cellSize is the size of each cell.
      * @param cellTexture is the texture of each cell in the grid.
-     * @param unselectedFactor is the multiplying factor applied to cell's RGB color when it's unselected.
+     * @param selectionBoxTexture is the texture of the selection box.
+     * @param selectionBoxColor is the tint color of the selection box.
      * @param x is the <b>bottom-left</b> x coordinate value of the actor's position.
      * @param y is the <b>bottom-left</b> y coordinate value of the actor's position.
      */
-    public GridActor(int cols, int rows, int cellSize, Texture cellTexture, float unselectedFactor,
+    public GridActor(int cols, int rows, int cellSize,
+                     Texture cellTexture, Texture selectionBoxTexture, Color selectionBoxColor,
                      float x, float y) {
         super(x, y);
         this.cols = cols;
         this.rows = rows;
         this.cellSize = cellSize;
         this.cellTexture = cellTexture;
-        this.unselectedFactor = unselectedFactor;
-    }
-
-    public GridActor(int cols, int rows, int cellSize, Texture cellTexture, float x, float y) {
-        this(cols, rows, cellSize, cellTexture, 0.5f, x, y);
+        this.selectionBoxTexture = selectionBoxTexture;
+        this.selectionBoxColor = selectionBoxColor.cpy();
     }
 
     @Override
     public void draw(SpriteBatch spriteBatch) {
-        Color originalColor = spriteBatch.getColor().cpy();
-        Color darkerColor = originalColor.cpy().mul(unselectedFactor, unselectedFactor, unselectedFactor, 1f);
-
-        // Get the cell the mouse is above
-        float mouseX = this.mouseX == null ? 0f : this.mouseX;
-        float mouseY = this.mouseY == null ? 0f : this.mouseY;
-        int hoveredCol = (int)((mouseX - position.x) / cellSize);
-        int hoveredRow = (int)((mouseY - position.y) / cellSize);
-
-        // Draw each cell
+        // Draw the grid
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                if (col == hoveredCol && row == hoveredRow && this.mouseX != null && this.mouseY != null) {
-                    spriteBatch.setColor(originalColor);
-                } else {
-                    spriteBatch.setColor(darkerColor);
-                }
-
                 float x = position.x + col * cellSize;
                 float y = position.y + row * cellSize;
                 spriteBatch.draw(cellTexture, x, y);
             }
         }
+    }
 
-        spriteBatch.setColor(originalColor);
+    /**
+     *
+     *
+     * @param spriteBatch
+     */
+    public void drawSelectionBox(SpriteBatch spriteBatch) {
+        // Draw selection box
+        if (mousePos != null) {
+            int col = (int)((mousePos.x - position.x) / cellSize);
+            int row = (int)((mousePos.y - position.y) / cellSize);
+            if (col >= 0 && col < cols && row >= 0 && row < rows) {
+                Color ogColor = spriteBatch.getColor().cpy();
+                spriteBatch.setColor(selectionBoxColor);
+                spriteBatch.draw(selectionBoxTexture, position.x + col * cellSize, position.y + row * cellSize);
+                spriteBatch.setColor(ogColor);
+            }
+        }
     }
 
     @Override
     public void onMouseMoved(float mouseX, float mouseY) {
-        this.mouseX = mouseX;
-        this.mouseY = mouseY;
+        if (mousePos == null) {
+            mousePos = new Vector2(mouseX, mouseY);
+            return;
+        }
+        mousePos.set(mouseX, mouseY);
     }
 }

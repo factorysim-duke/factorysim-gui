@@ -18,7 +18,7 @@ public class FactoryGame extends Game {
     private Viewport viewport;
 
     // Game World
-    private WorldActor world;
+    private GameWorld world;
 
     // Mouse Input
     private final MouseEventHandler mouseEventHandler = new MouseEventHandler();
@@ -35,7 +35,7 @@ public class FactoryGame extends Game {
 
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new WorldActor(cols, rows, Constants.CELL_SIZE, mouseEventHandler, 0f, 0f);
+        world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler, 0f, 0f);
 
         // TODO: Delete test code
         world.buildMine("M", new Recipe(new Item("metal"), new HashMap<>(), 1), new Coordinate(1, 1));
@@ -58,13 +58,13 @@ public class FactoryGame extends Game {
         spriteBatch.setProjectionMatrix(camera.combined);
 
         // Get mouse world position
-        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0f);
         viewport.unproject(mousePos);
         mouseEventHandler.update(mousePos.x, mousePos.y);
 
-        // Draw the world
+        // Render the world
         spriteBatch.begin();
-        world.draw(spriteBatch);
+        world.render(spriteBatch);
         spriteBatch.end();
     }
 
