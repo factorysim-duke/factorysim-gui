@@ -10,10 +10,9 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-
-import com.kotcrab.vis.ui.widget.VisTextButton.VisTextButtonStyle;
+import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.VisUI;
-import com.kotcrab.vis.ui.widget.*;
+import com.kotcrab.vis.ui.widget.file.FileChooser;
 
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.ui.style.UIButtonStyle;
@@ -22,6 +21,9 @@ import edu.duke.ece651.factorysim.ui.TopBar;
 import edu.duke.ece651.factorysim.ui.LogPanel;
 import edu.duke.ece651.factorysim.ui.InfoPanel;
 import edu.duke.ece651.factorysim.ui.ControlPanel;
+import edu.duke.ece651.factorysim.util.FileDialogUtil;
+
+import com.kotcrab.vis.ui.widget.VisTable;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -31,6 +33,7 @@ public class SimulationScreen implements Screen {
     private InfoPanel infoPanel;
     private ControlPanel controlPanel;
     private int currentStep = 0;
+    private FileChooser fileChooser;
 
     public SimulationScreen(FactoryGame game) {
         this.game = game;
@@ -41,26 +44,36 @@ public class SimulationScreen implements Screen {
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
 
+        // Load VisUI
         if (!VisUI.isLoaded()) {
             VisUI.load();
         }
+
+        // Register custom UI styles
         UIButtonStyle.registerCustomStyles();
         UISelectBoxStyle.registerCustomStyles();
 
+        // Use the refactored utility method to create a FileChooser
+        fileChooser = FileDialogUtil.createFileChooser(game);
+
+        // Create the root layout
         VisTable root = new VisTable();
         root.setFillParent(true);
         stage.addActor(root);
 
         // Initialize top bar
         topBar = new TopBar();
+        topBar.getLoadButton().addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                // Display file chooser
+                stage.addActor(fileChooser.fadeIn());
+            }
+        });
 
-        // Initialize log panel
+        // Initialize other UI panels
         logPanel = new LogPanel();
-
-        // Initialize info panel
         infoPanel = new InfoPanel();
-
-        // Initialize control panel
         controlPanel = new ControlPanel();
 
         // Set up click listener for the New Request button
@@ -74,7 +87,7 @@ public class SimulationScreen implements Screen {
         // add all panels to root
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
         root.add(logPanel).width(200).expandY().fillY().top().pad(10);
-        root.add().expand().fill();  // map area
+        root.add().expand().fill();  // center space (for map, etc.)
         root.add(infoPanel).width(200).top().pad(10).row();
         root.add().colspan(2).expandX().fillX();
         root.add(controlPanel).right().pad(10);
@@ -127,6 +140,7 @@ public class SimulationScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         stage.act(delta);
         stage.draw();
     }
