@@ -1,7 +1,7 @@
 package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import java.util.*;
@@ -24,6 +24,12 @@ public class WorldActor extends Actor2D implements Disposable {
     private final Texture storageTexture;
     private final Texture pathTexture;
     private final Texture pathCornerTexture;
+
+    private final Animation<TextureRegion> mineAnimation;
+    private final Animation<TextureRegion> factoryAnimation;
+    private final Animation<TextureRegion> storageAnimation;
+    private final Animation<TextureRegion> pathAnimation;
+    private final Animation<TextureRegion> pathCornerAnimation;
 
     // Actors
     private final GridActor grid;
@@ -51,12 +57,50 @@ public class WorldActor extends Actor2D implements Disposable {
         this.pathTexture = new Texture("path.png");
         this.pathCornerTexture = new Texture("path_corner.png");
 
+        // Create animations
+        this.mineAnimation = createAnimation(mineTexture, mineTexture.getHeight(),
+            mineTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.factoryAnimation = createAnimation(factoryTexture, factoryTexture.getHeight() / 2,
+            factoryTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.storageAnimation = createAnimation(storageTexture, storageTexture.getHeight(),
+            storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.pathAnimation = createAnimation(pathTexture, pathTexture.getHeight(),
+            pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.pathCornerAnimation = createAnimation(pathCornerTexture, pathCornerTexture.getHeight(),
+            pathCornerTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+
         // Create empty world and simulation
         // TODO: Replace with GUI logger
         this.sim = new Simulation(buildEmptyWorld(gridCols, gridRows), 0, new StreamLogger(System.out));
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, this.gridTexture, x - (width / 2f), y - (height / 2f));
+    }
+
+    /**
+     * Splits a texture into frames based on frame dimension, then creates an animation from it.
+     *
+     * @param texture is the texture to split frames from.
+     * @param frameWidth is the width of each frame.
+     * @param frameHeight is the height of each frame.
+     * @param frameDuration is the duration of each frame in the animation.
+     * @param playMode is the animation's play mode.
+     * @return animation created from the texture.
+     * @throws IllegalArgumentException when failed to split any frames from the texture and frame dimensions.
+     */
+    private static Animation<TextureRegion> createAnimation(Texture texture, int frameWidth, int frameHeight,
+                                                            float frameDuration, Animation.PlayMode playMode) {
+        TextureRegion[][] regions = TextureRegion.split(texture, frameWidth, frameHeight);
+        TextureRegion[] frames = Arrays.stream(regions)
+                                       .flatMap(Arrays::stream)
+                                       .toArray(TextureRegion[]::new);
+        if (frames.length == 0) {
+            throw new IllegalArgumentException("Failed to split any animation frame from the texture");
+        }
+
+        Animation<TextureRegion> animation = new Animation<>(frameDuration, frames);
+        animation.setPlayMode(playMode);
+        return animation;
     }
 
     /**
@@ -134,17 +178,17 @@ public class WorldActor extends Actor2D implements Disposable {
      * Constructs a `BuildingActor` and add it to the world's building list.
      *
      * @param building is the `Building` instance the actor is based on.
-     * @param texture is the texture used by the building.
+     * @param animation is the animation used by the building.
      * @param coordinate is the coordinate to build on.
      * @return newly constructed `BuildingActor` instance.
      */
-    private BuildingActor buildBuilding(Building building, Texture texture, Coordinate coordinate) {
+    private BuildingActor buildBuilding(Building building, Animation<TextureRegion> animation, Coordinate coordinate) {
         // Set location
         building.setLocation(coordinate);
 
         // Construct and add the actor
         Vector2 worldPos = coordinateToWorld(coordinate);
-        BuildingActor actor = new BuildingActor(building, texture, worldPos.x, worldPos.y);
+        BuildingActor actor = new BuildingActor(building, animation, worldPos.x, worldPos.y);
         buildings.add(actor);
         return actor;
     }
@@ -159,7 +203,7 @@ public class WorldActor extends Actor2D implements Disposable {
      */
     public BuildingActor buildMine(String name, Recipe miningRecipe, Coordinate coordinate) {
         MineBuilding mine = new MineBuilding(miningRecipe, name, sim);
-        return buildBuilding(mine, mineTexture, coordinate);
+        return buildBuilding(mine, mineAnimation, coordinate);
     }
 
     /**
@@ -172,7 +216,7 @@ public class WorldActor extends Actor2D implements Disposable {
      */
     public BuildingActor buildFactory(String name, Type factoryType, Coordinate coordinate) {
         FactoryBuilding factory = new FactoryBuilding(factoryType, name, new ArrayList<>(), sim);
-        return buildBuilding(factory, factoryTexture, coordinate);
+        return buildBuilding(factory, factoryAnimation, coordinate);
     }
 
     /**
@@ -188,7 +232,7 @@ public class WorldActor extends Actor2D implements Disposable {
     public BuildingActor buildStorage(String name, Item storageItem, int maxCapacity,
                                       double priority, Coordinate coordinate) {
         StorageBuilding factory = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
-        return buildBuilding(factory, factoryTexture, coordinate);
+        return buildBuilding(factory, factoryAnimation, coordinate);
     }
 
     public PathActor buildPath(BuildingActor from, BuildingActor to) {
