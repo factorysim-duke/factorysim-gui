@@ -5,8 +5,14 @@ import edu.duke.ece651.factorysim.screen.SimulationScreen;
 public class FactoryGame extends Game {
     private Simulation sim;
 
-    public void setSimulation(Simulation sim) {
-        this.sim = sim;
+    //constructor
+    public FactoryGame() {
+        super();
+        this.sim = new Simulation("doors1.json");
+    }
+
+    public void loadSimulation(String jsonPath) {
+        this.sim.load(jsonPath);
     }
 
     @Override
