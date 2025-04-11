@@ -1,5 +1,8 @@
 package edu.duke.ece651.factorysim;
 
+/**
+ * Stores useful constants.
+ */
 public class Constants {
     private Constants() { }
 

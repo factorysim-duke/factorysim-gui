@@ -3,16 +3,21 @@ package edu.duke.ece651.factorysim;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+/**
+ * Represents a grid entity.
+ */
 public class GridActor extends Actor2D {
     private final int cols;
     private final int rows;
     private final Texture cellTexture;
 
     /**
+     * Constructs a `GridActor` instance based on grid dimension, texture, and <b>bottom-left</b> absolute position of
+     * the actor.
      *
-     * @param cols
-     * @param rows
-     * @param cellTexture
+     * @param cols is the number of cells horizontally.
+     * @param rows is the number of cells vertically.
+     * @param cellTexture is the texture of each cell in the grid.
      * @param x is the <b>bottom-left</b> x coordinate value of the actor's position.
      * @param y is the <b>bottom-left</b> y coordinate value of the actor's position.
      */
@@ -23,6 +28,7 @@ public class GridActor extends Actor2D {
         this.cellTexture = cellTexture;
     }
 
+    @Override
     public void draw(SpriteBatch spriteBatch) {
         int cellWidth = cellTexture.getWidth();
         int cellHeight = cellTexture.getHeight();

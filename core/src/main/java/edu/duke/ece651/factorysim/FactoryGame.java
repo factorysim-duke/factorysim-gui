@@ -7,6 +7,9 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+/**
+ * Represents a libGDX game application of factorysim.
+ */
 public class FactoryGame extends Game {
     // Rendering
     private SpriteBatch spriteBatch;
