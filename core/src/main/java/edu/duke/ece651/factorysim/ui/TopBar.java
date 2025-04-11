@@ -33,8 +33,9 @@ public class TopBar extends VisTable {
 
         // combine save and load buttons
         VisTable rightButtons = new VisTable();
-        rightButtons.add(saveButton).padRight(20);
-        rightButtons.add(loadButton);
+        rightButtons.add(loadButton).padRight(20);
+        rightButtons.add(saveButton);
+
 
         // add to table
         add(titleLabel).left().padLeft(20);
