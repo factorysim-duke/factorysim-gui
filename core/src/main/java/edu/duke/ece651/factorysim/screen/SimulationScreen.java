@@ -9,10 +9,12 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
+
 
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.ui.style.UIButtonStyle;
@@ -23,7 +25,7 @@ import edu.duke.ece651.factorysim.ui.InfoPanel;
 import edu.duke.ece651.factorysim.ui.ControlPanel;
 import edu.duke.ece651.factorysim.util.FileDialogUtil;
 
-import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.*;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -62,19 +64,39 @@ public class SimulationScreen implements Screen {
         stage.addActor(root);
 
         // Initialize top bar
-        topBar = new TopBar();
+        topBar = new TopBar(currentStep);
         topBar.getLoadButton().addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 // Display file chooser
                 stage.addActor(fileChooser.fadeIn());
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
             }
         });
 
         // Initialize other UI panels
         logPanel = new LogPanel();
         infoPanel = new InfoPanel();
+        infoPanel.getNewRequestButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showRequestDialog();
+            }
+        });
+
+        // Initialize control panel
         controlPanel = new ControlPanel();
+        controlPanel.getStepButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                int stepsToMove = controlPanel.getStepCount();
+                game.step(stepsToMove);
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
+            }
+        });
+
 
         // Set up click listener for the New Request button
         infoPanel.getNewRequestButton().addListener(new ClickListener() {
@@ -99,31 +121,31 @@ public class SimulationScreen implements Screen {
     private void showRequestDialog() {
         // create the dialog
         VisDialog dialog = new VisDialog("Request items");
-        
+
         // create the dropdown for item selection
         final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
         itemSelectBox.setItems("door");
-        
+
         // create a container for the dialog content
         VisTable contentTable = new VisTable();
         contentTable.pad(10);
-        
+
         // create the text components
         VisLabel selectLabel = new VisLabel("Select '");
         VisLabel singleQuote = new VisLabel("'");
         VisLabel fromLabel = new VisLabel(" from 'D'"); // placeholder 'D' factory
-        
+
         // add components to the dialog
         contentTable.add(selectLabel).padRight(0);
         contentTable.add(itemSelectBox).padRight(0).width(80);
         contentTable.add(singleQuote).padRight(0);
         contentTable.add(fromLabel);
-        
+
         // add buttons
         dialog.getButtonsTable().defaults().pad(2, 10, 2, 10);
         dialog.button("Cancel", false);
         dialog.button("OK", true);
-        
+
         // set content and configure dialog
         dialog.getContentTable().add(contentTable).pad(10);
         dialog.setModal(true);
@@ -131,7 +153,7 @@ public class SimulationScreen implements Screen {
         dialog.setResizable(false);
         dialog.pack();
         dialog.centerWindow();
-        
+
         // show the dialog
         dialog.show(stage);
     }

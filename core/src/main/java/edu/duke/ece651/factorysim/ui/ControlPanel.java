@@ -24,24 +24,14 @@ public class ControlPanel extends VisTable {
     private void init() {
         setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
 
-        // Control label
         VisLabel controlLabel = new VisLabel("Control");
         controlLabel.setColor(Color.BLACK);
 
-        // Step spinner
+        finishButton = new VisTextButton("Finish", "red");
+        finishButton.pad(5, 10, 5, 10);
+
         IntSpinnerModel spinnerModel = new IntSpinnerModel(1, 1, 100, 1);
         stepSpinner = new Spinner("", spinnerModel);
-
-        // Add click listener to spinner to stop event propagation
-        stepSpinner.addListener(new ClickListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                event.stop();
-                return super.touchDown(event, x, y, pointer, button);
-            }
-        });
-
-        // Add value change listener to spinner
         stepSpinner.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -49,32 +39,31 @@ public class ControlPanel extends VisTable {
             }
         });
 
-        // Layout the step container
-        VisTable stepContainer = new VisTable();
-        VisLabel stepLabel = new VisLabel("Step");
-        stepContainer.center();  // Center the container itself
-        stepContainer.add(stepLabel).center().padBottom(5).row();
-        stepContainer.add(stepSpinner).center().width(40).row();
+        // Let the spinner handle the click event, not the button
+        stepSpinner.addListener(new ClickListener() {
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                event.stop();  // stop the event from bubbling up to the button
+                return super.touchDown(event, x, y, pointer, button);
+            }
+        });
 
-        // Create the step button that will receive click events
+
         stepButton = new VisTextButton("", "blue");
+        stepButton.setSize(100, 100); // adjust as needed
 
-        // Wrap stepContainer in a Table to center it
-        Table wrapper = new Table();
-        wrapper.add(stepContainer).center();
-        wrapper.center();
+        Table overlay = new Table();
+        VisLabel stepLabel = new VisLabel("Step");
+        stepLabel.setColor(Color.WHITE); // make the text more visible on the blue button
+        overlay.add(stepLabel).expandX().center().padBottom(5).row();
+        overlay.add(stepSpinner).width(50).height(30).center();
+        stepButton.clearChildren();
+        stepButton.add(overlay).expand().fill();
 
-        stepButton.clearChildren(); // Clear existing content
-        stepButton.add(wrapper).expand().fill().center();
 
-        // Finish button
-        finishButton = new VisTextButton("Finish", "red");
-        finishButton.pad(5, 10, 5, 10);
-
-        // Add all to panel
         add(controlLabel).colspan(2).padBottom(5).row();
-        add(stepButton).size(100, 100).padRight(20).pad(5);
-        add(finishButton).padLeft(10).pad(5);
+        add(stepButton).size(100, 100).pad(5);
+        add(finishButton).pad(5).row();
     }
 
     public VisTextButton getStepButton() {
