@@ -124,14 +124,14 @@ public class WorldActor extends Actor2D implements Disposable {
         // Draw background grid
         grid.draw(spriteBatch);
 
-        // Draw buildings
-        for (BuildingActor building : buildings) {
-            building.draw(spriteBatch);
-        }
-
         // Draw paths
         for (PathActor path : paths) {
             path.draw(spriteBatch);
+        }
+
+        // Draw buildings
+        for (BuildingActor building : buildings) {
+            building.draw(spriteBatch);
         }
     }
 
