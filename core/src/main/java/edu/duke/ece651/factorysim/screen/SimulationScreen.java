@@ -3,9 +3,10 @@ package edu.duke.ece651.factorysim.screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -90,7 +91,15 @@ public class SimulationScreen implements Screen {
         });
 
 
-        // Assemble the layout
+        // Set up click listener for the New Request button
+        infoPanel.getNewRequestButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showRequestDialog();
+            }
+        });
+
+        // add all panels to root
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
         root.add(logPanel).width(200).expandY().fillY().top().pad(10);
         root.add().expand().fill();  // center space (for map, etc.)
