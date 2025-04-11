@@ -14,11 +14,14 @@ public class WorldActor extends Actor2D implements Disposable {
     // Dimension
     private final int cellSize;
 
+    // Mouse Input
+    private final MouseEventHandler mouseEventHandler;
+
     // Simulation
     private final Simulation sim;
 
     // Resources
-    private final Texture gridTexture;
+    private final Texture cellTexture;
     private final Texture mineTexture;
     private final Texture factoryTexture;
     private final Texture storageTexture;
@@ -42,15 +45,18 @@ public class WorldActor extends Actor2D implements Disposable {
      * @param gridCols number of columns in the grid.
      * @param gridRows number of rows in the grid.
      */
-    public WorldActor(int gridCols, int gridRows, int cellSize, float x, float y) {
+    public WorldActor(int gridCols, int gridRows, int cellSize, MouseEventHandler mouseEventHandler,
+                      float x, float y) {
         super(x, y);
 
         this.cellSize = cellSize;
         int width = gridCols * cellSize;
         int height = gridRows * cellSize;
 
+        this.mouseEventHandler = mouseEventHandler;
+
         // Load textures
-        this.gridTexture = new Texture("cell.png");
+        this.cellTexture = new Texture("cell.png");
         this.mineTexture = new Texture("mine.png");
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
@@ -74,7 +80,9 @@ public class WorldActor extends Actor2D implements Disposable {
         this.sim = new Simulation(buildEmptyWorld(gridCols, gridRows), 0, new StreamLogger(System.out));
 
         // Create the grid
-        this.grid = new GridActor(gridCols, gridRows, this.gridTexture, x - (width / 2f), y - (height / 2f));
+        this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture,
+            x - (width / 2f), y - (height / 2f));
+        mouseEventHandler.subscribe(grid);
     }
 
     /**
@@ -137,7 +145,7 @@ public class WorldActor extends Actor2D implements Disposable {
 
     @Override
     public void dispose() {
-        gridTexture.dispose();
+        cellTexture.dispose();
         mineTexture.dispose();
         factoryTexture.dispose();
         storageTexture.dispose();

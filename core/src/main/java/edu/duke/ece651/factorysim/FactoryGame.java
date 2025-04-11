@@ -1,11 +1,12 @@
 package edu.duke.ece651.factorysim;
 
-import com.badlogic.gdx.Game;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.viewport.*;
+import java.util.*;
 
 /**
  * Represents a libGDX game application of factorysim.
@@ -19,6 +20,9 @@ public class FactoryGame extends Game {
     // Game World
     private WorldActor world;
 
+    // Mouse Input
+    private final MouseEventHandler mouseEventHandler = new MouseEventHandler();
+
     @Override
     public void create() {
         spriteBatch = new SpriteBatch();
@@ -31,7 +35,12 @@ public class FactoryGame extends Game {
 
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new WorldActor(cols, rows, Constants.CELL_SIZE, 0f, 0f);
+        world = new WorldActor(cols, rows, Constants.CELL_SIZE, mouseEventHandler, 0f, 0f);
+
+        // TODO: Delete test code
+        world.buildMine("M", new Recipe(new Item("metal"), new HashMap<>(), 1), new Coordinate(1, 1));
+        world.buildFactory("Hi", new Type("Hi", List.of()), new Coordinate(2, 2));
+        world.buildStorage("St", new Item("metal"), 10, 1.0, new Coordinate(3, 3));
     }
 
     @Override
@@ -44,8 +53,14 @@ public class FactoryGame extends Game {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
 
         // Update camera
+        viewport.apply();
         camera.update();
         spriteBatch.setProjectionMatrix(camera.combined);
+
+        // Get mouse world position
+        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
+        viewport.unproject(mousePos);
+        mouseEventHandler.update(mousePos.x, mousePos.y);
 
         // Draw the world
         spriteBatch.begin();
