@@ -4,7 +4,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import com.kotcrab.vis.ui.widget.VisTextButton.VisTextButtonStyle;
@@ -59,6 +63,14 @@ public class SimulationScreen implements Screen {
         // Initialize control panel
         controlPanel = new ControlPanel();
 
+        // Set up click listener for the New Request button
+        infoPanel.getNewRequestButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                showRequestDialog();
+            }
+        });
+
         // add all panels to root
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
         root.add(logPanel).width(200).expandY().fillY().top().pad(10);
@@ -66,6 +78,49 @@ public class SimulationScreen implements Screen {
         root.add(infoPanel).width(200).top().pad(10).row();
         root.add().colspan(2).expandX().fillX();
         root.add(controlPanel).right().pad(10);
+    }
+
+    /**
+     * Shows a dialog for creating a new request
+     */
+    private void showRequestDialog() {
+        // create the dialog
+        VisDialog dialog = new VisDialog("Request items");
+        
+        // create the dropdown for item selection
+        final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
+        itemSelectBox.setItems("door");
+        
+        // create a container for the dialog content
+        VisTable contentTable = new VisTable();
+        contentTable.pad(10);
+        
+        // create the text components
+        VisLabel selectLabel = new VisLabel("Select '");
+        VisLabel singleQuote = new VisLabel("'");
+        VisLabel fromLabel = new VisLabel(" from 'D'"); // placeholder 'D' factory
+        
+        // add components to the dialog
+        contentTable.add(selectLabel).padRight(0);
+        contentTable.add(itemSelectBox).padRight(0).width(80);
+        contentTable.add(singleQuote).padRight(0);
+        contentTable.add(fromLabel);
+        
+        // add buttons
+        dialog.getButtonsTable().defaults().pad(2, 10, 2, 10);
+        dialog.button("Cancel", false);
+        dialog.button("OK", true);
+        
+        // set content and configure dialog
+        dialog.getContentTable().add(contentTable).pad(10);
+        dialog.setModal(true);
+        dialog.setMovable(false);
+        dialog.setResizable(false);
+        dialog.pack();
+        dialog.centerWindow();
+        
+        // show the dialog
+        dialog.show(stage);
     }
 
     @Override
