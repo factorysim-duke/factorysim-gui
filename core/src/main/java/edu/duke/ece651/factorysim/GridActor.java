@@ -15,6 +15,10 @@ public class GridActor extends Actor2D {
         this.cellTexture = cellTexture;
     }
 
+    public GridActor(int width, int height, Texture cellTexture) {
+        this(0f, 0f, width, height, cellTexture);
+    }
+
     public void draw(SpriteBatch spriteBatch) {
         int cellWidth = cellTexture.getWidth();
         int cellHeight = cellTexture.getHeight();
