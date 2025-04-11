@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class BuildingActor extends Actor2D {
     private final Texture texture;
 
-    public BuildingActor(Texture texture, float x, float y) {
+    public BuildingActor(float x, float y, Texture texture) {
         super(x, y);
         this.texture = texture;
     }
