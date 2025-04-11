@@ -9,8 +9,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 public class BuildingActor extends Actor2D {
     private final Building building;
 
-    private final Animation<TextureRegion> animation;
-    private float animationTimer;
+    private final Animator<TextureRegion> animator;
 
     /**
      * Get the underlying `Building` instance used by this `BuildingActor`.
@@ -30,14 +29,13 @@ public class BuildingActor extends Actor2D {
     public BuildingActor(Building building, Animation<TextureRegion> animation, float x, float y) {
         super(x, y);
         this.building = building;
-        this.animation = animation;
-        this.animationTimer = 0f;
+        this.animator = new Animator<>(animation, true);
     }
 
     @Override
     public void draw(SpriteBatch spriteBatch) {
-        animationTimer += Gdx.graphics.getDeltaTime();
-        TextureRegion currentFrame = animation.getKeyFrame(animationTimer, true);
+        animator.step(Gdx.graphics.getDeltaTime());
+        TextureRegion currentFrame = animator.getCurrentKeyFrame();
         spriteBatch.draw(currentFrame, position.x, position.y);
     }
 }
