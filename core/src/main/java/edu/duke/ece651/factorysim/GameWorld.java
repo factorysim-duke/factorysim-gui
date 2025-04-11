@@ -76,8 +76,7 @@ public class GameWorld implements Disposable {
         this.sim = new Simulation(buildEmptyWorld(gridCols, gridRows), 0, new StreamLogger(System.out));
 
         // Create the grid
-        this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture,
-            this.selectTexture, Color.WHITE,
+        this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
         mouseEventHandler.subscribe(grid);
     }

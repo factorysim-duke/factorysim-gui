@@ -13,8 +13,7 @@ public class GridActor extends Actor2D implements MouseListener {
     private final int cellSize;
 
     private final Texture cellTexture;
-    private Texture selectionBoxTexture;
-    private final Color selectionBoxColor;
+    private Texture selectTexture;
 
     private Vector2 mousePos = null;
 
@@ -37,28 +36,14 @@ public class GridActor extends Actor2D implements MouseListener {
      *
      * @return the reference of the current texture of the selection box.
      */
-    public Texture getSelectionBoxTexture() { return this.selectionBoxTexture; }
+    public Texture getSelectTexture() { return this.selectTexture; }
 
     /**
      * Sets a new texture for the selection box.
      *
      * @param t the new selection box texture.
      */
-    public void setSelectionBoxTexture(Texture t) { this.selectionBoxTexture = t; }
-
-    /**
-     * Gets a copy of the current selection box color.
-     *
-     * @return a copy of the current selection box color.
-     */
-    public Color getSelectionBoxColor() { return this.selectionBoxColor.cpy(); }
-
-    /**
-     * Sets a new color for the selection box (doesn't take ownership of the reference).
-     *
-     * @param c the color to set.
-     */
-    public void setSelectionBoxColor(Color c) { this.selectionBoxColor.set(c); }
+    public void setSelectTexture(Texture t) { this.selectTexture = t; }
 
     /**
      * Constructs a `GridActor` instance based on grid dimension, texture, and <b>bottom-left</b> absolute position of
@@ -68,21 +53,19 @@ public class GridActor extends Actor2D implements MouseListener {
      * @param rows is the number of cells vertically.
      * @param cellSize is the size of each cell.
      * @param cellTexture is the texture of each cell in the grid.
-     * @param selectionBoxTexture is the texture of the selection box.
-     * @param selectionBoxColor is the tint color of the selection box.
+     * @param selectTexture is the texture of the selection box.
      * @param x is the <b>bottom-left</b> x coordinate value of the actor's position.
      * @param y is the <b>bottom-left</b> y coordinate value of the actor's position.
      */
     public GridActor(int cols, int rows, int cellSize,
-                     Texture cellTexture, Texture selectionBoxTexture, Color selectionBoxColor,
+                     Texture cellTexture, Texture selectTexture,
                      float x, float y) {
         super(x, y);
         this.cols = cols;
         this.rows = rows;
         this.cellSize = cellSize;
         this.cellTexture = cellTexture;
-        this.selectionBoxTexture = selectionBoxTexture;
-        this.selectionBoxColor = selectionBoxColor.cpy();
+        this.selectTexture = selectTexture;
     }
 
     @Override
@@ -98,9 +81,9 @@ public class GridActor extends Actor2D implements MouseListener {
     }
 
     /**
+     * Draw the selection box based on previously updated mouse position.
      *
-     *
-     * @param spriteBatch
+     * @param spriteBatch is the `SpriteBatch` instance used to draw.
      */
     public void drawSelectionBox(SpriteBatch spriteBatch) {
         // Draw selection box
@@ -108,10 +91,7 @@ public class GridActor extends Actor2D implements MouseListener {
             int col = (int)((mousePos.x - position.x) / cellSize);
             int row = (int)((mousePos.y - position.y) / cellSize);
             if (col >= 0 && col < cols && row >= 0 && row < rows) {
-                Color ogColor = spriteBatch.getColor().cpy();
-                spriteBatch.setColor(selectionBoxColor);
-                spriteBatch.draw(selectionBoxTexture, position.x + col * cellSize, position.y + row * cellSize);
-                spriteBatch.setColor(ogColor);
+                spriteBatch.draw(selectTexture, position.x + col * cellSize, position.y + row * cellSize);
             }
         }
     }
