@@ -38,9 +38,16 @@ public class FactoryGame extends Game {
         world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler, 0f, 0f);
 
         // TODO: Delete test code
-        world.buildMine("M", new Recipe(new Item("metal"), new HashMap<>(), 1), new Coordinate(1, 1));
-        world.buildFactory("Hi", new Type("Hi", List.of()), new Coordinate(2, 2));
-        world.buildStorage("St", new Item("metal"), 10, 1.0, new Coordinate(3, 3));
+        BuildingActor mine = world.buildMine("M", new Recipe(new Item("metal"), new HashMap<>(), 1),
+            new Coordinate(5, 5));
+        BuildingActor factory = world.buildFactory("Hi", new Type("Hi", List.of()),
+            new Coordinate(20, 20));
+        BuildingActor storage = world.buildStorage("St", new Item("metal"), 10, 1.0,
+            new Coordinate(30, 10));
+        world.buildPath(mine, factory);
+        world.buildPath(factory, storage);
+//        world.buildPath(storage, factory);
+//        world.buildPath(factory, mine);
     }
 
     @Override

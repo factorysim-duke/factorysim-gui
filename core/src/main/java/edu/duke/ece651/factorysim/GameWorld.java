@@ -24,7 +24,7 @@ public class GameWorld implements Disposable {
     private final Texture factoryTexture;
     private final Texture storageTexture;
     private final Texture pathTexture;
-    private final Texture pathCornerTexture;
+    private final Texture pathCrossTexture;
     private final Texture selectTexture;
 
     // Animation
@@ -32,7 +32,6 @@ public class GameWorld implements Disposable {
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
     private final Animator<TextureRegion> pathAnimator;
-    private final Animator<TextureRegion> pathCornerAnimator;
 
     // Actors
     private final GridActor grid;
@@ -57,7 +56,7 @@ public class GameWorld implements Disposable {
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
         this.pathTexture = new Texture("path.png");
-        this.pathCornerTexture = new Texture("path_corner.png");
+        this.pathCrossTexture = new Texture("path_cross.png");
         this.selectTexture = new Texture("select.png");
 
         // Create animations
@@ -69,8 +68,6 @@ public class GameWorld implements Disposable {
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
-        this.pathCornerAnimator = new Animator<>(createAnimation(pathCornerTexture, pathCornerTexture.getHeight(),
-            pathCornerTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
         // Create empty world and simulation
         // TODO: Replace with GUI logger
@@ -130,7 +127,6 @@ public class GameWorld implements Disposable {
 
         // Draw paths
         pathAnimator.step(dt);
-        pathCornerAnimator.step(dt);
         for (PathActor path : paths) {
             path.draw(spriteBatch);
         }
@@ -151,7 +147,7 @@ public class GameWorld implements Disposable {
         factoryTexture.dispose();
         storageTexture.dispose();
         pathTexture.dispose();
-        pathCornerTexture.dispose();
+        pathCrossTexture.dispose();
         selectTexture.dispose();
     }
 
@@ -246,7 +242,16 @@ public class GameWorld implements Disposable {
     }
 
     public PathActor buildPath(BuildingActor from, BuildingActor to) {
-        // TODO
-        return null;
+        // Connect the two buildings
+        Path path = sim.connectBuildings(from.getBuilding(), to.getBuilding());
+        if (path == null) {
+            throw new IllegalArgumentException("Cannot connect " + from.getBuilding().getName() + " to " + to.getBuilding().getName() + ": No valid path");
+        }
+
+        // Create the actor
+        PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
+            this::coordinateToWorld);
+        paths.add(actor);
+        return actor;
     }
 }
