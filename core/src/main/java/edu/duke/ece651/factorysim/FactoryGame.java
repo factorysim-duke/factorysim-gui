@@ -64,7 +64,7 @@ public class FactoryGame extends Game {
 
         // Render the world
         spriteBatch.begin();
-        world.render(spriteBatch);
+        world.render(spriteBatch, Gdx.graphics.getDeltaTime());
         spriteBatch.end();
     }
 

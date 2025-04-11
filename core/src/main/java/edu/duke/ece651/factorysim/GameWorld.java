@@ -124,11 +124,13 @@ public class GameWorld implements Disposable {
         return world;
     }
 
-    public void render(SpriteBatch spriteBatch) {
+    public void render(SpriteBatch spriteBatch, float dt) {
         // Draw background grid
         grid.draw(spriteBatch);
 
         // Draw paths
+        pathAnimator.step(dt);
+        pathCornerAnimator.step(dt);
         for (PathActor path : paths) {
             path.draw(spriteBatch);
         }
