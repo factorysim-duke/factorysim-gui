@@ -31,8 +31,8 @@ public class GameWorld implements Disposable, InputProcessor {
     private final Texture selectMineTexture;
     private final Texture selectFactoryTexture;
     private final Texture selectStorageTexture;
-    private final Texture selectFrom;
-    private final Texture selectTo;
+    private final Texture selectFromTexture;
+    private final Texture selectToTexture;
 
     // Animation
     private final Animation<TextureRegion> mineAnimation;
@@ -71,8 +71,8 @@ public class GameWorld implements Disposable, InputProcessor {
         this.selectMineTexture = new Texture("select_mine.png");
         this.selectFactoryTexture = new Texture("select_factory.png");
         this.selectStorageTexture = new Texture("select_storage.png");
-        this.selectFrom = new Texture("select_from.png");
-        this.selectTo = new Texture("select_to.png");
+        this.selectFromTexture = new Texture("select_from.png");
+        this.selectToTexture = new Texture("select_to.png");
 
         // Create animations
         this.mineAnimation = createAnimation(mineTexture, mineTexture.getHeight(),
@@ -171,8 +171,8 @@ public class GameWorld implements Disposable, InputProcessor {
         selectMineTexture.dispose();
         selectFactoryTexture.dispose();
         selectStorageTexture.dispose();
-        selectFrom.dispose();
-        selectTo.dispose();
+        selectFromTexture.dispose();
+        selectToTexture.dispose();
     }
 
     /**
@@ -393,6 +393,9 @@ public class GameWorld implements Disposable, InputProcessor {
                 // Get source if not already
                 if (from == null) {
                     from = getBuildingAt(c);
+                    if (from != null) {
+                        grid.setSelectTexture(selectToTexture); // Update select box texture
+                    }
                     return; // Intentional. If clicked on a coordinate with no building, do nothing
                 }
 
@@ -404,6 +407,7 @@ public class GameWorld implements Disposable, InputProcessor {
 
                 // Try to connect
                 connectPath(from, to);
+                enterDefaultPhase(); // Connected successfully, resume to default phase
             } catch (Exception e) {
                 // Log error and resume back to default phase on error
                 logger.log(e.getMessage());
@@ -413,7 +417,7 @@ public class GameWorld implements Disposable, InputProcessor {
 
         @Override
         public void onEnter() {
-            grid.setSelectTexture(selectTexture);
+            grid.setSelectTexture(selectFromTexture);
         }
     }
 
