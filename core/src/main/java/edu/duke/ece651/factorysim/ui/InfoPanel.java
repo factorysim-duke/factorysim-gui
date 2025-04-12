@@ -43,7 +43,7 @@ public class InfoPanel extends VisTable {
 
         newRequestButton = new VisTextButton("New Request", "blue");
 
-        // 布局添加
+        // update layout
         add(buildingLabel).left().padLeft(10).padTop(10).row();
         add(policyLabel).left().padLeft(10).padTop(5);
         add(policyBox).left().padLeft(5).pad(5, 10, 5, 10).row();
