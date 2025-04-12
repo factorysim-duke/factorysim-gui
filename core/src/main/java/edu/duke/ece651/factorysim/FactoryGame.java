@@ -3,7 +3,6 @@ package edu.duke.ece651.factorysim;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import java.util.*;
@@ -20,9 +19,6 @@ public class FactoryGame extends Game {
     // Game World
     private GameWorld world;
 
-    // Mouse Input
-    private final MouseEventHandler mouseEventHandler = new MouseEventHandler();
-
     @Override
     public void create() {
         spriteBatch = new SpriteBatch();
@@ -35,8 +31,7 @@ public class FactoryGame extends Game {
 
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler::subscribe, this::screenToWorld,
-            0f, 0f);
+        world = new GameWorld(cols, rows, Constants.CELL_SIZE, camera, viewport, 0f, 0f);
         Gdx.input.setInputProcessor(world);
 
         // TODO: Delete test code
@@ -68,11 +63,6 @@ public class FactoryGame extends Game {
         camera.update();
         spriteBatch.setProjectionMatrix(camera.combined);
 
-        // Get mouse world position
-        Vector2 mousePos = new Vector2(Gdx.input.getX(), Gdx.input.getY());
-        screenToWorld(mousePos);
-        mouseEventHandler.update(mousePos.x, mousePos.y);
-
         // Render the world
         spriteBatch.begin();
         world.render(spriteBatch, Gdx.graphics.getDeltaTime());
@@ -83,10 +73,5 @@ public class FactoryGame extends Game {
     public void dispose() {
         spriteBatch.dispose();
         world.dispose();
-    }
-
-    private Vector2 screenToWorld(Vector2 screenPos) {
-        viewport.unproject(screenPos);
-        return screenPos;
     }
 }

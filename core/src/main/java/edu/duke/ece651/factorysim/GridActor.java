@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 /**
  * Represents a grid entity.
  */
-public class GridActor extends Actor2D implements MouseListener {
+public class GridActor extends Actor2D {
     private int cols;
     private int rows;
     private final int cellSize;
@@ -15,7 +15,7 @@ public class GridActor extends Actor2D implements MouseListener {
     private final Texture cellTexture;
     private Texture selectTexture;
 
-    private Vector2 mousePos = null;
+    private final Vector2 mousePos = new Vector2(0f, 0f);
 
     /**
      * Get the number of columns in the grid.
@@ -87,26 +87,19 @@ public class GridActor extends Actor2D implements MouseListener {
      */
     public void drawSelectionBox(SpriteBatch spriteBatch) {
         // Draw selection box
-        if (mousePos != null) {
-            int col = (int)((mousePos.x - position.x) / cellSize);
-            int row = (int)((mousePos.y - position.y) / cellSize);
-            if (col >= 0 && col < cols && row >= 0 && row < rows) {
-                spriteBatch.draw(selectTexture, position.x + col * cellSize, position.y + row * cellSize);
-            }
+        int col = (int)((mousePos.x - position.x) / cellSize);
+        int row = (int)((mousePos.y - position.y) / cellSize);
+        if (col >= 0 && col < cols && row >= 0 && row < rows) {
+            spriteBatch.draw(selectTexture, position.x + col * cellSize, position.y + row * cellSize);
         }
-    }
-
-    @Override
-    public void onMouseMoved(float mouseX, float mouseY) {
-        if (mousePos == null) {
-            mousePos = new Vector2(mouseX, mouseY);
-            return;
-        }
-        mousePos.set(mouseX, mouseY);
     }
 
     public void resize(int cols, int rows) {
         this.cols = cols;
         this.rows = rows;
+    }
+
+    public void onMouseMoved(Vector2 mousePos) {
+        this.mousePos.set(mousePos);
     }
 }

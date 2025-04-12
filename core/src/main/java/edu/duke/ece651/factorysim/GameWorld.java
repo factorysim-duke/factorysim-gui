@@ -1,10 +1,13 @@
 package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.viewport.Viewport;
+
 import java.util.*;
 import java.util.function.*;
 
@@ -15,6 +18,10 @@ import java.util.function.*;
 public class GameWorld implements Disposable, InputProcessor {
     // Dimension
     private final int cellSize;
+
+    // View
+    private final OrthographicCamera camera;
+    private final Viewport viewport;
 
     // Simulation
     private final Simulation sim;
@@ -46,19 +53,23 @@ public class GameWorld implements Disposable, InputProcessor {
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
     private final List<PathActor> paths = new ArrayList<>();
 
-    private final Function<Vector2, Vector2> screenToWorldFn;
-
     /**
      * Constructs a `WorldActor` instance based on grid dimension.
      *
      * @param gridCols number of columns in the grid.
      * @param gridRows number of rows in the grid.
      */
-    public GameWorld(int gridCols, int gridRows, int cellSize, Consumer<MouseListener> subscribeToMouseEvent,
-                     Function<Vector2, Vector2> screenToWorldFn, float x, float y) {
+    public GameWorld(int gridCols, int gridRows, int cellSize,
+                     OrthographicCamera camera, Viewport viewport,
+                     float x, float y) {
+        // Set and calculate dimensions
         this.cellSize = cellSize;
         int width = gridCols * cellSize;
         int height = gridRows * cellSize;
+
+        // Set camera and viewport
+        this.camera = camera;
+        this.viewport = viewport;
 
         // Load textures
         this.cellTexture = new Texture("cell.png");
@@ -92,10 +103,6 @@ public class GameWorld implements Disposable, InputProcessor {
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
-        subscribeToMouseEvent.accept(grid);
-
-        // Reference screen to world function
-        this.screenToWorldFn = screenToWorldFn;
     }
 
     /**
@@ -185,6 +192,15 @@ public class GameWorld implements Disposable, InputProcessor {
         selectToTexture.dispose();
     }
 
+
+
+    private Vector2 screenToWorld(Vector2 screenPos) {
+        viewport.unproject(screenPos);
+        return screenPos;
+    }
+
+
+
     /**
      * Converts a coordinate on the grid to a global position.
      *
@@ -213,6 +229,8 @@ public class GameWorld implements Disposable, InputProcessor {
         int clampedY = Math.max(0, Math.min(y, grid.getRows() - 1));
         return new Coordinate(clampedX, clampedY);
     }
+
+
 
     /**
      * Constructs a `BuildingActor` and add it to the world's building list.
@@ -542,8 +560,7 @@ public class GameWorld implements Disposable, InputProcessor {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
             // Get coordinate based on touch screen position
-            Vector2 pos = new Vector2(screenX, screenY);
-            pos = screenToWorldFn.apply(pos);
+            Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
             Coordinate c = worldToCoordinate(pos);
 
             // Invoke current phase's `onClick` event
@@ -567,9 +584,13 @@ public class GameWorld implements Disposable, InputProcessor {
         return false;
     }
 
+    private final Vector2 tempVec2 = new Vector2();
+
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        return false;
+        tempVec2.set(screenX, screenY);
+        grid.onMouseMoved(screenToWorld(tempVec2));
+        return true;
     }
 
     @Override
