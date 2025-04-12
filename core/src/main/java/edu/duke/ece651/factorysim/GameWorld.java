@@ -59,9 +59,9 @@ public class GameWorld implements Disposable, InputProcessor {
 
     // Actors
     private final GridActor grid;
-    private final List<BuildingActor> buildings = new ArrayList<>();
+    private final List<BuildingActor> buildingActors = new ArrayList<>();
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
-    private final List<PathActor> paths = new ArrayList<>();
+    private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
 
     /**
      * Constructs a `WorldActor` instance based on grid dimension.
@@ -151,13 +151,30 @@ public class GameWorld implements Disposable, InputProcessor {
         grid.resize(tileMap.getWidth(), tileMap.getHeight());
 
         // Release actors associated with the previous simulation
-        buildings.clear();
+        buildingActors.clear();
         buildingMap.clear();
-        paths.clear();
+        pathPairs.clear();
 
-        // Create new actors
+        // Create building actors
         for (Building building : world.getBuildings()) {
-            addBuilding(building);
+            actorizeBuilding(building);
+        }
+
+        // Create path actors
+        for (BuildingActor buildingActor : buildingActors) {
+            Building building = buildingActor.getBuilding();
+
+            // Connect sources to building
+            for (Building source : building.getSources()) {
+                Optional<BuildingActor> result = buildingActors.stream()
+                    .filter((a) -> a.getBuilding() == source)
+                    .findAny();
+                result.ifPresent((sourceActor) -> {
+                    connectPath(sourceActor, buildingActor);
+                });
+            }
+
+            // TODO: Connect building to storages
         }
     }
 
@@ -179,12 +196,12 @@ public class GameWorld implements Disposable, InputProcessor {
 
         // Draw paths
         pathAnimator.step(dt);
-        for (PathActor path : paths) {
-            path.draw(spriteBatch);
+        for (Tuple<PathActor, Path> tuple : pathPairs) {
+            tuple.first().draw(spriteBatch);
         }
 
         // Draw buildings
-        for (BuildingActor building : buildings) {
+        for (BuildingActor building : buildingActors) {
             building.draw(spriteBatch);
         }
 
@@ -220,7 +237,6 @@ public class GameWorld implements Disposable, InputProcessor {
             grid.position.x + vwHalf, grid.position.x + grid.getWidth() - vwHalf);
         camera.position.y = MathUtils.clamp(camera.position.y,
             grid.position.y + vhHalf, grid.position.y + grid.getHeight() - vhHalf);
-
     }
 
     @Override
@@ -307,7 +323,7 @@ public class GameWorld implements Disposable, InputProcessor {
         }
 
         // Construct and add the actor
-        return addBuilding(building, animation);
+        return actorizeBuilding(building, animation);
     }
 
     /**
@@ -317,11 +333,11 @@ public class GameWorld implements Disposable, InputProcessor {
      * @param animation is the animation of the building's actor.
      * @return constructed building actor.
      */
-    private BuildingActor addBuilding(Building building, Animation<TextureRegion> animation) {
+    private BuildingActor actorizeBuilding(Building building, Animation<TextureRegion> animation) {
         Coordinate location = building.getLocation();
         Vector2 worldPos = coordinateToWorld(location);
         BuildingActor actor = new BuildingActor(building, animation, worldPos.x, worldPos.y);
-        buildings.add(actor);
+        buildingActors.add(actor);
         buildingMap.put(location, actor);
         return actor;
     }
@@ -334,15 +350,15 @@ public class GameWorld implements Disposable, InputProcessor {
      * @return constructed building actor.
      * @throws IllegalArgumentException when building type has no corresponding animation available.
      */
-    private BuildingActor addBuilding(Building building) {
+    private BuildingActor actorizeBuilding(Building building) {
         if (building instanceof MineBuilding) {
-            return addBuilding(building, mineAnimation);
+            return actorizeBuilding(building, mineAnimation);
         }
         if (building instanceof FactoryBuilding) {
-            return addBuilding(building, factoryAnimation);
+            return actorizeBuilding(building, factoryAnimation);
         }
         if (building instanceof StorageBuilding) {
-            return addBuilding(building, storageAnimation);
+            return actorizeBuilding(building, storageAnimation);
         }
         throw new IllegalArgumentException("Unsupported building type: " + building.getClass().getName());
     }
@@ -392,18 +408,25 @@ public class GameWorld implements Disposable, InputProcessor {
         return buildBuilding(factory, storageAnimation, coordinate);
     }
 
-    public PathActor connectPath(BuildingActor from, BuildingActor to) {
+    private PathActor actorizePath(Path path) {
+        PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
+            this::coordinateToWorld);
+        pathPairs.add(new Tuple<>(actor, path));
+        return actor;
+    }
+
+    public void connectPath(BuildingActor from, BuildingActor to) {
         // Connect the two buildings
         Path path = sim.connectBuildings(from.getBuilding(), to.getBuilding());
         if (path == null) {
             throw new IllegalArgumentException("Cannot connect " + from.getBuilding().getName() + " to " + to.getBuilding().getName() + ": No valid path");
         }
+        if (pathPairs.stream().anyMatch((t) -> t.second() == path)) {
+            return;
+        }
 
         // Create the actor
-        PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
-            this::coordinateToWorld);
-        paths.add(actor);
-        return actor;
+        actorizePath(path);
     }
 
     public BuildingActor getBuildingAt(Coordinate c) {
