@@ -158,6 +158,26 @@ public class SimulationScreen implements Screen {
                     showRequestDialog();
                 }
             });
+
+            ((FactoryInfoPanel) currentInfoPanel).getRequestPolicyBox().addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    String selectedPolicy = ((FactoryInfoPanel) currentInfoPanel).getRequestPolicyBox().getSelected().toLowerCase();
+                    String buildingName = building.getName();
+                    game.setPolicy("request", selectedPolicy, buildingName);
+                    System.out.println("Setting policy to " + selectedPolicy + " for building " + buildingName);
+                }
+            });
+
+            ((FactoryInfoPanel) currentInfoPanel).getSourcePolicyBox().addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    String selectedPolicy = ((FactoryInfoPanel) currentInfoPanel).getSourcePolicyBox().getSelected().toLowerCase();
+                    String buildingName = building.getName();
+                    game.setPolicy("source", selectedPolicy, buildingName);
+                    System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
+                }
+            });
         }
 
     }

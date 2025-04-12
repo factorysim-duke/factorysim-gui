@@ -15,9 +15,12 @@ public class FactoryInfoPanel extends InfoPanel {
     private final VisLabel sourcesLabel;
     private final VisLabel queueLabel;
 
-    private final VisLabel policyLabel;
-    private final VisSelectBox<String> policyBox;
+    private final VisLabel requestPolicyLabel;
+    private final VisSelectBox<String> requestPolicyBox;
     private final VisTextButton newRequestButton;
+    
+    private final VisLabel sourcePolicyLabel;
+    private final VisSelectBox<String> sourcePolicyBox;
 
     public FactoryInfoPanel(FactoryBuilding building) {
         super();
@@ -31,16 +34,27 @@ public class FactoryInfoPanel extends InfoPanel {
         buildingLabel.setFontScale(1.2f);
         add(buildingLabel).left().padBottom(10).row();
 
-        // Request policy 行
-        policyLabel = new VisLabel("Request Policy:");
-        policyLabel.setColor(Color.BLACK);
-        policyBox = new VisSelectBox<>("blue");
-        policyBox.setItems("FIFO", "READY", "SJF");
+        // Request policy
+        requestPolicyLabel = new VisLabel("Request Policy:");
+        requestPolicyLabel.setColor(Color.BLACK);
+        requestPolicyBox = new VisSelectBox<>("blue");
+        requestPolicyBox.setItems("FIFO", "READY", "SJF");
 
-        VisTable policyRow = new VisTable(true); // true = spacing between columns
-        policyRow.add(policyLabel).left();
-        policyRow.add(policyBox).width(100).left();
-        add(policyRow).left().padBottom(10).row();
+        VisTable requestPolicyRow = new VisTable(true);
+        requestPolicyRow.add(requestPolicyLabel).left();
+        requestPolicyRow.add(requestPolicyBox).width(100).left();
+        add(requestPolicyRow).left().padBottom(10).row();
+
+        // Source policy
+        sourcePolicyLabel = new VisLabel("Source Policy:");
+        sourcePolicyLabel.setColor(Color.BLACK);
+        sourcePolicyBox = new VisSelectBox<>("blue");
+        sourcePolicyBox.setItems("QLEN", "SIMPLELAT", "RECURSIVELAT");
+
+        VisTable sourcePolicyRow = new VisTable(true);
+        sourcePolicyRow.add(sourcePolicyLabel).left();
+        sourcePolicyRow.add(sourcePolicyBox).width(100).left();
+        add(sourcePolicyRow).left().padBottom(10).row();
 
         // Outputs label
         outputsLabel = new VisLabel();
@@ -80,8 +94,12 @@ public class FactoryInfoPanel extends InfoPanel {
         queueLabel.setText("Request Queue: " + queueSize + " pending");
     }
 
-    public VisSelectBox<String> getPolicyBox() {
-        return policyBox;
+    public VisSelectBox<String> getRequestPolicyBox() {
+        return requestPolicyBox;
+    }
+
+    public VisSelectBox<String> getSourcePolicyBox() {
+        return sourcePolicyBox;
     }
 
     public VisTextButton getNewRequestButton() {

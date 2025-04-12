@@ -51,6 +51,11 @@ public class FactoryGame extends Game {
         this.sim.step(n);
     }
 
+    //set policy
+    public void setPolicy(String type, String policy, String buildingName) {
+        this.sim.setPolicy(type, policy, buildingName);
+    }
+
     //finish simulation
     public void finish() {
         this.sim.finish();
