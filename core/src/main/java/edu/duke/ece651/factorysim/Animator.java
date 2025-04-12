@@ -14,6 +14,8 @@ public class Animator<T> {
 
     private float timer;
 
+    float getCurrentTime() { return timer; }
+
     /**
      * Constructs an animator with the given animation and loop setting.
      *

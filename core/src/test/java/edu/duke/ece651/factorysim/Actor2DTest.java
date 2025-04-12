@@ -15,7 +15,7 @@ public class Actor2DTest {
     }
 
     @Test
-    public void position_test() {
+    public void test_position() {
         Actor2D actor = new TestActor(5f, 10f);
         assertEquals(5f, actor.position.x, 0.0001f);
         assertEquals(10f, actor.position.y, 0.0001f);
