@@ -20,6 +20,11 @@ public class FactoryGame extends Game {
         this.sim.load(jsonPath);
     }
 
+    //save simulation to json file
+    public void saveSimulation(String jsonPath) {
+        this.sim.save(jsonPath);
+    }
+
     //set logger
     public void setLogger(PanelLogger logger) {
         this.logger = logger;

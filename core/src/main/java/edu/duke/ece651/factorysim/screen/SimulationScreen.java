@@ -36,8 +36,8 @@ public class SimulationScreen implements Screen {
     private InfoPanel infoPanel;
     private ControlPanel controlPanel;
     private int currentStep = 0;
-    private FileChooser fileChooser;
-
+    private FileChooser createFileChooser;
+    private FileChooser saveFileChooser;
     public SimulationScreen(FactoryGame game) {
         this.game = game;
     }
@@ -57,7 +57,8 @@ public class SimulationScreen implements Screen {
         UISelectBoxStyle.registerCustomStyles();
 
         // Use the refactored utility method to create a FileChooser
-        fileChooser = FileDialogUtil.createFileChooser(game);
+        createFileChooser = FileDialogUtil.createFileChooser(game);
+        saveFileChooser = FileDialogUtil.saveFileChooser(game);
 
         // Create the root layout
         VisTable root = new VisTable();
@@ -70,7 +71,16 @@ public class SimulationScreen implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 // Display file chooser
-                stage.addActor(fileChooser.fadeIn());
+                stage.addActor(createFileChooser.fadeIn());
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
+            }
+        });
+
+        topBar.getSaveButton().addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                stage.addActor(saveFileChooser.fadeIn());
                 currentStep = game.getCurrentStep();
                 topBar.updateStepCount(currentStep);
             }
@@ -129,7 +139,7 @@ public class SimulationScreen implements Screen {
     }
 
     public void showBuildingInfo(Building building) {
-        infoPanel.setBuilding(building);
+        infoPanel.showBuildingInfo(building);
     }
 
     public void hideInfoPanel() {

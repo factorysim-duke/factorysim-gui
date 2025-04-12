@@ -50,4 +50,33 @@ public class FileDialogUtil {
 
         return fileChooser;
     }
+
+    public static FileChooser saveFileChooser(final FactoryGame game) {
+        FileChooser.setDefaultPrefsName("edu.duke.ece651.factorysim.filechooser");
+
+        FileChooser fileChooser = new FileChooser(Mode.SAVE);
+
+        FileTypeFilter typeFilter = new FileTypeFilter(true);
+        typeFilter.addRule("Simulation files (*.json)", "json");
+        fileChooser.setFileTypeFilter(typeFilter);
+        fileChooser.setSelectionMode(SelectionMode.FILES);
+
+        fileChooser.setListener(new FileChooserAdapter() {
+            @Override
+            public void selected(Array<FileHandle> files) {
+                if (files.size > 0) {
+                    String jsonPath = files.first().file().getAbsolutePath();
+                    try {
+                        game.saveSimulation(jsonPath);
+                        System.out.println("Simulation saved to: " + jsonPath);
+                    } catch (Exception e) {
+                        System.err.println("Failed to save simulation: " + e.getMessage());
+                    }
+                }
+            }
+        });
+
+        return fileChooser;
+    }
+
 }
