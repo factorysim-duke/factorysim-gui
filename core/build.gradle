@@ -7,8 +7,16 @@ dependencies {
   api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
   implementation project(':factorysim-app')
-  
+
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
+
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+  testImplementation 'org.junit.platform:junit-platform-launcher:1.11.4'
+}
+
+test {
+  useJUnitPlatform()
 }
