@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.*;
 
 /**
  * Represents a central game world manager that manages resources and other actors.
@@ -54,7 +54,7 @@ public class GameWorld implements Disposable, InputProcessor {
      * @param gridCols number of columns in the grid.
      * @param gridRows number of rows in the grid.
      */
-    public GameWorld(int gridCols, int gridRows, int cellSize, MouseEventHandler mouseEventHandler,
+    public GameWorld(int gridCols, int gridRows, int cellSize, Consumer<MouseListener> subscribeToMouseEvent,
                      Function<Vector2, Vector2> screenToWorldFn, float x, float y) {
         this.cellSize = cellSize;
         int width = gridCols * cellSize;
@@ -85,14 +85,14 @@ public class GameWorld implements Disposable, InputProcessor {
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
         // Create empty world and simulation
-        // TODO: Replace with GUI logger
+        // TODO: Replace with the GUI logger
         this.logger = new StreamLogger(System.out);
-        this.sim = new Simulation(buildEmptyWorld(gridCols, gridRows), 0, logger);
+        this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
-        mouseEventHandler.subscribe(grid);
+        subscribeToMouseEvent.accept(grid);
 
         // Reference screen to world function
         this.screenToWorldFn = screenToWorldFn;
@@ -124,22 +124,32 @@ public class GameWorld implements Disposable, InputProcessor {
         return animation;
     }
 
-    /**
-     * Helper function that creates an empty `World` instance.
-     *
-     * @param boardWidth is the width of the board used by `TileMap`.
-     * @param boardHeight is the height of the board used by `TileMap`.
-     * @return a newly constructed empty `World` instance.
-     */
-    private static World buildEmptyWorld(int boardWidth, int boardHeight) {
-        World world = new World();
-        world.setTypes(new ArrayList<>());
-        world.setRecipes(new ArrayList<>());
-        world.setBuildings(new ArrayList<>());
-        world.setTileMapDimensions(boardWidth, boardHeight);
-        return world;
+    public void loadSimulation(String json) {
+        // Update the simulation based on the JSON string
+        sim.loadFromJsonString(json);
+        World world = sim.getWorld();
+        TileMap tileMap = world.getTileMap();
+
+        // Resize the grid
+        grid.resize(tileMap.getWidth(), tileMap.getHeight());
+
+        // Release actors associated with the previous simulation
+        buildings.clear();
+        buildingMap.clear();
+        paths.clear();
+
+        // Create new actors
+        for (Building building : world.getBuildings()) {
+            addBuilding(building);
+        }
     }
 
+    /**
+     * Render the game world.
+     *
+     * @param spriteBatch is the `SpriteBatch` instance used to render.
+     * @param dt is the delta time (time passed since last render).
+     */
     public void render(SpriteBatch spriteBatch, float dt) {
         // Draw background grid
         grid.draw(spriteBatch);
@@ -232,11 +242,44 @@ public class GameWorld implements Disposable, InputProcessor {
         }
 
         // Construct and add the actor
-        Vector2 worldPos = coordinateToWorld(coordinate);
+        return addBuilding(building, animation);
+    }
+
+    /**
+     * Creates an actor for the building and add it to the game world.
+     *
+     * @param building is the building to add.
+     * @param animation is the animation of the building's actor.
+     * @return constructed building actor.
+     */
+    private BuildingActor addBuilding(Building building, Animation<TextureRegion> animation) {
+        Coordinate location = building.getLocation();
+        Vector2 worldPos = coordinateToWorld(location);
         BuildingActor actor = new BuildingActor(building, animation, worldPos.x, worldPos.y);
         buildings.add(actor);
-        buildingMap.put(coordinate, actor);
+        buildingMap.put(location, actor);
         return actor;
+    }
+
+    /**
+     * Creates an actor for the building and add it to the game world.
+     * Let the method choose the animation based on the building type.
+     *
+     * @param building is the building to add.
+     * @return constructed building actor.
+     * @throws IllegalArgumentException when building type has no corresponding animation available.
+     */
+    private BuildingActor addBuilding(Building building) {
+        if (building instanceof MineBuilding) {
+            return addBuilding(building, mineAnimation);
+        }
+        if (building instanceof FactoryBuilding) {
+            return addBuilding(building, factoryAnimation);
+        }
+        if (building instanceof StorageBuilding) {
+            return addBuilding(building, storageAnimation);
+        }
+        throw new IllegalArgumentException("Unsupported building type: " + building.getClass().getName());
     }
 
     /**
