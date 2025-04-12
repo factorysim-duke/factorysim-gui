@@ -28,7 +28,7 @@ public class InfoPanel extends VisTable {
         top();
 
         // Building label
-        buildingLabel = new VisLabel("Building 'D'");
+        buildingLabel = new VisLabel("Building '" + building.getName() + "'");
         buildingLabel.setColor(Color.BLACK);
 
         // Policy controls
