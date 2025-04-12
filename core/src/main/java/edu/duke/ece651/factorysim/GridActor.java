@@ -8,8 +8,8 @@ import com.badlogic.gdx.math.Vector2;
  * Represents a grid entity.
  */
 public class GridActor extends Actor2D implements MouseListener {
-    private final int cols;
-    private final int rows;
+    private int cols;
+    private int rows;
     private final int cellSize;
 
     private final Texture cellTexture;
@@ -103,5 +103,10 @@ public class GridActor extends Actor2D implements MouseListener {
             return;
         }
         mousePos.set(mouseX, mouseY);
+    }
+
+    public void resize(int cols, int rows) {
+        this.cols = cols;
+        this.rows = rows;
     }
 }
