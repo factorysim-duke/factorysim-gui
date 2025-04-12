@@ -213,8 +213,18 @@ public class GameWorld implements Disposable, InputProcessor {
      * @return newly constructed `BuildingActor` instance.
      */
     private BuildingActor buildBuilding(Building building, Animation<TextureRegion> animation, Coordinate coordinate) {
+        // Make sure the location is not occupied
+        if (sim.getWorld().isOccupied(coordinate)) {
+            throw new IllegalArgumentException("The location " + coordinate + " is occupied by another building");
+        }
+
         // Set location
         building.setLocation(coordinate);
+
+        // Add the building to the world
+        if (!sim.getWorld().tryAddBuilding(building)) {
+            throw new IllegalArgumentException("Failed when trying to build at location " + coordinate);
+        }
 
         // Construct and add the actor
         Vector2 worldPos = coordinateToWorld(coordinate);
@@ -233,6 +243,7 @@ public class GameWorld implements Disposable, InputProcessor {
      * @return created `BuildingActor` reference.
      */
     public BuildingActor buildMine(String name, Recipe miningRecipe, Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
         MineBuilding mine = new MineBuilding(miningRecipe, name, sim);
         return buildBuilding(mine, mineAnimation, coordinate);
     }
@@ -246,6 +257,7 @@ public class GameWorld implements Disposable, InputProcessor {
      * @return created `BuildingActor` reference.
      */
     public BuildingActor buildFactory(String name, Type factoryType, Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
         FactoryBuilding factory = new FactoryBuilding(factoryType, name, new ArrayList<>(), sim);
         return buildBuilding(factory, factoryAnimation, coordinate);
     }
@@ -262,6 +274,7 @@ public class GameWorld implements Disposable, InputProcessor {
      */
     public BuildingActor buildStorage(String name, Item storageItem, int maxCapacity,
                                       double priority, Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
         StorageBuilding factory = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
         return buildBuilding(factory, storageAnimation, coordinate);
     }
