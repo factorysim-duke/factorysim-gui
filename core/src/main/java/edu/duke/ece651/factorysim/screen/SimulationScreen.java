@@ -128,7 +128,7 @@ public class SimulationScreen implements Screen {
 
         // add all panels to root
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
-        root.add(logPanel).width(200).expandY().fillY().top().pad(10);
+        root.add(logPanel).width(200).height(Gdx.graphics.getHeight() * 0.6f).top().pad(10);
         root.add().expand().fill();  // center space (for map, etc.)
 
         VisTable rightCol = new VisTable();
