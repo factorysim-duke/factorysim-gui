@@ -26,6 +26,7 @@ import edu.duke.ece651.factorysim.ui.ControlPanel;
 import edu.duke.ece651.factorysim.util.FileDialogUtil;
 import edu.duke.ece651.factorysim.util.PanelLogger;
 import com.kotcrab.vis.ui.widget.*;
+import edu.duke.ece651.factorysim.Building;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -85,7 +86,9 @@ public class SimulationScreen implements Screen {
         });
         game.setLogger(new PanelLogger(logPanel));
 
+        // Initialize info panel
         infoPanel = new InfoPanel();
+        infoPanel.setVisible(false);
         infoPanel.getNewRequestButton().addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
@@ -102,6 +105,8 @@ public class SimulationScreen implements Screen {
                 game.step(stepsToMove);
                 currentStep = game.getCurrentStep();
                 topBar.updateStepCount(currentStep);
+                // TODO: hide info panel test, remove later
+                hideInfoPanel();
             }
         });
 
@@ -122,6 +127,15 @@ public class SimulationScreen implements Screen {
         root.add().colspan(2).expandX().fillX();
         root.add(controlPanel).right().pad(10);
     }
+
+    public void showBuildingInfo(Building building) {
+        infoPanel.setBuilding(building);
+    }
+
+    public void hideInfoPanel() {
+        infoPanel.setVisible(false);
+    }
+
 
     /**
      * Shows a dialog for creating a new request

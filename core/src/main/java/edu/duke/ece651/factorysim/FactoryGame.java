@@ -55,6 +55,9 @@ public class FactoryGame extends Game {
     public void create() {
         SimulationScreen simulationScreen = new SimulationScreen(this);
         this.setScreen(simulationScreen);
+        // TODO: Hardcode building info request, remove later
+        Building building = this.sim.getWorld().getBuildingFromName("D");
+        simulationScreen.showBuildingInfo(building);
     }
 
     @Override

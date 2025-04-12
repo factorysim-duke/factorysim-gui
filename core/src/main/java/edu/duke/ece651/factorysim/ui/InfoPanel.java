@@ -3,7 +3,7 @@ package edu.duke.ece651.factorysim.ui;
 import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.*;
-
+import edu.duke.ece651.factorysim.Building;
 public class InfoPanel extends VisTable {
     private VisLabel buildingLabel;
     private VisSelectBox<String> policyBox;
@@ -11,10 +11,16 @@ public class InfoPanel extends VisTable {
     private VisLabel sourcesLabel;
     private VisLabel queueLabel;
     private VisTextButton newRequestButton;
+    private Building building;
 
     public InfoPanel() {
         super();
         init();
+    }
+
+    public void setBuilding(Building building) {
+        this.building = building;
+        this.setVisible(true);
     }
 
     private void init() {
