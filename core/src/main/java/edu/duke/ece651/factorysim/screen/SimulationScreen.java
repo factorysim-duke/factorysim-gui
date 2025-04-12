@@ -24,7 +24,7 @@ import edu.duke.ece651.factorysim.ui.LogPanel;
 import edu.duke.ece651.factorysim.ui.InfoPanel;
 import edu.duke.ece651.factorysim.ui.ControlPanel;
 import edu.duke.ece651.factorysim.util.FileDialogUtil;
-
+import edu.duke.ece651.factorysim.util.PanelLogger;
 import com.kotcrab.vis.ui.widget.*;
 
 public class SimulationScreen implements Screen {
@@ -77,6 +77,8 @@ public class SimulationScreen implements Screen {
 
         // Initialize other UI panels
         logPanel = new LogPanel();
+        game.setLogger(new PanelLogger(logPanel));
+
         infoPanel = new InfoPanel();
         infoPanel.getNewRequestButton().addListener(new ClickListener() {
             @Override

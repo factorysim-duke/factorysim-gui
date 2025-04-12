@@ -2,8 +2,11 @@ package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.Game;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
+import edu.duke.ece651.factorysim.util.PanelLogger;
+
 public class FactoryGame extends Game {
     private Simulation sim;
+    private PanelLogger logger;
 
     //TODO: double check how to work with gameworld
     //constructor
@@ -15,6 +18,12 @@ public class FactoryGame extends Game {
     //load simulation from json file
     public void loadSimulation(String jsonPath) {
         this.sim.load(jsonPath);
+    }
+
+    //set logger
+    public void setLogger(PanelLogger logger) {
+        this.logger = logger;
+        this.sim.setLogger(this.logger);
     }
 
     //get current step
