@@ -35,7 +35,8 @@ public class FactoryGame extends Game {
 
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler, this::screenToWorld, 0f, 0f);
+        world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler::subscribe, this::screenToWorld,
+            0f, 0f);
         Gdx.input.setInputProcessor(world);
 
         // TODO: Delete test code
@@ -49,6 +50,8 @@ public class FactoryGame extends Game {
 //        world.connectPath(factory, storage);
 //        world.connectPath(storage, factory);
 //        world.connectPath(factory, mine);
+
+        world.loadSimulation(Gdx.files.internal("doors1.json").readString());
     }
 
     @Override
