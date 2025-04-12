@@ -26,6 +26,11 @@ public class FactoryGame extends Game {
         this.sim.setLogger(this.logger);
     }
 
+    // set verbosity
+    public void setVerbosity(int verbosity) {
+        this.sim.setVerbosity(verbosity);
+    }
+
     //get current step
     public int getCurrentStep() {
         return this.sim.getCurrentTime();

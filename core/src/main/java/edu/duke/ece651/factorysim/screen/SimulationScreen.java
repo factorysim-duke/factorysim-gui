@@ -77,6 +77,12 @@ public class SimulationScreen implements Screen {
 
         // Initialize other UI panels
         logPanel = new LogPanel();
+        logPanel.getVerbosityBox().addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setVerbosity(Integer.parseInt(logPanel.getVerbosityBox().getSelected()));
+            }
+        });
         game.setLogger(new PanelLogger(logPanel));
 
         infoPanel = new InfoPanel();
