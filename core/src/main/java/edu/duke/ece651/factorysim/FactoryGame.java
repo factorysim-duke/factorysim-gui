@@ -2,25 +2,53 @@ package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.Game;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
+import edu.duke.ece651.factorysim.util.PanelLogger;
+
 public class FactoryGame extends Game {
     private Simulation sim;
+    private PanelLogger logger;
 
+    //TODO: double check how to work with gameworld
     //constructor
     public FactoryGame() {
         super();
         this.sim = new Simulation("doors1.json");
     }
 
+    //load simulation from json file
     public void loadSimulation(String jsonPath) {
         this.sim.load(jsonPath);
     }
 
+    //set logger
+    public void setLogger(PanelLogger logger) {
+        this.logger = logger;
+        this.sim.setLogger(this.logger);
+    }
+
+    // set verbosity
+    public void setVerbosity(int verbosity) {
+        this.sim.setVerbosity(verbosity);
+    }
+
+    // make user request
+    public void makeUserRequest(String itemName, String buildingName) {
+        this.sim.makeUserRequest(itemName, buildingName);
+    }
+
+    //get current step
     public int getCurrentStep() {
         return this.sim.getCurrentTime();
     }
 
+    //step simulation by n steps
     public void step(int n) {
         this.sim.step(n);
+    }
+
+    //finish simulation
+    public void finish() {
+        this.sim.finish();
     }
 
     @Override

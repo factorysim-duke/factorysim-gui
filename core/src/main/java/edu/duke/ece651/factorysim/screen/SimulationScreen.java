@@ -24,7 +24,7 @@ import edu.duke.ece651.factorysim.ui.LogPanel;
 import edu.duke.ece651.factorysim.ui.InfoPanel;
 import edu.duke.ece651.factorysim.ui.ControlPanel;
 import edu.duke.ece651.factorysim.util.FileDialogUtil;
-
+import edu.duke.ece651.factorysim.util.PanelLogger;
 import com.kotcrab.vis.ui.widget.*;
 
 public class SimulationScreen implements Screen {
@@ -77,6 +77,14 @@ public class SimulationScreen implements Screen {
 
         // Initialize other UI panels
         logPanel = new LogPanel();
+        logPanel.getVerbosityBox().addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setVerbosity(Integer.parseInt(logPanel.getVerbosityBox().getSelected()));
+            }
+        });
+        game.setLogger(new PanelLogger(logPanel));
+
         infoPanel = new InfoPanel();
         infoPanel.getNewRequestButton().addListener(new ClickListener() {
             @Override
@@ -97,12 +105,12 @@ public class SimulationScreen implements Screen {
             }
         });
 
-
-        // Set up click listener for the New Request button
-        infoPanel.getNewRequestButton().addListener(new ClickListener() {
+        controlPanel.getFinishButton().addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                showRequestDialog();
+                game.finish();
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
             }
         });
 
@@ -119,12 +127,21 @@ public class SimulationScreen implements Screen {
      * Shows a dialog for creating a new request
      */
     private void showRequestDialog() {
-        // create the dialog
-        VisDialog dialog = new VisDialog("Request items");
-
         // create the dropdown for item selection
         final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
         itemSelectBox.setItems("door");
+
+        // create the dialog
+        VisDialog dialog = new VisDialog("Request items") {
+            @Override
+            protected void result(Object obj) {
+                if (Boolean.TRUE.equals(obj)) {
+                    String selectedItem = itemSelectBox.getSelected();
+                    game.makeUserRequest(selectedItem, "D");
+                }
+                this.hide();
+            }
+        };
 
         // create a container for the dialog content
         VisTable contentTable = new VisTable();
@@ -133,7 +150,7 @@ public class SimulationScreen implements Screen {
         // create the text components
         VisLabel selectLabel = new VisLabel("Select '");
         VisLabel singleQuote = new VisLabel("'");
-        VisLabel fromLabel = new VisLabel(" from 'D'"); // placeholder 'D' factory
+        VisLabel fromLabel = new VisLabel(" from 'D'"); // building D is hardcoded here
 
         // add components to the dialog
         contentTable.add(selectLabel).padRight(0);
@@ -157,6 +174,7 @@ public class SimulationScreen implements Screen {
         // show the dialog
         dialog.show(stage);
     }
+
 
     @Override
     public void render(float delta) {
