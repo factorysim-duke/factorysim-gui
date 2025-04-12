@@ -27,13 +27,16 @@ import edu.duke.ece651.factorysim.util.FileDialogUtil;
 import edu.duke.ece651.factorysim.util.PanelLogger;
 import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.Building;
+import edu.duke.ece651.factorysim.ui.BuildingInfoPanelFactory;
+import edu.duke.ece651.factorysim.ui.FactoryInfoPanel;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
     private FactoryGame game;
     private TopBar topBar;
     private LogPanel logPanel;
-    private InfoPanel infoPanel;
+    private VisTable infoPanelContainer;
+    private InfoPanel currentInfoPanel;
     private ControlPanel controlPanel;
     private int currentStep = 0;
     private FileChooser createFileChooser;
@@ -97,14 +100,8 @@ public class SimulationScreen implements Screen {
         game.setLogger(new PanelLogger(logPanel));
 
         // Initialize info panel
-        infoPanel = new InfoPanel();
-        infoPanel.setVisible(false);
-        infoPanel.getNewRequestButton().addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                showRequestDialog();
-            }
-        });
+        infoPanelContainer = new VisTable();
+        infoPanelContainer.setVisible(false);
 
         // Initialize control panel
         controlPanel = new ControlPanel();
@@ -133,17 +130,40 @@ public class SimulationScreen implements Screen {
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
         root.add(logPanel).width(200).expandY().fillY().top().pad(10);
         root.add().expand().fill();  // center space (for map, etc.)
-        root.add(infoPanel).width(200).top().pad(10).row();
-        root.add().colspan(2).expandX().fillX();
-        root.add(controlPanel).right().pad(10);
+
+        VisTable rightCol = new VisTable();
+        rightCol.top().padTop(10).padRight(10);
+        rightCol.add(infoPanelContainer).top().width(220);
+
+        root.add(rightCol).width(240).top().padTop(10).padRight(10).padBottom(10).expandY().fillY().row();
+
+        root.add().colspan(2).expand();
+        root.add(controlPanel).bottom().right().pad(10);
     }
 
     public void showBuildingInfo(Building building) {
-        infoPanel.showBuildingInfo(building);
+        if (currentInfoPanel != null) {
+            currentInfoPanel.remove();
+        }
+
+        currentInfoPanel = BuildingInfoPanelFactory.createInfoPanel(building);
+        infoPanelContainer.clear();
+        infoPanelContainer.add(currentInfoPanel).expand().fill().top().left().pad(5);
+        infoPanelContainer.setVisible(true);
+
+        if (currentInfoPanel instanceof FactoryInfoPanel) {
+            ((FactoryInfoPanel) currentInfoPanel).getNewRequestButton().addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    showRequestDialog();
+                }
+            });
+        }
+
     }
 
     public void hideInfoPanel() {
-        infoPanel.setVisible(false);
+        infoPanelContainer.setVisible(false);
     }
 
 
