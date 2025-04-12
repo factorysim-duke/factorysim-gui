@@ -213,9 +213,14 @@ public class GameWorld implements Disposable, InputProcessor {
      * @return newly constructed `BuildingActor` instance.
      */
     private BuildingActor buildBuilding(Building building, Animation<TextureRegion> animation, Coordinate coordinate) {
-        // Make sure the location is not occupied
+        // Make sure the location is not occupied by other buildings
         if (sim.getWorld().isOccupied(coordinate)) {
             throw new IllegalArgumentException("The location " + coordinate + " is occupied by another building");
+        }
+
+        // Make sure the location is not occupied by paths
+        if (!sim.getWorld().getTileMap().isAvailable(coordinate)) {
+            throw new IllegalArgumentException("The location " + coordinate + " is occupied by a path");
         }
 
         // Set location
