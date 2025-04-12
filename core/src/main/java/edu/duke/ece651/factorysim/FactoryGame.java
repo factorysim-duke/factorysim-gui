@@ -35,7 +35,8 @@ public class FactoryGame extends Game {
 
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler, 0f, 0f);
+        world = new GameWorld(cols, rows, Constants.CELL_SIZE, mouseEventHandler, this::screenToWorld, 0f, 0f);
+        Gdx.input.setInputProcessor(world);
 
         // TODO: Delete test code
         BuildingActor mine = world.buildMine("M", new Recipe(new Item("metal"), new HashMap<>(), 1),
@@ -44,10 +45,10 @@ public class FactoryGame extends Game {
             new Coordinate(20, 20));
         BuildingActor storage = world.buildStorage("St", new Item("metal"), 10, 1.0,
             new Coordinate(30, 10));
-        world.buildPath(mine, factory);
-        world.buildPath(factory, storage);
-//        world.buildPath(storage, factory);
-//        world.buildPath(factory, mine);
+//        world.connectPath(mine, factory);
+//        world.connectPath(factory, storage);
+//        world.connectPath(storage, factory);
+//        world.connectPath(factory, mine);
     }
 
     @Override
@@ -65,8 +66,8 @@ public class FactoryGame extends Game {
         spriteBatch.setProjectionMatrix(camera.combined);
 
         // Get mouse world position
-        Vector3 mousePos = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0f);
-        viewport.unproject(mousePos);
+        Vector2 mousePos = new Vector2(Gdx.input.getX(), Gdx.input.getY());
+        screenToWorld(mousePos);
         mouseEventHandler.update(mousePos.x, mousePos.y);
 
         // Render the world
@@ -79,5 +80,10 @@ public class FactoryGame extends Game {
     public void dispose() {
         spriteBatch.dispose();
         world.dispose();
+    }
+
+    private Vector2 screenToWorld(Vector2 screenPos) {
+        viewport.unproject(screenPos);
+        return screenPos;
     }
 }

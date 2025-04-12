@@ -1,22 +1,24 @@
 package edu.duke.ece651.factorysim;
 
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Represents a central game world manager that manages resources and other actors.
  * Instances need to be explicitly disposed with `dispose` method after use.
  */
-public class GameWorld implements Disposable {
+public class GameWorld implements Disposable, InputProcessor {
     // Dimension
     private final int cellSize;
 
     // Simulation
     private final Simulation sim;
+    private final Logger logger;
 
     // Resources
     private final Texture cellTexture;
@@ -26,6 +28,11 @@ public class GameWorld implements Disposable {
     private final Texture pathTexture;
     private final Texture pathCrossTexture;
     private final Texture selectTexture;
+    private final Texture selectMineTexture;
+    private final Texture selectFactoryTexture;
+    private final Texture selectStorageTexture;
+    private final Texture selectFrom;
+    private final Texture selectTo;
 
     // Animation
     private final Animation<TextureRegion> mineAnimation;
@@ -36,7 +43,10 @@ public class GameWorld implements Disposable {
     // Actors
     private final GridActor grid;
     private final List<BuildingActor> buildings = new ArrayList<>();
+    private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
     private final List<PathActor> paths = new ArrayList<>();
+
+    private final Function<Vector2, Vector2> screenToWorldFn;
 
     /**
      * Constructs a `WorldActor` instance based on grid dimension.
@@ -45,7 +55,7 @@ public class GameWorld implements Disposable {
      * @param gridRows number of rows in the grid.
      */
     public GameWorld(int gridCols, int gridRows, int cellSize, MouseEventHandler mouseEventHandler,
-                     float x, float y) {
+                     Function<Vector2, Vector2> screenToWorldFn, float x, float y) {
         this.cellSize = cellSize;
         int width = gridCols * cellSize;
         int height = gridRows * cellSize;
@@ -58,6 +68,11 @@ public class GameWorld implements Disposable {
         this.pathTexture = new Texture("path.png");
         this.pathCrossTexture = new Texture("path_cross.png");
         this.selectTexture = new Texture("select.png");
+        this.selectMineTexture = new Texture("select_mine.png");
+        this.selectFactoryTexture = new Texture("select_factory.png");
+        this.selectStorageTexture = new Texture("select_storage.png");
+        this.selectFrom = new Texture("select_from.png");
+        this.selectTo = new Texture("select_to.png");
 
         // Create animations
         this.mineAnimation = createAnimation(mineTexture, mineTexture.getHeight(),
@@ -71,12 +86,16 @@ public class GameWorld implements Disposable {
 
         // Create empty world and simulation
         // TODO: Replace with GUI logger
-        this.sim = new Simulation(buildEmptyWorld(gridCols, gridRows), 0, new StreamLogger(System.out));
+        this.logger = new StreamLogger(System.out);
+        this.sim = new Simulation(buildEmptyWorld(gridCols, gridRows), 0, logger);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
         mouseEventHandler.subscribe(grid);
+
+        // Reference screen to world function
+        this.screenToWorldFn = screenToWorldFn;
     }
 
     /**
@@ -149,6 +168,11 @@ public class GameWorld implements Disposable {
         pathTexture.dispose();
         pathCrossTexture.dispose();
         selectTexture.dispose();
+        selectMineTexture.dispose();
+        selectFactoryTexture.dispose();
+        selectStorageTexture.dispose();
+        selectFrom.dispose();
+        selectTo.dispose();
     }
 
     /**
@@ -196,6 +220,7 @@ public class GameWorld implements Disposable {
         Vector2 worldPos = coordinateToWorld(coordinate);
         BuildingActor actor = new BuildingActor(building, animation, worldPos.x, worldPos.y);
         buildings.add(actor);
+        buildingMap.put(coordinate, actor);
         return actor;
     }
 
@@ -241,7 +266,7 @@ public class GameWorld implements Disposable {
         return buildBuilding(factory, storageAnimation, coordinate);
     }
 
-    public PathActor buildPath(BuildingActor from, BuildingActor to) {
+    public PathActor connectPath(BuildingActor from, BuildingActor to) {
         // Connect the two buildings
         Path path = sim.connectBuildings(from.getBuilding(), to.getBuilding());
         if (path == null) {
@@ -253,5 +278,237 @@ public class GameWorld implements Disposable {
             this::coordinateToWorld);
         paths.add(actor);
         return actor;
+    }
+
+    public BuildingActor getBuildingAt(Coordinate c) {
+        return buildingMap.get(c);
+    }
+
+
+
+    public interface Phase {
+        void onClick(Coordinate c);
+        void onEnter();
+    }
+
+    public class DefaultPhase implements Phase {
+        @Override
+        public void onClick(Coordinate c) { }
+
+        @Override
+        public void onEnter() {
+            grid.setSelectTexture(selectTexture);
+        }
+    }
+
+    public abstract class BuildPhase implements Phase {
+        private final Texture selectTexture;
+
+        protected final String name;
+
+        protected BuildPhase(Texture selectTexture, String name) {
+            this.selectTexture = selectTexture;
+            this.name = name;
+        }
+
+        @Override
+        public abstract void onClick(Coordinate c);
+
+        @Override
+        public void onEnter() {
+            grid.setSelectTexture(selectTexture);
+        }
+    }
+
+    public class BuildMinePhase extends BuildPhase {
+        private final Recipe miningRecipe;
+
+        public BuildMinePhase(String name, Recipe miningRecipe) {
+            super(selectMineTexture, name);
+            this.miningRecipe = miningRecipe;
+        }
+
+        @Override
+        public void onClick(Coordinate c) {
+            try {
+                buildMine(name, miningRecipe, c);
+            } catch (Exception e) {
+                logger.log(e.getMessage());
+            } finally {
+                enterDefaultPhase();
+            }
+        }
+    }
+
+    public class BuildFactoryPhase extends BuildPhase {
+        private final Type factoryType;
+
+        public BuildFactoryPhase(String name, Type factoryType) {
+            super(selectFactoryTexture, name);
+            this.factoryType = factoryType;
+        }
+
+        @Override
+        public void onClick(Coordinate c) {
+            try {
+                buildFactory(name, factoryType, c);
+            } catch (Exception e) {
+                logger.log(e.getMessage());
+            } finally {
+                enterDefaultPhase();
+            }
+        }
+    }
+
+    public class BuildStoragePhase extends BuildPhase {
+        private final Item storageItem;
+        private final int maxCapacity;
+        private final double priority;
+
+        public BuildStoragePhase(String name, Item storageItem, int maxCapacity, double priority) {
+            super(selectStorageTexture, name);
+            this.storageItem = storageItem;
+            this.maxCapacity = maxCapacity;
+            this.priority = priority;
+        }
+
+        @Override
+        public void onClick(Coordinate c) {
+            try {
+                buildStorage(name, storageItem, maxCapacity, priority, c);
+            } catch (Exception e) {
+                logger.log(e.getMessage());
+            } finally {
+                enterDefaultPhase();
+            }
+        }
+    }
+
+    public class ConnectPhase implements Phase {
+        private BuildingActor from = null;
+
+        @Override
+        public void onClick(Coordinate c) {
+            try {
+                // Get source if not already
+                if (from == null) {
+                    from = getBuildingAt(c);
+                    return; // Intentional. If clicked on a coordinate with no building, do nothing
+                }
+
+                // Get destination
+                BuildingActor to = getBuildingAt(c);
+                if (to == null) {
+                    return;
+                }
+
+                // Try to connect
+                connectPath(from, to);
+            } catch (Exception e) {
+                // Log error and resume back to default phase on error
+                logger.log(e.getMessage());
+                enterDefaultPhase();
+            }
+        }
+
+        @Override
+        public void onEnter() {
+            grid.setSelectTexture(selectTexture);
+        }
+    }
+
+    private Phase phase = new DefaultPhase();
+
+    public void enterDefaultPhase() {
+        phase = new DefaultPhase();
+        phase.onEnter();
+    }
+
+    public void enterBuildMinePhase(String name, Recipe miningRecipe) {
+        phase = new BuildMinePhase(name, miningRecipe);
+        phase.onEnter();
+    }
+
+    public void enterBuildFactoryPhase(String name, Type factoryType) {
+        phase = new BuildFactoryPhase(name, factoryType);
+        phase.onEnter();
+    }
+
+    public void enterBuildStoragePhase(String name, Item storageItem, int maxCapacity, double priority) {
+        phase = new BuildStoragePhase(name, storageItem, maxCapacity, priority);
+        phase.onEnter();
+    }
+
+    public void enterConnectPhase() {
+        phase = new ConnectPhase();
+        phase.onEnter();
+    }
+
+
+
+    @Override
+    public boolean keyDown(int keycode) {
+        // TODO: The following is test code
+        if (keycode == Input.Keys.GRAVE) { // Default
+            enterDefaultPhase();
+        } else if (keycode == Input.Keys.NUM_1) { // Mine
+            enterBuildMinePhase("M", new Recipe(new Item("metal"), new HashMap<>(), 1));
+        } else if (keycode == Input.Keys.NUM_2) { // Factory
+            enterBuildFactoryPhase("Hi", new Type("Hi", List.of()));
+        } else if (keycode == Input.Keys.NUM_3) { // Storage
+            enterBuildStoragePhase("St", new Item("metal"), 10, 1.0);
+        } else if (keycode == Input.Keys.NUM_4) { // Connect
+            enterConnectPhase();
+        }
+        return true;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.LEFT) {
+            // Get coordinate based on touch screen position
+            Vector2 pos = new Vector2(screenX, screenY);
+            pos = screenToWorldFn.apply(pos);
+            Coordinate c = worldToCoordinate(pos);
+
+            // Invoke current phase's `onClick` event
+            phase.onClick(c);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+        return false;
     }
 }
