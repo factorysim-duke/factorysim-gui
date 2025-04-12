@@ -134,12 +134,20 @@ public class SimulationScreen implements Screen {
      * Shows a dialog for creating a new request
      */
     private void showRequestDialog() {
-        // create the dialog
-        VisDialog dialog = new VisDialog("Request items");
-
         // create the dropdown for item selection
         final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
-        itemSelectBox.setItems("door");
+        itemSelectBox.setItems("door", "hinge", "handle");
+
+        // create the dialog
+        VisDialog dialog = new VisDialog("Request items") {
+            @Override
+            protected void result(Object obj) {
+                if (Boolean.TRUE.equals(obj)) {
+                    String selectedItem = itemSelectBox.getSelected();
+                    game.makeUserRequest(selectedItem, "D");
+                }
+            }
+        };
 
         // create a container for the dialog content
         VisTable contentTable = new VisTable();
@@ -148,7 +156,7 @@ public class SimulationScreen implements Screen {
         // create the text components
         VisLabel selectLabel = new VisLabel("Select '");
         VisLabel singleQuote = new VisLabel("'");
-        VisLabel fromLabel = new VisLabel(" from 'D'"); // placeholder 'D' factory
+        VisLabel fromLabel = new VisLabel(" from 'D'"); // building D is hardcoded here
 
         // add components to the dialog
         contentTable.add(selectLabel).padRight(0);
@@ -172,6 +180,7 @@ public class SimulationScreen implements Screen {
         // show the dialog
         dialog.show(stage);
     }
+
 
     @Override
     public void render(float delta) {

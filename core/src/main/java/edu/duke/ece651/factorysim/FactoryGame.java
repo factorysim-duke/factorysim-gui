@@ -31,6 +31,11 @@ public class FactoryGame extends Game {
         this.sim.setVerbosity(verbosity);
     }
 
+    // make user request
+    public void makeUserRequest(String itemName, String buildingName) {
+        this.sim.makeUserRequest(itemName, buildingName);
+    }
+
     //get current step
     public int getCurrentStep() {
         return this.sim.getCurrentTime();
