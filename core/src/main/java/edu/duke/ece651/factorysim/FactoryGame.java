@@ -5,22 +5,31 @@ import edu.duke.ece651.factorysim.screen.SimulationScreen;
 public class FactoryGame extends Game {
     private Simulation sim;
 
+    //TODO: double check how to work with gameworld
     //constructor
     public FactoryGame() {
         super();
         this.sim = new Simulation("doors1.json");
     }
 
+    //load simulation from json file
     public void loadSimulation(String jsonPath) {
         this.sim.load(jsonPath);
     }
 
+    //get current step
     public int getCurrentStep() {
         return this.sim.getCurrentTime();
     }
 
+    //step simulation by n steps
     public void step(int n) {
         this.sim.step(n);
+    }
+
+    //finish simulation
+    public void finish() {
+        this.sim.finish();
     }
 
     @Override

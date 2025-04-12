@@ -97,6 +97,13 @@ public class SimulationScreen implements Screen {
             }
         });
 
+        controlPanel.getFinishButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                game.finish();
+            }
+        });
+
 
         // Set up click listener for the New Request button
         infoPanel.getNewRequestButton().addListener(new ClickListener() {
