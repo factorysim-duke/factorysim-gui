@@ -114,15 +114,6 @@ public class SimulationScreen implements Screen {
             }
         });
 
-
-        // Set up click listener for the New Request button
-        infoPanel.getNewRequestButton().addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                showRequestDialog();
-            }
-        });
-
         // add all panels to root
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
         root.add(logPanel).width(200).expandY().fillY().top().pad(10);
@@ -138,7 +129,7 @@ public class SimulationScreen implements Screen {
     private void showRequestDialog() {
         // create the dropdown for item selection
         final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
-        itemSelectBox.setItems("door", "hinge", "handle");
+        itemSelectBox.setItems("door");
 
         // create the dialog
         VisDialog dialog = new VisDialog("Request items") {
@@ -148,6 +139,7 @@ public class SimulationScreen implements Screen {
                     String selectedItem = itemSelectBox.getSelected();
                     game.makeUserRequest(selectedItem, "D");
                 }
+                this.hide();
             }
         };
 
