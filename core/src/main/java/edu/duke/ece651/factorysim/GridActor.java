@@ -18,18 +18,32 @@ public class GridActor extends Actor2D {
     private final Vector2 mousePos = new Vector2(0f, 0f);
 
     /**
-     * Get the number of columns in the grid.
+     * Gets the number of columns in the grid.
      *
      * @return the number of columns in the grid
      */
     public int getCols() { return this.cols; }
 
     /**
-     * Get the number of rows in the grid.
+     * Gets the number of rows in the grid.
      *
      * @return the number of rows in the grid
      */
     public int getRows() { return this.rows; }
+
+    /**
+     * Calculates the width of the grid.
+     *
+     * @return the width of the grid.
+     */
+    public int getWidth() { return cols * cellSize; }
+
+    /**
+     * Calculates the height of the grid.
+     *
+     * @return the height of the grid.
+     */
+    public int getHeight() { return rows * cellSize; }
 
     /**
      * Gets the reference of the current texture of the selection box.

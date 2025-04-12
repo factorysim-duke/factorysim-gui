@@ -4,12 +4,12 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.*;
-import java.util.function.*;
 
 /**
  * Represents a central game world manager that manages resources and other actors.
@@ -19,9 +19,19 @@ public class GameWorld implements Disposable, InputProcessor {
     // Dimension
     private final int cellSize;
 
-    // View
+    // Camera & View
     private final OrthographicCamera camera;
     private final Viewport viewport;
+    private static final float CAMERA_SPEED = 200f;
+    private static final float CAMERA_SPEED_MULTIPLIER = 2f;
+    private final Vector2 cameraVelocity = new Vector2(0f, 0f);
+
+    // Zoom
+    private float zoom = 1f;
+    private static final float ZOOM_AMOUNT = 0.2f;
+    private static final float ZOOM_SPEED = 5f;
+    private static final float ZOOM_MIN = 0.5f;
+    private static final float ZOOM_MAX = 2f;
 
     // Simulation
     private final Simulation sim;
@@ -152,12 +162,18 @@ public class GameWorld implements Disposable, InputProcessor {
     }
 
     /**
-     * Render the game world.
+     * Update the game world.
      *
      * @param spriteBatch is the `SpriteBatch` instance used to render.
-     * @param dt is the delta time (time passed since last render).
+     * @param dt is the delta time (time passed since last update).
      */
-    public void render(SpriteBatch spriteBatch, float dt) {
+    public void update(SpriteBatch spriteBatch, float dt) {
+        // Zoom
+        camera.zoom = MathUtils.lerp(camera.zoom, zoom, ZOOM_SPEED * dt);
+
+        // Handle camera movement
+        handleCameraMovement(dt);
+
         // Draw background grid
         grid.draw(spriteBatch);
 
@@ -174,6 +190,37 @@ public class GameWorld implements Disposable, InputProcessor {
 
         // Draw grid selection box
         grid.drawSelectionBox(spriteBatch);
+    }
+
+    private void handleCameraMovement(float dt) {
+        // Camera movement
+        cameraVelocity.set(0f, 0f);
+        if (isHoldingUp) {
+            cameraVelocity.y = 1f;
+        } else if (isHoldingDown) {
+            cameraVelocity.y = -1f;
+        }
+        if (isHoldingLeft) {
+            cameraVelocity.x = -1f;
+        } else if (isHoldingRight) {
+            cameraVelocity.x = 1f;
+        }
+        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * zoom * dt);
+        camera.position.add(cameraVelocity.x, cameraVelocity.y, 0f);
+
+        // Invoke mouse movement event if camera is moved
+        if (cameraVelocity.x != 0f || cameraVelocity.y != 0f) {
+            mouseMoved(mouseScreenX, mouseScreenY);
+        }
+
+        // Make sure camera don't go off the world
+        float vwHalf = camera.viewportWidth * camera.zoom / 2f;
+        float vhHalf = camera.viewportHeight * camera.zoom / 2f;
+        camera.position.x = MathUtils.clamp(camera.position.x,
+            grid.position.x + vwHalf, grid.position.x + grid.getWidth() - vwHalf);
+        camera.position.y = MathUtils.clamp(camera.position.y,
+            grid.position.y + vhHalf, grid.position.y + grid.getHeight() - vhHalf);
+
     }
 
     @Override
@@ -529,26 +576,67 @@ public class GameWorld implements Disposable, InputProcessor {
 
 
 
+    private boolean isHoldingUp = false;
+    private boolean isHoldingDown = false;
+    private boolean isHoldingLeft = false;
+    private boolean isHoldingRight = false;
+    private boolean isHoldingSpeed = false;
+
     @Override
     public boolean keyDown(int keycode) {
-        // TODO: The following is test code
-        if (keycode == Input.Keys.GRAVE) { // Default
+        // Movement down
+        if (keycode == Input.Keys.W) {
+            isHoldingUp = true;
+        }
+        if (keycode == Input.Keys.S) {
+            isHoldingDown = true;
+        }
+        if (keycode == Input.Keys.A) {
+            isHoldingLeft = true;
+        }
+        if (keycode == Input.Keys.D) {
+            isHoldingRight = true;
+        }
+        if (keycode == Input.Keys.SHIFT_LEFT) {
+            isHoldingSpeed = true;
+        }
+
+        // Tool selection
+        if (keycode == Input.Keys.NUM_1) { // Default
             enterDefaultPhase();
-        } else if (keycode == Input.Keys.NUM_1) { // Mine
+        } else if (keycode == Input.Keys.NUM_2) { // Mine
             enterBuildMinePhase("M", new Recipe(new Item("metal"), new HashMap<>(), 1));
-        } else if (keycode == Input.Keys.NUM_2) { // Factory
+        } else if (keycode == Input.Keys.NUM_3) { // Factory
             enterBuildFactoryPhase("Hi", new Type("Hi", List.of()));
-        } else if (keycode == Input.Keys.NUM_3) { // Storage
+        } else if (keycode == Input.Keys.NUM_4) { // Storage
             enterBuildStoragePhase("St", new Item("metal"), 10, 1.0);
-        } else if (keycode == Input.Keys.NUM_4) { // Connect
+        } else if (keycode == Input.Keys.NUM_5) { // Connect
             enterConnectPhase();
         }
+
         return true;
     }
 
     @Override
     public boolean keyUp(int keycode) {
-        return false;
+        // Movement up
+        if (keycode == Input.Keys.W) {
+            isHoldingUp = false;
+        }
+        if (keycode == Input.Keys.S) {
+            isHoldingDown = false;
+        }
+        if (keycode == Input.Keys.A) {
+            isHoldingLeft = false;
+        }
+        if (keycode == Input.Keys.D) {
+            isHoldingRight = false;
+        }
+        if (keycode == Input.Keys.SHIFT_LEFT) {
+            isHoldingSpeed = false;
+        }
+
+        return true;
     }
 
     @Override
@@ -584,17 +672,23 @@ public class GameWorld implements Disposable, InputProcessor {
         return false;
     }
 
-    private final Vector2 tempVec2 = new Vector2();
+    private int mouseScreenX = 0;
+    private int mouseScreenY = 0;
+    private final Vector2 mouseWorldPos = new Vector2(0f, 0f);
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        tempVec2.set(screenX, screenY);
-        grid.onMouseMoved(screenToWorld(tempVec2));
+        mouseScreenX = screenX;
+        mouseScreenY = screenY;
+        mouseWorldPos.set(screenX, screenY);
+        grid.onMouseMoved(screenToWorld(mouseWorldPos));
         return true;
     }
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        return false;
+        zoom += amountY * ZOOM_AMOUNT;
+        zoom = MathUtils.clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+        return true;
     }
 }
