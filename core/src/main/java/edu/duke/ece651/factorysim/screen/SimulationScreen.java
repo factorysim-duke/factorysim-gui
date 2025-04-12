@@ -109,6 +109,8 @@ public class SimulationScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.finish();
+                currentStep = game.getCurrentStep();
+                topBar.updateStepCount(currentStep);
             }
         });
 
