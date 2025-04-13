@@ -20,6 +20,7 @@ public class FactoryGame extends Game {
     // Game World
     private GameWorld world;
     private Simulation sim;
+    private Logger logger = new StreamLogger(System.out);;
 
     // Input
     private final InputMultiplexer multiplexer = new InputMultiplexer();
@@ -49,8 +50,8 @@ public class FactoryGame extends Game {
         // Create game world
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new GameWorld(cols, rows, Constants.CELL_SIZE, camera, viewport, new StreamLogger(System.out),
-            simulationScreen, 0f, 0f);
+        world = new GameWorld(cols, rows, Constants.CELL_SIZE, camera, viewport, logger, simulationScreen,
+            0f, 0f);
 
         // Get simulation from game world
         sim = world.getSimulation();
@@ -78,6 +79,7 @@ public class FactoryGame extends Game {
     //load simulation from json file
     public void loadSimulation(String jsonPath) {
         this.sim = new Simulation(jsonPath);
+        this.sim.setLogger(this.logger);
         this.world.setSimulation(this.sim);
     }
 
@@ -88,6 +90,7 @@ public class FactoryGame extends Game {
 
     //set logger
     public void setLogger(PanelLogger logger) {
+        this.logger = logger;
         this.sim.setLogger(logger);
         this.world.setLogger(logger);
     }
