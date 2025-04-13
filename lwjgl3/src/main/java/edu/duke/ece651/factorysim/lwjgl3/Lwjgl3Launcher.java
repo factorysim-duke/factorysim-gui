@@ -2,6 +2,7 @@ package edu.duke.ece651.factorysim.lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import edu.duke.ece651.factorysim.Constants;
 import edu.duke.ece651.factorysim.FactoryGame;
 
 /** Launches the desktop (LWJGL3) application. */
@@ -28,7 +29,7 @@ public class Lwjgl3Launcher {
         //// useful for testing performance, but can also be very stressful to some hardware.
         //// You may also need to configure GPU drivers to fully disable Vsync; this can cause screen tearing.
 
-        configuration.setWindowedMode(1280, 720);
+        configuration.setWindowedMode(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
         configuration.setWindowSizeLimits(640, 360, -1, -1);  // min width=600, min height=600, max width/height unlimited
         //// You can change these files; they are in lwjgl3/src/main/resources/ .
         //// They can also be loaded from the root of assets/ .
