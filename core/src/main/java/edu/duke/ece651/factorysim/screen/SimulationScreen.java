@@ -32,6 +32,7 @@ import edu.duke.ece651.factorysim.MineBuilding;
 import edu.duke.ece651.factorysim.ui.BuildingInfoPanelFactory;
 import edu.duke.ece651.factorysim.ui.FactoryInfoPanel;
 import edu.duke.ece651.factorysim.ui.MineInfoPanel;
+import edu.duke.ece651.factorysim.ui.StorageInfoPanel;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -209,6 +210,33 @@ public class SimulationScreen implements Screen {
                     System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
                 }
             });
+        } else if (currentInfoPanel instanceof StorageInfoPanel) {
+            ((StorageInfoPanel) currentInfoPanel).getNewRequestButton().addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    showRequestDialog();
+                }
+            });
+
+            ((StorageInfoPanel) currentInfoPanel).getRequestPolicyBox().addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    String selectedPolicy = ((StorageInfoPanel) currentInfoPanel).getRequestPolicyBox().getSelected().toLowerCase();
+                    String buildingName = building.getName();
+                    game.setPolicy("request", selectedPolicy, buildingName);
+                    System.out.println("Setting policy to " + selectedPolicy + " for building " + buildingName);
+                }
+            });
+
+            ((StorageInfoPanel) currentInfoPanel).getSourcePolicyBox().addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    String selectedPolicy = ((StorageInfoPanel) currentInfoPanel).getSourcePolicyBox().getSelected().toLowerCase();
+                    String buildingName = building.getName();
+                    game.setPolicy("source", selectedPolicy, buildingName);
+                    System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
+                }
+            });
         }
     }
 
@@ -230,6 +258,8 @@ public class SimulationScreen implements Screen {
             currentBuilding = ((FactoryInfoPanel) currentInfoPanel).getBuilding();
         } else if (currentInfoPanel instanceof MineInfoPanel) {
             currentBuilding = ((MineInfoPanel) currentInfoPanel).getBuilding();
+        } else if (currentInfoPanel instanceof StorageInfoPanel) {
+            currentBuilding = ((StorageInfoPanel) currentInfoPanel).getBuilding();
         } else {
             return;
         }
