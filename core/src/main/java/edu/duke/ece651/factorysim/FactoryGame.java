@@ -63,7 +63,7 @@ public class FactoryGame extends Game {
         // (make sure to do this after setting screen so that screen has higher input priority)
         addInputProcessor(world);
 
-//        // TODO: Test code
+          // TODO: Test code
 //        world.loadFromJsonString(Gdx.files.internal("doors1.json").readString());
 //
 //        // TODO: Hardcode building info request, remove later
