@@ -652,7 +652,7 @@ public class GameWorld implements Disposable, InputProcessor {
         } else if (keycode == Input.Keys.NUM_2) { // Mine
             enterBuildMinePhase("M", new Recipe(new Item("metal"), new HashMap<>(), 1));
         } else if (keycode == Input.Keys.NUM_3) { // Factory
-            enterBuildFactoryPhase("Hi", new Type("Hi", List.of()));
+            enterBuildFactoryPhase("Hi", new Type("hinge", List.of()));
         } else if (keycode == Input.Keys.NUM_4) { // Storage
             enterBuildStoragePhase("St", new Item("metal"), 10, 1.0);
         } else if (keycode == Input.Keys.NUM_5) { // Connect
