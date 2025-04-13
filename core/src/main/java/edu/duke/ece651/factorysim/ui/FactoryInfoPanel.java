@@ -5,11 +5,13 @@ import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.FactoryBuilding;
 import edu.duke.ece651.factorysim.Recipe;
+import edu.duke.ece651.factorysim.Building;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class FactoryInfoPanel extends InfoPanel {
+    private final FactoryBuilding building;
     private final VisLabel buildingLabel;
     private final VisLabel outputsLabel;
     private final VisLabel sourcesLabel;
@@ -18,15 +20,18 @@ public class FactoryInfoPanel extends InfoPanel {
     private final VisLabel requestPolicyLabel;
     private final VisSelectBox<String> requestPolicyBox;
     private final VisTextButton newRequestButton;
-    
+
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
 
+    /*
+     * FactoryInfoPanel constructor
+     *
+     * @param building the factory building to display information for
+     */
     public FactoryInfoPanel(FactoryBuilding building) {
         super();
-        setBackground(VisUI.getSkin().newDrawable("white", new Color(0.98f, 0.98f, 0.98f, 0.95f)));
-        pad(15);
-        top().left();
+        this.building = building;
 
         // Factory title
         buildingLabel = new VisLabel("Factory: " + building.getName());
@@ -104,5 +109,9 @@ public class FactoryInfoPanel extends InfoPanel {
 
     public VisTextButton getNewRequestButton() {
         return newRequestButton;
+    }
+
+    public Building getBuilding() {
+        return building;
     }
 }
