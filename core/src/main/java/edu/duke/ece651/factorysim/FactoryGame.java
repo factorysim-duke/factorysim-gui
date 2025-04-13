@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
-import java.util.*;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 import edu.duke.ece651.factorysim.util.PanelLogger;
 
@@ -31,26 +30,37 @@ public class FactoryGame extends Game {
 
     @Override
     public void create() {
+        // Rendering
         spriteBatch = new SpriteBatch();
 
+        // Set up camera & viewport
         camera = new OrthographicCamera();
         viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
         camera.position.set(0f, 0f, 0f);
         camera.update();
         viewport.apply();
 
+        // Set up input multiplexer
         Gdx.input.setInputProcessor(multiplexer);
 
+        // Create screen
+        SimulationScreen simulationScreen = new SimulationScreen(this);
+
+        // Create game world
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
         world = new GameWorld(cols, rows, Constants.CELL_SIZE, camera, viewport, new StreamLogger(System.out),
-            0f, 0f);
-        multiplexer.addProcessor(world);
+            simulationScreen, 0f, 0f);
 
+        // Get simulation from game world
         sim = world.getSimulation();
 
-        SimulationScreen simulationScreen = new SimulationScreen(this);
+        // Set screen as the screen of the game
         this.setScreen(simulationScreen);
+
+        // Add world as an input processor
+        // (make sure to do this after setting screen so that screen has higher input priority)
+        addInputProcessor(world);
 
         // TODO: Test code
         world.loadSimulation(Gdx.files.internal("doors1.json").readString());

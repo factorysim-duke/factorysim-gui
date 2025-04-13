@@ -8,6 +8,8 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import edu.duke.ece651.factorysim.screen.SimulationScreen;
+
 import java.util.*;
 
 /**
@@ -62,6 +64,9 @@ public class GameWorld implements Disposable, InputProcessor {
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
     private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
 
+    // Screen
+    private final SimulationScreen screen;
+
     /**
      * Constructs a `WorldActor` instance based on grid dimension.
      *
@@ -71,6 +76,7 @@ public class GameWorld implements Disposable, InputProcessor {
     public GameWorld(int gridCols, int gridRows, int cellSize,
                      OrthographicCamera camera, Viewport viewport,
                      Logger logger,
+                     SimulationScreen screen,
                      float x, float y) {
         // Set and calculate dimensions
         this.cellSize = cellSize;
@@ -112,6 +118,9 @@ public class GameWorld implements Disposable, InputProcessor {
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
+
+        // Set screen
+        this.screen = screen;
     }
 
     public Simulation getSimulation() { return this.sim; }
@@ -161,7 +170,8 @@ public class GameWorld implements Disposable, InputProcessor {
 
         // Create building actors
         for (Building building : world.getBuildings()) {
-            actorizeBuilding(building);
+            BuildingActor actor = actorizeBuilding(building);
+            buildingMap.put(building.getLocation(), actor);
         }
 
         // Create path actors
@@ -444,7 +454,13 @@ public class GameWorld implements Disposable, InputProcessor {
 
     public class DefaultPhase implements Phase {
         @Override
-        public void onClick(Coordinate c) { }
+        public void onClick(Coordinate c) {
+            BuildingActor actor = getBuildingAt(c);
+            if (actor == null) {
+                return;
+            }
+            screen.showBuildingInfo(actor.getBuilding());
+        }
 
         @Override
         public void onEnter() {
