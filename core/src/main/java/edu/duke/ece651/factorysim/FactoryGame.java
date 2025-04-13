@@ -62,12 +62,12 @@ public class FactoryGame extends Game {
         // (make sure to do this after setting screen so that screen has higher input priority)
         addInputProcessor(world);
 
-        // TODO: Test code
-        world.loadSimulation(Gdx.files.internal("doors1.json").readString());
-
-        // TODO: Hardcode building info request, remove later
-        Building building = this.sim.getWorld().getBuildingFromName("D");
-        simulationScreen.showBuildingInfo(building);
+//        // TODO: Test code
+//        world.loadFromJsonString(Gdx.files.internal("doors1.json").readString());
+//
+//        // TODO: Hardcode building info request, remove later
+//        Building building = this.sim.getWorld().getBuildingFromName("D");
+//        simulationScreen.showBuildingInfo(building);
     }
 
     @Override
@@ -77,7 +77,8 @@ public class FactoryGame extends Game {
 
     //load simulation from json file
     public void loadSimulation(String jsonPath) {
-        this.sim.load(jsonPath);
+        this.sim = new Simulation(jsonPath);
+        this.world.setSimulation(this.sim);
     }
 
     //save simulation to json file

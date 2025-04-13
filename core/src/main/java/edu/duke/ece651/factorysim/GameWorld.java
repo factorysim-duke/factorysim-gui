@@ -9,7 +9,6 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
-
 import java.util.*;
 
 /**
@@ -35,7 +34,7 @@ public class GameWorld implements Disposable, InputProcessor {
     private static final float ZOOM_MAX = 2f;
 
     // Simulation
-    private final Simulation sim;
+    private Simulation sim;
     private Logger logger;
 
     // Resources
@@ -125,38 +124,8 @@ public class GameWorld implements Disposable, InputProcessor {
 
     public Simulation getSimulation() { return this.sim; }
 
-    public Logger getLogger() { return this.logger; }
-    public void setLogger(Logger logger) { this.logger = logger; }
-
-    /**
-     * Splits a texture into frames based on frame dimension, then creates an animation from it.
-     *
-     * @param texture is the texture to split frames from.
-     * @param frameWidth is the width of each frame.
-     * @param frameHeight is the height of each frame.
-     * @param frameDuration is the duration of each frame in the animation.
-     * @param playMode is the animation's play mode.
-     * @return animation created from the texture.
-     * @throws IllegalArgumentException when failed to split any frames from the texture and frame dimensions.
-     */
-    private static Animation<TextureRegion> createAnimation(Texture texture, int frameWidth, int frameHeight,
-                                                            float frameDuration, Animation.PlayMode playMode) {
-        TextureRegion[][] regions = TextureRegion.split(texture, frameWidth, frameHeight);
-        TextureRegion[] frames = Arrays.stream(regions)
-                                       .flatMap(Arrays::stream)
-                                       .toArray(TextureRegion[]::new);
-        if (frames.length == 0) {
-            throw new IllegalArgumentException("Failed to split any animation frame from the texture");
-        }
-
-        Animation<TextureRegion> animation = new Animation<>(frameDuration, frames);
-        animation.setPlayMode(playMode);
-        return animation;
-    }
-
-    public void loadSimulation(String json) {
-        // Update the simulation based on the JSON string
-        sim.loadFromJsonString(json);
+    public void setSimulation(Simulation sim) {
+        this.sim = sim;
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
 
@@ -189,6 +158,37 @@ public class GameWorld implements Disposable, InputProcessor {
             }
         }
     }
+
+    public Logger getLogger() { return this.logger; }
+    public void setLogger(Logger logger) { this.logger = logger; }
+
+    /**
+     * Splits a texture into frames based on frame dimension, then creates an animation from it.
+     *
+     * @param texture is the texture to split frames from.
+     * @param frameWidth is the width of each frame.
+     * @param frameHeight is the height of each frame.
+     * @param frameDuration is the duration of each frame in the animation.
+     * @param playMode is the animation's play mode.
+     * @return animation created from the texture.
+     * @throws IllegalArgumentException when failed to split any frames from the texture and frame dimensions.
+     */
+    private static Animation<TextureRegion> createAnimation(Texture texture, int frameWidth, int frameHeight,
+                                                            float frameDuration, Animation.PlayMode playMode) {
+        TextureRegion[][] regions = TextureRegion.split(texture, frameWidth, frameHeight);
+        TextureRegion[] frames = Arrays.stream(regions)
+                                       .flatMap(Arrays::stream)
+                                       .toArray(TextureRegion[]::new);
+        if (frames.length == 0) {
+            throw new IllegalArgumentException("Failed to split any animation frame from the texture");
+        }
+
+        Animation<TextureRegion> animation = new Animation<>(frameDuration, frames);
+        animation.setPlayMode(playMode);
+        return animation;
+    }
+
+
 
     /**
      * Update the game world.
@@ -436,6 +436,10 @@ public class GameWorld implements Disposable, InputProcessor {
         if (pathPairs.stream().anyMatch((t) -> t.second() == path)) {
             return;
         }
+
+        // TODO: Add 'from' as a new source of 'to'
+//        Building source = from.getBuilding();
+//        Building target = to.getBuilding();
 
         // Create the actor
         actorizePath(path);
