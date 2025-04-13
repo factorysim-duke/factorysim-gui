@@ -20,6 +20,14 @@ public class FactoryGame extends Game {
 
     // Game World
     private GameWorld world;
+    private Simulation sim;
+
+    // Input
+    private final InputMultiplexer multiplexer = new InputMultiplexer();
+
+    public void addInputProcessor(InputProcessor inputProcessor) {
+        multiplexer.addProcessor(inputProcessor);
+    }
 
     @Override
     public void create() {
@@ -31,35 +39,30 @@ public class FactoryGame extends Game {
         camera.update();
         viewport.apply();
 
+        Gdx.input.setInputProcessor(multiplexer);
+
         int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
         int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
-        world = new GameWorld(cols, rows, Constants.CELL_SIZE, camera, viewport, 0f, 0f);
-        Gdx.input.setInputProcessor(world);
+        world = new GameWorld(cols, rows, Constants.CELL_SIZE, camera, viewport, new StreamLogger(System.out),
+            0f, 0f);
+        multiplexer.addProcessor(world);
 
-        // TODO: Delete test code
-        BuildingActor mine = world.buildMine("M", new Recipe(new Item("metal"), new HashMap<>(), 1),
-            new Coordinate(5, 5));
-        BuildingActor factory = world.buildFactory("Hi", new Type("Hi", List.of()),
-            new Coordinate(20, 20));
-        BuildingActor storage = world.buildStorage("St", new Item("metal"), 10, 1.0,
-            new Coordinate(30, 10));
-//        world.connectPath(mine, factory);
-//        world.connectPath(factory, storage);
-//        world.connectPath(storage, factory);
-//        world.connectPath(factory, mine);
+        sim = world.getSimulation();
 
+        SimulationScreen simulationScreen = new SimulationScreen(this);
+        this.setScreen(simulationScreen);
+
+        // TODO: Test code
         world.loadSimulation(Gdx.files.internal("doors1.json").readString());
+
+        // TODO: Hardcode building info request, remove later
+        Building building = this.sim.getWorld().getBuildingFromName("D");
+        simulationScreen.showBuildingInfo(building);
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, false);
-
-    //TODO: double check how to work with gameworld
-    //constructor
-    public FactoryGame() {
-        super();
-        this.sim = new Simulation("doors1.json");
     }
 
     //load simulation from json file
@@ -74,8 +77,8 @@ public class FactoryGame extends Game {
 
     //set logger
     public void setLogger(PanelLogger logger) {
-        this.logger = logger;
-        this.sim.setLogger(this.logger);
+        this.sim.setLogger(logger);
+        this.world.setLogger(logger);
     }
 
     // set verbosity
@@ -106,15 +109,6 @@ public class FactoryGame extends Game {
     //finish simulation
     public void finish() {
         this.sim.finish();
-    }
-
-    @Override
-    public void create() {
-        SimulationScreen simulationScreen = new SimulationScreen(this);
-        this.setScreen(simulationScreen);
-        // TODO: Hardcode building info request, remove later
-        Building building = this.sim.getWorld().getBuildingFromName("D");
-        simulationScreen.showBuildingInfo(building);
     }
 
     @Override

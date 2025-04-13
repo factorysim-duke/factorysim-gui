@@ -48,7 +48,8 @@ public class SimulationScreen implements Screen {
     @Override
     public void show() {
         stage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(stage);
+        game.addInputProcessor(stage);
+        // Gdx.input.setInputProcessor(stage);
 
         // Load VisUI
         if (!VisUI.isLoaded()) {
@@ -242,8 +243,8 @@ public class SimulationScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+//        Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
+//        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         stage.act(delta);
         stage.draw();

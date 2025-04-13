@@ -34,7 +34,7 @@ public class GameWorld implements Disposable, InputProcessor {
 
     // Simulation
     private final Simulation sim;
-    private final Logger logger;
+    private Logger logger;
 
     // Resources
     private final Texture cellTexture;
@@ -70,6 +70,7 @@ public class GameWorld implements Disposable, InputProcessor {
      */
     public GameWorld(int gridCols, int gridRows, int cellSize,
                      OrthographicCamera camera, Viewport viewport,
+                     Logger logger,
                      float x, float y) {
         // Set and calculate dimensions
         this.cellSize = cellSize;
@@ -105,14 +106,18 @@ public class GameWorld implements Disposable, InputProcessor {
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
         // Create empty world and simulation
-        // TODO: Replace with the GUI logger
-        this.logger = new StreamLogger(System.out);
+        this.logger = logger;
         this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
     }
+
+    public Simulation getSimulation() { return this.sim; }
+
+    public Logger getLogger() { return this.logger; }
+    public void setLogger(Logger logger) { this.logger = logger; }
 
     /**
      * Splits a texture into frames based on frame dimension, then creates an animation from it.
@@ -172,8 +177,6 @@ public class GameWorld implements Disposable, InputProcessor {
                     connectPath(sourceActor, buildingActor);
                 });
             }
-
-            // TODO: Connect building to storages
         }
     }
 
