@@ -27,8 +27,11 @@ import edu.duke.ece651.factorysim.util.FileDialogUtil;
 import edu.duke.ece651.factorysim.util.PanelLogger;
 import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.Building;
+import edu.duke.ece651.factorysim.FactoryBuilding;
+import edu.duke.ece651.factorysim.MineBuilding;
 import edu.duke.ece651.factorysim.ui.BuildingInfoPanelFactory;
 import edu.duke.ece651.factorysim.ui.FactoryInfoPanel;
+import edu.duke.ece651.factorysim.ui.MineInfoPanel;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -179,8 +182,34 @@ public class SimulationScreen implements Screen {
                     System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
                 }
             });
-        }
+        } else if (currentInfoPanel instanceof MineInfoPanel) {
+            ((MineInfoPanel) currentInfoPanel).getNewRequestButton().addListener(new ClickListener() {
+                @Override
+                public void clicked(InputEvent event, float x, float y) {
+                    showRequestDialog();
+                }
+            });
 
+            ((MineInfoPanel) currentInfoPanel).getRequestPolicyBox().addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    String selectedPolicy = ((MineInfoPanel) currentInfoPanel).getRequestPolicyBox().getSelected().toLowerCase();
+                    String buildingName = building.getName();
+                    game.setPolicy("request", selectedPolicy, buildingName);
+                    System.out.println("Setting policy to " + selectedPolicy + " for building " + buildingName);
+                }
+            });
+
+            ((MineInfoPanel) currentInfoPanel).getSourcePolicyBox().addListener(new ChangeListener() {
+                @Override
+                public void changed(ChangeEvent event, Actor actor) {
+                    String selectedPolicy = ((MineInfoPanel) currentInfoPanel).getSourcePolicyBox().getSelected().toLowerCase();
+                    String buildingName = building.getName();
+                    game.setPolicy("source", selectedPolicy, buildingName);
+                    System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
+                }
+            });
+        }
     }
 
     public void hideInfoPanel() {
@@ -192,9 +221,32 @@ public class SimulationScreen implements Screen {
      * Shows a dialog for creating a new request
      */
     private void showRequestDialog() {
+        if (currentInfoPanel == null) {
+            return;
+        }
+
+        final Building currentBuilding;
+        if (currentInfoPanel instanceof FactoryInfoPanel) {
+            currentBuilding = ((FactoryInfoPanel) currentInfoPanel).getBuilding();
+        } else if (currentInfoPanel instanceof MineInfoPanel) {
+            currentBuilding = ((MineInfoPanel) currentInfoPanel).getBuilding();
+        } else {
+            return;
+        }
+
         // create the dropdown for item selection
         final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
-        itemSelectBox.setItems("door");
+        String[] items;
+        if (currentBuilding instanceof FactoryBuilding) {
+            items = ((FactoryBuilding) currentBuilding).getFactoryType().getRecipes().stream()
+                    .map(r -> r.getOutput().getName())
+                    .toArray(String[]::new);
+        } else if (currentBuilding instanceof MineBuilding) {
+            items = new String[]{((MineBuilding) currentBuilding).getResource().getName()};
+        } else {
+            return;
+        }
+        itemSelectBox.setItems(items);
 
         // create the dialog
         VisDialog dialog = new VisDialog("Request items") {
@@ -202,7 +254,7 @@ public class SimulationScreen implements Screen {
             protected void result(Object obj) {
                 if (Boolean.TRUE.equals(obj)) {
                     String selectedItem = itemSelectBox.getSelected();
-                    game.makeUserRequest(selectedItem, "D");
+                    game.makeUserRequest(selectedItem, currentBuilding.getName());
                 }
                 this.hide();
             }
@@ -215,7 +267,7 @@ public class SimulationScreen implements Screen {
         // create the text components
         VisLabel selectLabel = new VisLabel("Select '");
         VisLabel singleQuote = new VisLabel("'");
-        VisLabel fromLabel = new VisLabel(" from 'D'"); // building D is hardcoded here
+        VisLabel fromLabel = new VisLabel(" from '" + currentBuilding.getName() + "'");
 
         // add components to the dialog
         contentTable.add(selectLabel).padRight(0);

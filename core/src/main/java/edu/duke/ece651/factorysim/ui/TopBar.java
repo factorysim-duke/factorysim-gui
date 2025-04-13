@@ -17,11 +17,9 @@ public class TopBar extends VisTable {
         // title
         VisLabel titleLabel = new VisLabel("Factorysim");
         titleLabel.setFontScale(2.2f);
-        titleLabel.setColor(Color.BLACK);
 
         // step count
         stepCountLabel = new VisLabel("Current Step: " + currentStep);
-        stepCountLabel.setColor(Color.BLACK);
 
         // save button
         saveButton = new VisTextButton("Save", "orange");

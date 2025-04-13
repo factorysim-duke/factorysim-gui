@@ -14,7 +14,8 @@ public class InfoPanel extends VisTable {
         super();
         setVisible(true);
         setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
-        top();
+        pad(15);
+        top().left();
     }
 
     /**
