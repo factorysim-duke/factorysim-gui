@@ -70,11 +70,11 @@ public class PathActor extends Actor2D {
     private static final int DOWN  = 2;
     private static final int LEFT  = 3;
 
-    private boolean canDraw(Coordinate c) {
+    boolean canDraw(Coordinate c) {
         return tileMap.isInsideMap(c) && tileMap.getTileType(c) == TileType.PATH;
     }
 
-    private static int getFlowDirs(int[] flows, int[] out) {
+    static int getFlowDirs(int[] flows, int[] out) {
         int num = 0;
         for (int i = 0; i < 4; i++) {
             if (flows[i] != 0) {
@@ -87,12 +87,12 @@ public class PathActor extends Actor2D {
         return num;
     }
 
-    private static boolean isLinear(int d1, int d2) {
+    static boolean isLinear(int d1, int d2) {
         return (d1 == UP && d2 == DOWN) || (d1 == DOWN && d2 == UP) ||
                (d1 == LEFT && d2 == RIGHT) || (d1 == RIGHT && d2 == LEFT);
     }
 
-    private static float getRotationFromDirection(int dir) {
+    static float getRotationFromDirection(int dir) {
         return switch (dir) {
             case UP    -> 90f;
             case RIGHT -> 180f;
