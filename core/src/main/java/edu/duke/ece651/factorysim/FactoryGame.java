@@ -20,7 +20,11 @@ public class FactoryGame extends Game {
     // Game World
     private GameWorld world;
     private Simulation sim;
-    private Logger logger = new StreamLogger(System.out);;
+    private Logger logger = new StreamLogger(System.out);
+    
+    // Real-time simulation
+    private RealTimeSimulation realTimeSimulation;
+    private boolean realTimeEnabled = false;
 
     // Input
     private final InputMultiplexer multiplexer = new InputMultiplexer();
@@ -55,6 +59,9 @@ public class FactoryGame extends Game {
 
         // Get simulation from game world
         sim = world.getSimulation();
+        
+        // Initialize real-time simulation handler
+        realTimeSimulation = new RealTimeSimulation(sim);
 
         // Set screen as the screen of the game
         this.setScreen(simulationScreen);
@@ -81,6 +88,7 @@ public class FactoryGame extends Game {
         this.sim = new Simulation(jsonPath);
         this.sim.setLogger(this.logger);
         this.world.setSimulation(this.sim);
+        this.realTimeSimulation = new RealTimeSimulation(this.sim);
     }
 
     //save simulation to json file
@@ -112,6 +120,10 @@ public class FactoryGame extends Game {
 
     //step simulation by n steps
     public void step(int n) {
+        // Stop real-time simulation if user choose to step manually
+        if (realTimeEnabled) {
+            stopRealTimeSimulation();
+        }
         this.sim.step(n);
     }
 
@@ -122,12 +134,96 @@ public class FactoryGame extends Game {
 
     //finish simulation
     public void finish() {
+        // Stop real-time simulation if user choose to finish
+        if (realTimeEnabled) {
+            stopRealTimeSimulation();
+        }
         this.sim.finish();
+    }
+    
+    /**
+     * Starts real-time simulation.
+     */
+    public void startRealTimeSimulation() {
+        realTimeSimulation.start();
+        realTimeEnabled = true;
+    }
+    
+    /**
+     * Pauses real-time simulation.
+     */
+    public void pauseRealTimeSimulation() {
+        if (realTimeEnabled) {
+            realTimeSimulation.pause();
+        }
+    }
+    
+    /**
+     * Resumes real-time simulation from a paused state.
+     */
+    public void resumeRealTimeSimulation() {
+        if (realTimeEnabled) {
+            realTimeSimulation.resume();
+        }
+    }
+    
+    /**
+     * Stops real-time simulation.
+     */
+    public void stopRealTimeSimulation() {
+        realTimeSimulation.stop();
+        realTimeEnabled = false;
+    }
+    
+    /**
+     * Sets the speed of real-time simulation.
+     * 
+     * @param stepsPerSecond steps per second
+     */
+    public void setRealTimeSpeed(float stepsPerSecond) {
+        realTimeSimulation.setSpeed(stepsPerSecond);
+    }
+    
+    /**
+     * Gets the current real-time simulation speed.
+     * 
+     * @return steps per second
+     */
+    public float getRealTimeSpeed() {
+        return realTimeSimulation.getSpeed();
+    }
+    
+    /**
+     * Checks if real-time simulation is enabled.
+     * 
+     * @return true if enabled
+     */
+    public boolean isRealTimeEnabled() {
+        return realTimeEnabled;
+    }
+    
+    /**
+     * Checks if real-time simulation is paused.
+     * 
+     * @return true if paused
+     */
+    public boolean isRealTimePaused() {
+        return realTimeSimulation.isPaused();
     }
 
     @Override
     public void render() {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
+        
+        // Update real-time simulation
+        if (realTimeEnabled) {
+            int stepsExecuted = realTimeSimulation.update(Gdx.graphics.getDeltaTime());
+            
+            // Log steps executed for debug
+            // if (stepsExecuted > 0) {
+            //     logger.log(0, "Executed " + stepsExecuted + " steps in real-time");
+            // }
+        }
 
         // Update camera
         viewport.apply();
@@ -144,6 +240,11 @@ public class FactoryGame extends Game {
 
     @Override
     public void dispose() {
+        // Stop real-time simulation before disposing
+        if (realTimeEnabled) {
+            stopRealTimeSimulation();
+        }
+        
         spriteBatch.dispose();
         world.dispose();
         if (this.getScreen() != null) {
