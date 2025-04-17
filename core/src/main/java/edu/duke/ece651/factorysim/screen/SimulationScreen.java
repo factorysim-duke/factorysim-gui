@@ -312,7 +312,7 @@ public class SimulationScreen implements Screen {
         contentTable.pad(10);
 
         // create the text components
-        VisLabel selectLabel = new VisLabel("Select '");
+        VisLabel selectLabel = new VisLabel("Request '");
         VisLabel singleQuote = new VisLabel("'");
         VisLabel fromLabel = new VisLabel(" from '" + currentBuilding.getName() + "'");
 
