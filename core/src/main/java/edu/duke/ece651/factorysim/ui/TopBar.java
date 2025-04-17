@@ -7,7 +7,7 @@ public class TopBar extends VisTable {
     private VisLabel stepCountLabel;
     private VisTextButton saveButton;
     private VisTextButton loadButton;
-
+    
     public TopBar(int initialStep) {
         super();
         init(initialStep);
@@ -29,11 +29,10 @@ public class TopBar extends VisTable {
         loadButton = new VisTextButton("Load", "orange");
         loadButton.pad(5, 10, 5, 10);
 
-        // combine save and load buttons
+        // combine buttons
         VisTable rightButtons = new VisTable();
         rightButtons.add(loadButton).padRight(20);
         rightButtons.add(saveButton);
-
 
         // add to table
         add(titleLabel).left().padLeft(20);

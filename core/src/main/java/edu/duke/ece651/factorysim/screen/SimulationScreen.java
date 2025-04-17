@@ -33,6 +33,7 @@ import edu.duke.ece651.factorysim.ui.BuildingInfoPanelFactory;
 import edu.duke.ece651.factorysim.ui.FactoryInfoPanel;
 import edu.duke.ece651.factorysim.ui.MineInfoPanel;
 import edu.duke.ece651.factorysim.ui.StorageInfoPanel;
+import edu.duke.ece651.factorysim.ui.RealTimeMenu;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -45,6 +46,8 @@ public class SimulationScreen implements Screen {
     private int currentStep = 0;
     private FileChooser createFileChooser;
     private FileChooser saveFileChooser;
+    private RealTimeMenu realTimeMenu;
+    
     public SimulationScreen(FactoryGame game) {
         this.game = game;
     }
@@ -91,6 +94,24 @@ public class SimulationScreen implements Screen {
                 stage.addActor(saveFileChooser.fadeIn());
                 currentStep = game.getCurrentStep();
                 topBar.updateStepCount(currentStep);
+            }
+        });
+        
+        // Initialize real-time menu
+        realTimeMenu = new RealTimeMenu(game);
+        
+        // Create new Real-time button for bottom left corner
+        VisTextButton realTimeButton = new VisTextButton("Real-time", "blue");
+        realTimeButton.pad(5, 10, 5, 10);
+        
+        // Add listener for real-time button
+        realTimeButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Update button state to ensure it's showing the correct text
+                realTimeMenu.updateButtonState();
+                // Show dropdown at the bottom left position
+                realTimeMenu.showMenu(stage, realTimeButton);
             }
         });
 
@@ -142,7 +163,9 @@ public class SimulationScreen implements Screen {
 
         root.add(rightCol).width(240).top().padTop(10).padRight(10).padBottom(10).expandY().fillY().row();
 
-        root.add().colspan(2).expand();
+        // Add real-time button to bottom left
+        root.add(realTimeButton).left().padLeft(65).padBottom(160);
+        root.add().expand();
         root.add(controlPanel).bottom().right().pad(10);
     }
 
@@ -295,7 +318,7 @@ public class SimulationScreen implements Screen {
         contentTable.pad(10);
 
         // create the text components
-        VisLabel selectLabel = new VisLabel("Select '");
+        VisLabel selectLabel = new VisLabel("Request '");
         VisLabel singleQuote = new VisLabel("'");
         VisLabel fromLabel = new VisLabel(" from '" + currentBuilding.getName() + "'");
 
@@ -327,6 +350,12 @@ public class SimulationScreen implements Screen {
     public void render(float delta) {
 //        Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
 //        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Update step count display if it has changed (for real-time simulation)
+        if (game.getCurrentStep() != currentStep) {
+            currentStep = game.getCurrentStep();
+            topBar.updateStepCount(currentStep);
+        }
 
         stage.act(delta);
         stage.draw();
