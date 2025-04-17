@@ -33,6 +33,7 @@ import edu.duke.ece651.factorysim.ui.BuildingInfoPanelFactory;
 import edu.duke.ece651.factorysim.ui.FactoryInfoPanel;
 import edu.duke.ece651.factorysim.ui.MineInfoPanel;
 import edu.duke.ece651.factorysim.ui.StorageInfoPanel;
+import edu.duke.ece651.factorysim.ui.RealTimeMenu;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
@@ -45,6 +46,8 @@ public class SimulationScreen implements Screen {
     private int currentStep = 0;
     private FileChooser createFileChooser;
     private FileChooser saveFileChooser;
+    private RealTimeMenu realTimeMenu;
+    
     public SimulationScreen(FactoryGame game) {
         this.game = game;
     }
@@ -91,6 +94,20 @@ public class SimulationScreen implements Screen {
                 stage.addActor(saveFileChooser.fadeIn());
                 currentStep = game.getCurrentStep();
                 topBar.updateStepCount(currentStep);
+            }
+        });
+        
+        // Initialize real-time menu
+        realTimeMenu = new RealTimeMenu(game);
+        
+        // Add listener for real-time button
+        topBar.getRealTimeButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Update button state to ensure it's showing the correct text
+                realTimeMenu.updateButtonState();
+                // Show dropdown below the real-time button
+                realTimeMenu.showMenu(stage, topBar.getRealTimeButton());
             }
         });
 
@@ -327,6 +344,12 @@ public class SimulationScreen implements Screen {
     public void render(float delta) {
 //        Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
 //        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Update step count display if it has changed (for real-time simulation)
+        if (game.getCurrentStep() != currentStep) {
+            currentStep = game.getCurrentStep();
+            topBar.updateStepCount(currentStep);
+        }
 
         stage.act(delta);
         stage.draw();
