@@ -33,10 +33,6 @@ public class RealTimeMenu extends PopupMenu {
         menuTable.setColor(new Color(0.2f, 0.4f, 0.8f, 1f)); // Blue background
         menuTable.pad(10);
         
-        // Title label
-        VisLabel titleLabel = new VisLabel("Real-time");
-        titleLabel.setColor(Color.WHITE);
-        
         // Start/Pause button
         startPauseButton = new VisTextButton("Start", "orange");
         
@@ -55,7 +51,6 @@ public class RealTimeMenu extends PopupMenu {
         });
         
         // Add components to the menu
-        menuTable.add(titleLabel).center().padBottom(10).row();
         menuTable.add(startPauseButton).fillX().expandX().padBottom(10).row();
         
         VisTable controlsTable = new VisTable();
@@ -167,27 +162,7 @@ public class RealTimeMenu extends PopupMenu {
         float x = buttonX + (buttonWidth / 2) - (menuWidth / 2);
         
         // Position the menu just below the button
-        float y = buttonY - menuHeight;
-        
-        // Make sure the menu stays within the stage bounds
-        // Get stage dimensions
-        float stageWidth = stage.getWidth();
-        float stageHeight = stage.getHeight();
-        
-        // Adjust x position if menu would go off the right edge
-        if (x + menuWidth > stageWidth) {
-            x = stageWidth - menuWidth;
-        }
-        
-        // Adjust x position if menu would go off the left edge
-        if (x < 0) {
-            x = 0;
-        }
-        
-        // Adjust y position if menu would go off the bottom edge
-        if (y < 0) {
-            y = 0;
-        }
+        float y = buttonY - menuHeight - 1;
         
         // Set the position and add to stage
         setPosition(x, y);

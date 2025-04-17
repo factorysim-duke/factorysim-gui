@@ -100,14 +100,18 @@ public class SimulationScreen implements Screen {
         // Initialize real-time menu
         realTimeMenu = new RealTimeMenu(game);
         
+        // Create new Real-time button for bottom left corner
+        VisTextButton realTimeButton = new VisTextButton("Real-time", "blue");
+        realTimeButton.pad(5, 10, 5, 10);
+        
         // Add listener for real-time button
-        topBar.getRealTimeButton().addListener(new ClickListener() {
+        realTimeButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 // Update button state to ensure it's showing the correct text
                 realTimeMenu.updateButtonState();
-                // Show dropdown below the real-time button
-                realTimeMenu.showMenu(stage, topBar.getRealTimeButton());
+                // Show dropdown at the bottom left position
+                realTimeMenu.showMenu(stage, realTimeButton);
             }
         });
 
@@ -159,7 +163,9 @@ public class SimulationScreen implements Screen {
 
         root.add(rightCol).width(240).top().padTop(10).padRight(10).padBottom(10).expandY().fillY().row();
 
-        root.add().colspan(2).expand();
+        // Add real-time button to bottom left
+        root.add(realTimeButton).left().padLeft(65).padBottom(160);
+        root.add().expand();
         root.add(controlPanel).bottom().right().pad(10);
     }
 

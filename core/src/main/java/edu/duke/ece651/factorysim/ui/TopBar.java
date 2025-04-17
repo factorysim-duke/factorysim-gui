@@ -7,8 +7,7 @@ public class TopBar extends VisTable {
     private VisLabel stepCountLabel;
     private VisTextButton saveButton;
     private VisTextButton loadButton;
-    private VisTextButton realTimeButton;
-
+    
     public TopBar(int initialStep) {
         super();
         init(initialStep);
@@ -29,17 +28,11 @@ public class TopBar extends VisTable {
         // load button
         loadButton = new VisTextButton("Load", "orange");
         loadButton.pad(5, 10, 5, 10);
-        
-        // real-time button
-        realTimeButton = new VisTextButton("Real-time", "blue");
-        realTimeButton.pad(5, 10, 5, 10);
 
         // combine buttons
         VisTable rightButtons = new VisTable();
-        rightButtons.add(realTimeButton).padRight(20);
         rightButtons.add(loadButton).padRight(20);
         rightButtons.add(saveButton);
-
 
         // add to table
         add(titleLabel).left().padLeft(20);
@@ -57,9 +50,5 @@ public class TopBar extends VisTable {
 
     public VisTextButton getLoadButton() {
         return loadButton;
-    }
-    
-    public VisTextButton getRealTimeButton() {
-        return realTimeButton;
     }
 }
