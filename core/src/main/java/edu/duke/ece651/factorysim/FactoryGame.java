@@ -21,7 +21,7 @@ public class FactoryGame extends Game {
     private GameWorld world;
     private Simulation sim;
     private Logger logger = new StreamLogger(System.out);
-    
+
     // Real-time simulation
     private RealTimeSimulation realTimeSimulation;
     private boolean realTimeEnabled = false;
@@ -59,7 +59,7 @@ public class FactoryGame extends Game {
 
         // Get simulation from game world
         sim = world.getSimulation();
-        
+
         // Initialize real-time simulation handler
         realTimeSimulation = new RealTimeSimulation(sim);
 
@@ -140,7 +140,7 @@ public class FactoryGame extends Game {
         }
         this.sim.finish();
     }
-    
+
     /**
      * Starts real-time simulation.
      */
@@ -148,7 +148,7 @@ public class FactoryGame extends Game {
         realTimeSimulation.start();
         realTimeEnabled = true;
     }
-    
+
     /**
      * Pauses real-time simulation.
      */
@@ -157,7 +157,7 @@ public class FactoryGame extends Game {
             realTimeSimulation.pause();
         }
     }
-    
+
     /**
      * Resumes real-time simulation from a paused state.
      */
@@ -166,7 +166,7 @@ public class FactoryGame extends Game {
             realTimeSimulation.resume();
         }
     }
-    
+
     /**
      * Stops real-time simulation.
      */
@@ -174,37 +174,37 @@ public class FactoryGame extends Game {
         realTimeSimulation.stop();
         realTimeEnabled = false;
     }
-    
+
     /**
      * Sets the speed of real-time simulation.
-     * 
+     *
      * @param stepsPerSecond steps per second
      */
     public void setRealTimeSpeed(float stepsPerSecond) {
         realTimeSimulation.setSpeed(stepsPerSecond);
     }
-    
+
     /**
      * Gets the current real-time simulation speed.
-     * 
+     *
      * @return steps per second
      */
     public float getRealTimeSpeed() {
         return realTimeSimulation.getSpeed();
     }
-    
+
     /**
      * Checks if real-time simulation is enabled.
-     * 
+     *
      * @return true if enabled
      */
     public boolean isRealTimeEnabled() {
         return realTimeEnabled;
     }
-    
+
     /**
      * Checks if real-time simulation is paused.
-     * 
+     *
      * @return true if paused
      */
     public boolean isRealTimePaused() {
@@ -214,11 +214,13 @@ public class FactoryGame extends Game {
     @Override
     public void render() {
         ScreenUtils.clear(0f, 0f, 0f, 1f);
-        
+
+        float dt = Gdx.graphics.getDeltaTime();
+
         // Update real-time simulation
         if (realTimeEnabled) {
-            int stepsExecuted = realTimeSimulation.update(Gdx.graphics.getDeltaTime());
-            
+            int stepsExecuted = realTimeSimulation.update(dt);
+
             // Log steps executed for debug
             // if (stepsExecuted > 0) {
             //     logger.log(0, "Executed " + stepsExecuted + " steps in real-time");
@@ -232,7 +234,7 @@ public class FactoryGame extends Game {
 
         // Render the world
         spriteBatch.begin();
-        world.update(spriteBatch, Gdx.graphics.getDeltaTime());
+        world.update(spriteBatch, dt);
         spriteBatch.end();
 
         super.render();
@@ -244,7 +246,7 @@ public class FactoryGame extends Game {
         if (realTimeEnabled) {
             stopRealTimeSimulation();
         }
-        
+
         spriteBatch.dispose();
         world.dispose();
         if (this.getScreen() != null) {

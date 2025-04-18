@@ -27,7 +27,7 @@ public class GameWorld implements Disposable, InputProcessor {
     private final Vector2 cameraVelocity = new Vector2(0f, 0f);
 
     // Zoom
-    private float zoom = 1f;
+    private float targetZoom = 1f;
     private static final float ZOOM_AMOUNT = 0.2f;
     private static final float ZOOM_SPEED = 5f;
     private static final float ZOOM_MIN = 0.5f;
@@ -120,10 +120,19 @@ public class GameWorld implements Disposable, InputProcessor {
 
         // Set screen
         this.screen = screen;
+
+        // Initialize camera zoom
+        updateTargetZoom(targetZoom);
+        syncZoom();
     }
 
     public Simulation getSimulation() { return this.sim; }
 
+    /**
+     * Sets a new `Simulation` instance to the game world. Updates everything in the world.
+     *
+     * @param sim is the new `Simulation` instance to set.
+     */
     public void setSimulation(Simulation sim) {
         this.sim = sim;
         World world = sim.getWorld();
@@ -131,6 +140,9 @@ public class GameWorld implements Disposable, InputProcessor {
 
         // Resize the grid
         grid.resize(tileMap.getWidth(), tileMap.getHeight());
+
+        // Sync camera zoom instantly
+        syncZoom();
 
         // Release actors associated with the previous simulation
         buildingActors.clear();
@@ -159,8 +171,36 @@ public class GameWorld implements Disposable, InputProcessor {
         }
     }
 
+    /**
+     * Gets the current logger instance used by the `GameWorld` instance.
+     *
+     * @return the current logger instance used by the `GameWorld` instance.
+     */
     public Logger getLogger() { return this.logger; }
+
+    /**
+     * Sets a new logger for the `GameWorld` instance.
+     *
+     * @param logger is the new logger.
+     */
     public void setLogger(Logger logger) { this.logger = logger; }
+
+    /**
+     * Update target zoom to a new value while making sure it won't exceed bounds.
+     *
+     * @param newZoom is the new target zoom.
+     */
+    private void updateTargetZoom(float newZoom) {
+        newZoom = MathUtils.clamp(newZoom, ZOOM_MIN, ZOOM_MAX);
+        targetZoom = Math.min(newZoom, calculateZoomLimit());
+    }
+
+    /**
+     * Sync camera zoom to target zoom instantly.
+     */
+    private void syncZoom() {
+        camera.zoom = targetZoom;
+    }
 
     /**
      * Splits a texture into frames based on frame dimension, then creates an animation from it.
@@ -198,7 +238,7 @@ public class GameWorld implements Disposable, InputProcessor {
      */
     public void update(SpriteBatch spriteBatch, float dt) {
         // Zoom
-        camera.zoom = MathUtils.lerp(camera.zoom, zoom, ZOOM_SPEED * dt);
+        camera.zoom = MathUtils.lerp(camera.zoom, targetZoom, ZOOM_SPEED * dt);
 
         // Handle camera movement
         handleCameraMovement(dt);
@@ -234,7 +274,7 @@ public class GameWorld implements Disposable, InputProcessor {
         } else if (isHoldingRight) {
             cameraVelocity.x = 1f;
         }
-        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * zoom * dt);
+        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * targetZoom * dt);
         camera.position.add(cameraVelocity.x, cameraVelocity.y, 0f);
 
         // Invoke mouse movement event if camera is moved
@@ -268,7 +308,12 @@ public class GameWorld implements Disposable, InputProcessor {
     }
 
 
-
+    /**
+     * Converts a position on the screen to where it is in the world.
+     *
+     * @param screenPos is the screen position to convert.
+     * @return converted world position of the screen position.
+     */
     private Vector2 screenToWorld(Vector2 screenPos) {
         viewport.unproject(screenPos);
         return screenPos;
@@ -445,6 +490,12 @@ public class GameWorld implements Disposable, InputProcessor {
         actorizePath(path);
     }
 
+    /**
+     * Gets the building actor at a certain coordinate.
+     *
+     * @param c is the coordinate to get the actor.
+     * @return the building actor instance at that coordinate or null.
+     */
     public BuildingActor getBuildingAt(Coordinate c) {
         return buildingMap.get(c);
     }
@@ -452,8 +503,9 @@ public class GameWorld implements Disposable, InputProcessor {
 
 
     public interface Phase {
-        void onClick(Coordinate c);
-        void onEnter();
+        default void onClick(Coordinate c) { }
+        default void onRelease(Coordinate c) { }
+        default void onEnter() { }
     }
 
     public class DefaultPhase implements Phase {
@@ -558,6 +610,18 @@ public class GameWorld implements Disposable, InputProcessor {
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
 
+        private void onConnect(Coordinate c) {
+            // Get destination
+            BuildingActor to = getBuildingAt(c);
+            if (to == null) {
+                return;
+            }
+
+            // Try to connect
+            connectPath(from, to);
+            enterDefaultPhase(); // Connected successfully, resume to default phase
+        }
+
         @Override
         public void onClick(Coordinate c) {
             try {
@@ -570,15 +634,25 @@ public class GameWorld implements Disposable, InputProcessor {
                     return; // Intentional. If clicked on a coordinate with no building, do nothing
                 }
 
-                // Get destination
-                BuildingActor to = getBuildingAt(c);
-                if (to == null) {
+                // Try to connect to the coordinate
+                onConnect(c);
+            } catch (Exception e) {
+                // Log error and resume back to default phase on error
+                logger.log(e.getMessage());
+                enterDefaultPhase();
+            }
+        }
+
+        @Override
+        public void onRelease(Coordinate c) {
+            try {
+                // Ignore if no source or release coordinate is where source is
+                if (from == null || from.getBuilding().getLocation().equals(c)) {
                     return;
                 }
 
-                // Try to connect
-                connectPath(from, to);
-                enterDefaultPhase(); // Connected successfully, resume to default phase
+                // Try to connect to the coordinate
+                onConnect(c);
             } catch (Exception e) {
                 // Log error and resume back to default phase on error
                 logger.log(e.getMessage());
@@ -704,7 +778,15 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false;
+        if (button == Input.Buttons.LEFT) {
+            // Get coordinate based on touch screen position
+            Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
+            Coordinate c = worldToCoordinate(pos);
+
+            // Invoke current phase's `onRelease` event
+            phase.onRelease(c);
+        }
+        return true;
     }
 
     @Override
@@ -714,7 +796,7 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        return false;
+        return mouseMoved(screenX, screenY);
     }
 
     private int mouseScreenX = 0;
@@ -732,8 +814,19 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        zoom += amountY * ZOOM_AMOUNT;
-        zoom = MathUtils.clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+        updateTargetZoom(targetZoom + amountY * ZOOM_AMOUNT);
         return true;
+    }
+
+    /**
+     * Calculates a zoom limit based on the grid size and viewport size.
+     * A zoom limit is the maximum zoom that makes sure all grid is shown while no out-of-bound is visible.
+     *
+     * @return the camera zoom limit.
+     */
+    private float calculateZoomLimit() {
+        float zoomMaxX = grid.getWidth() / viewport.getWorldWidth();
+        float zoomMaxY = grid.getHeight() / viewport.getWorldHeight();
+        return Math.min(zoomMaxX, zoomMaxY);
     }
 }
