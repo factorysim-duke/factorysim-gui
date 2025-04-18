@@ -42,6 +42,7 @@ public class GameWorld implements Disposable, InputProcessor {
     private final Texture mineTexture;
     private final Texture factoryTexture;
     private final Texture storageTexture;
+    private final Texture itemTexture;
     private final Texture pathTexture;
     private final Texture pathCrossTexture;
     private final Texture selectTexture;
@@ -91,6 +92,7 @@ public class GameWorld implements Disposable, InputProcessor {
         this.mineTexture = new Texture("mine.png");
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
+        this.itemTexture = new Texture("item.png");
         this.pathTexture = new Texture("path.png");
         this.pathCrossTexture = new Texture("path_cross.png");
         this.selectTexture = new Texture("select.png");
@@ -244,17 +246,24 @@ public class GameWorld implements Disposable, InputProcessor {
         handleCameraMovement(dt);
 
         // Draw background grid
-        grid.draw(spriteBatch);
-
-        // Draw paths
-        pathAnimator.step(dt);
-        for (Tuple<PathActor, Path> tuple : pathPairs) {
-            tuple.first().draw(spriteBatch);
-        }
+        grid.drawGrid(spriteBatch);
 
         // Draw buildings
         for (BuildingActor building : buildingActors) {
             building.draw(spriteBatch);
+        }
+
+        // Draw paths
+        pathAnimator.step(dt);
+        for (Tuple<PathActor, Path> tuple : pathPairs) {
+            tuple.first().drawPaths(spriteBatch);
+        }
+
+        // TODO: Draw items
+
+        // Draw crossing paths
+        for (Tuple<PathActor, Path> tuple : pathPairs) {
+            tuple.first().drawCrosses(spriteBatch);
         }
 
         // Draw grid selection box
@@ -297,6 +306,7 @@ public class GameWorld implements Disposable, InputProcessor {
         mineTexture.dispose();
         factoryTexture.dispose();
         storageTexture.dispose();
+        itemTexture.dispose();
         pathTexture.dispose();
         pathCrossTexture.dispose();
         selectTexture.dispose();

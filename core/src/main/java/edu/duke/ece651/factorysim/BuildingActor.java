@@ -32,7 +32,6 @@ public class BuildingActor extends Actor2D {
         this.animator = new Animator<>(animation, true);
     }
 
-    @Override
     public void draw(SpriteBatch spriteBatch) {
         animator.step(Gdx.graphics.getDeltaTime());
         spriteBatch.draw(animator.getCurrentKeyFrame(), position.x, position.y);
