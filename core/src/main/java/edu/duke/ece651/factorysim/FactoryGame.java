@@ -220,7 +220,7 @@ public class FactoryGame extends Game {
 
         // Update real-time simulation
         if (realTimeEnabled) {
-            int stepsExecuted = realTimeSimulation.update(Gdx.graphics.getDeltaTime());
+            // int stepsExecuted = realTimeSimulation.update(Gdx.graphics.getDeltaTime());
 
             // Log steps executed for debug
             // if (stepsExecuted > 0) {

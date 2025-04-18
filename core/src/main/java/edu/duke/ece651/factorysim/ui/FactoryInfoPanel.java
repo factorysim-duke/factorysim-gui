@@ -1,7 +1,6 @@
 package edu.duke.ece651.factorysim.ui;
 
 import com.badlogic.gdx.graphics.Color;
-import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.FactoryBuilding;
 import edu.duke.ece651.factorysim.Recipe;
