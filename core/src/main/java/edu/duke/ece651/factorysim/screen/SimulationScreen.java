@@ -9,9 +9,8 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 
@@ -47,14 +46,14 @@ public class SimulationScreen implements Screen {
     private FileChooser createFileChooser;
     private FileChooser saveFileChooser;
     private RealTimeMenu realTimeMenu;
-    
+
     public SimulationScreen(FactoryGame game) {
         this.game = game;
     }
 
     @Override
     public void show() {
-        stage = new Stage(new ScreenViewport());
+        stage = new Stage(new FitViewport(1600, 900));
         game.addInputProcessor(stage);
         // Gdx.input.setInputProcessor(stage);
 
@@ -96,14 +95,14 @@ public class SimulationScreen implements Screen {
                 topBar.updateStepCount(currentStep);
             }
         });
-        
+
         // Initialize real-time menu
         realTimeMenu = new RealTimeMenu(game);
-        
+
         // Create new Real-time button for bottom left corner
         VisTextButton realTimeButton = new VisTextButton("Real-time", "blue");
         realTimeButton.pad(5, 10, 5, 10);
-        
+
         // Add listener for real-time button
         realTimeButton.addListener(new ClickListener() {
             @Override
@@ -154,7 +153,7 @@ public class SimulationScreen implements Screen {
 
         // add all panels to root
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
-        root.add(logPanel).width(200).height(Gdx.graphics.getHeight() * 0.6f).top().pad(10);
+        root.add(logPanel).width(200).height(500f).top().pad(10);
         root.add().expand().fill();  // center space (for map, etc.)
 
         VisTable rightCol = new VisTable();
@@ -164,7 +163,7 @@ public class SimulationScreen implements Screen {
         root.add(rightCol).width(240).top().padTop(10).padRight(10).padBottom(10).expandY().fillY().row();
 
         // Add real-time button to bottom left
-        root.add(realTimeButton).left().padLeft(65).padBottom(160);
+        root.add(realTimeButton).left().padLeft(65).padBottom(280);
         root.add().expand();
         root.add(controlPanel).bottom().right().pad(10);
     }
@@ -363,7 +362,9 @@ public class SimulationScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
+        if (stage != null) {
+            stage.getViewport().update(width, height, true);
+        }
     }
 
     @Override
