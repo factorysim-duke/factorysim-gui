@@ -274,7 +274,7 @@ public class GameWorld implements Disposable, InputProcessor {
         } else if (isHoldingRight) {
             cameraVelocity.x = 1f;
         }
-        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * targetZoom * dt);
+        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * camera.zoom * dt);
         camera.position.add(cameraVelocity.x, cameraVelocity.y, 0f);
 
         // Invoke mouse movement event if camera is moved
