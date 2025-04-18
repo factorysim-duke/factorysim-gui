@@ -15,7 +15,7 @@ import java.util.*;
  * Represents a central game world manager that manages resources and other actors.
  * Instances need to be explicitly disposed with `dispose` method after use.
  */
-public class GameWorld implements Disposable, InputProcessor {
+public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     // Dimension
     private final int cellSize;
 
@@ -63,6 +63,7 @@ public class GameWorld implements Disposable, InputProcessor {
     private final List<BuildingActor> buildingActors = new ArrayList<>();
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
     private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
+    private final List<DeliveryActor> deliveries = new ArrayList<>();
 
     // Screen
     private final SimulationScreen screen;
@@ -115,6 +116,7 @@ public class GameWorld implements Disposable, InputProcessor {
         // Create empty world and simulation
         this.logger = logger;
         this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
+        this.sim.deliverySchedule.subscribe(this);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
@@ -136,7 +138,12 @@ public class GameWorld implements Disposable, InputProcessor {
      * @param sim is the new `Simulation` instance to set.
      */
     public void setSimulation(Simulation sim) {
+        // Unsubscribe as a listener from the previous simulation
+        this.sim.getDeliverySchedule().unsubscribe(this);
+
+        // Set new simulation
         this.sim = sim;
+        this.sim.getDeliverySchedule().subscribe(this);
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
 
@@ -259,7 +266,10 @@ public class GameWorld implements Disposable, InputProcessor {
             tuple.first().drawPaths(spriteBatch);
         }
 
-        // TODO: Draw items
+        // Draw items
+        for (DeliveryActor delivery : deliveries) {
+            delivery.draw(spriteBatch);
+        }
 
         // Draw crossing paths
         for (Tuple<PathActor, Path> tuple : pathPairs) {
@@ -475,6 +485,12 @@ public class GameWorld implements Disposable, InputProcessor {
         return buildBuilding(factory, storageAnimation, coordinate);
     }
 
+    /**
+     * Takes an existing path and creates an actor from it.
+     *
+     * @param path is the path instance to be an actor.
+     * @return constructed `PathActor` instance.
+     */
     private PathActor actorizePath(Path path) {
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
@@ -509,7 +525,6 @@ public class GameWorld implements Disposable, InputProcessor {
     public BuildingActor getBuildingAt(Coordinate c) {
         return buildingMap.get(c);
     }
-
 
 
     public interface Phase {
@@ -838,5 +853,15 @@ public class GameWorld implements Disposable, InputProcessor {
         float zoomMaxX = grid.getWidth() / viewport.getWorldWidth();
         float zoomMaxY = grid.getHeight() / viewport.getWorldHeight();
         return Math.min(zoomMaxX, zoomMaxY);
+    }
+
+    @Override
+    public void onDeliveryAdded(Delivery delivery) {
+        deliveries.add(new DeliveryActor(delivery, itemTexture, this::coordinateToWorld));
+    }
+
+    @Override
+    public void onDeliveryFinished(Delivery delivery) {
+        deliveries.removeIf((d) -> d.getDelivery() == delivery);
     }
 }

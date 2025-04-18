@@ -43,11 +43,12 @@ public class PathActorTest {
         Texture cross = mock(Texture.class);
 
         // Mock sprite batch
-        SpriteBatch batch = mock(SpriteBatch.class);
+        SpriteBatch spriteBatch = mock(SpriteBatch.class);
 
         PathActor actor = new PathActor(path, tileMap, animator, cross,
             c -> new Vector2(c.getX() * 16f, c.getY() * 16f));
-        actor.draw(batch);
+        actor.drawPaths(spriteBatch);
+        actor.drawCrosses(spriteBatch);
     }
 
     @Test

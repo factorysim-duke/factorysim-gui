@@ -242,11 +242,7 @@ public class FactoryGame extends Game {
 
     @Override
     public void dispose() {
-        // Stop real-time simulation before disposing
-        if (realTimeEnabled) {
-            stopRealTimeSimulation();
-        }
-
+        // Dispose memory and GPU resources
         spriteBatch.dispose();
         world.dispose();
         if (this.getScreen() != null) {
