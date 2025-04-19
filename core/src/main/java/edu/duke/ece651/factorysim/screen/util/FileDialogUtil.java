@@ -1,4 +1,4 @@
-package edu.duke.ece651.factorysim.util;
+package edu.duke.ece651.factorysim.screen.util;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;

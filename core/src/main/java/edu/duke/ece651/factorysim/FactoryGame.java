@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.*;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
-import edu.duke.ece651.factorysim.util.PanelLogger;
+import edu.duke.ece651.factorysim.screen.util.PanelLogger;
 
 /**
  * Represents a libGDX game application of factorysim.

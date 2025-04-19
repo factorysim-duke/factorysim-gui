@@ -1,13 +1,12 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
-import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.widget.*;
 
 public class TopBar extends VisTable {
     private VisLabel stepCountLabel;
     private VisTextButton saveButton;
     private VisTextButton loadButton;
-    
+
     public TopBar(int initialStep) {
         super();
         init(initialStep);

@@ -1,38 +1,32 @@
+// Base SimulationScreen class with reduced responsibilities
 package edu.duke.ece651.factorysim.screen;
 
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
-
+import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.FactoryGame;
-import edu.duke.ece651.factorysim.ui.style.UIButtonStyle;
-import edu.duke.ece651.factorysim.ui.style.UISelectBoxStyle;
-import edu.duke.ece651.factorysim.ui.TopBar;
-import edu.duke.ece651.factorysim.ui.LogPanel;
-import edu.duke.ece651.factorysim.ui.InfoPanel;
-import edu.duke.ece651.factorysim.ui.ControlPanel;
-import edu.duke.ece651.factorysim.util.FileDialogUtil;
-import edu.duke.ece651.factorysim.util.PanelLogger;
-import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.Building;
-import edu.duke.ece651.factorysim.FactoryBuilding;
-import edu.duke.ece651.factorysim.MineBuilding;
-import edu.duke.ece651.factorysim.ui.BuildingInfoPanelFactory;
-import edu.duke.ece651.factorysim.ui.FactoryInfoPanel;
-import edu.duke.ece651.factorysim.ui.MineInfoPanel;
-import edu.duke.ece651.factorysim.ui.StorageInfoPanel;
-import edu.duke.ece651.factorysim.ui.RealTimeMenu;
+import edu.duke.ece651.factorysim.screen.ui.ControlPanel;
+import edu.duke.ece651.factorysim.screen.ui.InfoPanel;
+import edu.duke.ece651.factorysim.screen.ui.InfoPanelManager;
+import edu.duke.ece651.factorysim.screen.ui.LogPanel;
+import edu.duke.ece651.factorysim.screen.ui.RealTimeMenu;
+import edu.duke.ece651.factorysim.screen.ui.RequestDialogManager;
+import edu.duke.ece651.factorysim.screen.ui.TopBar;
+import edu.duke.ece651.factorysim.screen.ui.UIInitializer;
+import edu.duke.ece651.factorysim.screen.util.FileDialogUtil;
+import edu.duke.ece651.factorysim.screen.util.PanelLogger;
+import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
 
 public class SimulationScreen implements Screen {
     private Stage stage;
-    private FactoryGame game;
+    private final FactoryGame game;
     private TopBar topBar;
     private LogPanel logPanel;
     private VisTable infoPanelContainer;
@@ -43,6 +37,12 @@ public class SimulationScreen implements Screen {
     private FileChooser saveFileChooser;
     private RealTimeMenu realTimeMenu;
 
+    // New components for better SOLID compliance
+    private InfoPanelManager infoPanelManager;
+    private RequestDialogManager requestDialogManager;
+    private UIInitializer uiInitializer;
+    private UIEventListenerFactory listenerFactory;
+
     public SimulationScreen(FactoryGame game) {
         this.game = game;
     }
@@ -51,305 +51,111 @@ public class SimulationScreen implements Screen {
     public void show() {
         stage = new Stage(new FitViewport(1600, 900));
         game.addInputProcessor(stage);
-        // Gdx.input.setInputProcessor(stage);
 
-        // Load VisUI
-        if (!VisUI.isLoaded()) {
-            VisUI.load();
-        }
+        initializeUI();
+        setupLayout();
+        attachEventListeners();
+    }
 
-        // Register custom UI styles
-        UIButtonStyle.registerCustomStyles();
-        UISelectBoxStyle.registerCustomStyles();
+    private void initializeUI() {
+        // Initialize UI helper components
+        uiInitializer = new UIInitializer();
+        listenerFactory = new UIEventListenerFactory(game);
+        infoPanelManager = new InfoPanelManager();
+        requestDialogManager = new RequestDialogManager(game, stage);
 
-        // Use the refactored utility method to create a FileChooser
+        // Initialize UI components
+        uiInitializer.initializeVisUI();
+        uiInitializer.registerCustomStyles();
+
+        // Create file choosers
         createFileChooser = FileDialogUtil.createFileChooser(game);
         saveFileChooser = FileDialogUtil.saveFileChooser(game);
 
-        // Create the root layout
+        // Create UI panels
+        topBar = new TopBar(currentStep);
+        logPanel = new LogPanel();
+        infoPanelContainer = new VisTable();
+        infoPanelContainer.setVisible(false);
+        controlPanel = new ControlPanel();
+        realTimeMenu = new RealTimeMenu(game);
+
+        // Set up logging
+        game.setLogger(new PanelLogger(logPanel));
+    }
+
+    private void setupLayout() {
+        // Create root layout
         VisTable root = new VisTable();
         root.setFillParent(true);
         stage.addActor(root);
 
-        // Initialize top bar
-        topBar = new TopBar(currentStep);
-        topBar.getLoadButton().addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                // Display file chooser
-                stage.addActor(createFileChooser.fadeIn());
-                currentStep = game.getCurrentStep();
-                topBar.updateStepCount(currentStep);
-            }
-        });
-
-        topBar.getSaveButton().addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                stage.addActor(saveFileChooser.fadeIn());
-                currentStep = game.getCurrentStep();
-                topBar.updateStepCount(currentStep);
-            }
-        });
-
-        // Initialize real-time menu
-        realTimeMenu = new RealTimeMenu(game);
-
-        // Create new Real-time button for bottom left corner
-        VisTextButton realTimeButton = new VisTextButton("Real-time", "blue");
-        realTimeButton.pad(5, 10, 5, 10);
-
-        // Add listener for real-time button
-        realTimeButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                // Update button state to ensure it's showing the correct text
-                realTimeMenu.updateButtonState();
-                // Show dropdown at the bottom left position
-                realTimeMenu.showMenu(stage, realTimeButton);
-            }
-        });
-
-        // Initialize other UI panels
-        logPanel = new LogPanel();
-        logPanel.getVerbosityBox().addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setVerbosity(Integer.parseInt(logPanel.getVerbosityBox().getSelected()));
-            }
-        });
-        game.setLogger(new PanelLogger(logPanel));
-
-        // Initialize info panel
-        infoPanelContainer = new VisTable();
-        infoPanelContainer.setVisible(false);
-
-        // Initialize control panel
-        controlPanel = new ControlPanel();
-        controlPanel.getStepButton().addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                int stepsToMove = controlPanel.getStepCount();
-                game.step(stepsToMove);
-                currentStep = game.getCurrentStep();
-                topBar.updateStepCount(currentStep);
-                // TODO: hide info panel test, remove later
-                hideInfoPanel();
-            }
-        });
-
-        controlPanel.getFinishButton().addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                game.finish();
-                currentStep = game.getCurrentStep();
-                topBar.updateStepCount(currentStep);
-            }
-        });
-
-        // add all panels to root
+        // Top bar
         root.add(topBar).colspan(3).expandX().fillX().pad(10).row();
-        root.add(logPanel).width(200).height(500f).top().pad(10);
-        root.add().expand().fill();  // center space (for map, etc.)
 
+        // Left panel (log panel)
+        root.add(logPanel).width(200).height(500f).top().pad(10);
+
+        // Center space
+        root.add().expand().fill();
+
+        // Right panel (info panel)
         VisTable rightCol = new VisTable();
         rightCol.top().padTop(10).padRight(10);
         rightCol.add(infoPanelContainer).top().width(220);
-
         root.add(rightCol).width(240).top().padTop(10).padRight(10).padBottom(10).expandY().fillY().row();
 
-        // Add real-time button to bottom left
+        // Bottom bar
+        VisTextButton realTimeButton = new VisTextButton("Real-time", "blue");
+        realTimeButton.pad(5, 10, 5, 10);
         root.add(realTimeButton).left().padLeft(65).padBottom(280);
         root.add().expand();
         root.add(controlPanel).bottom().right().pad(10);
+
+        // Add real-time button listener
+        realTimeButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                realTimeMenu.updateButtonState();
+                realTimeMenu.showMenu(stage, realTimeButton);
+            }
+        });
+    }
+
+    private void attachEventListeners() {
+        // Top bar listeners
+        topBar.getLoadButton().addListener(listenerFactory.createLoadButtonListener(stage, createFileChooser, topBar));
+        topBar.getSaveButton().addListener(listenerFactory.createSaveButtonListener(stage, saveFileChooser, topBar));
+
+        // Log panel listeners
+        logPanel.getVerbosityBox().addListener(listenerFactory.createVerbosityChangeListener(game));
+
+        // Control panel listeners
+        controlPanel.getStepButton().addListener(listenerFactory.createStepButtonListener(game, controlPanel, this));
+        controlPanel.getFinishButton().addListener(listenerFactory.createFinishButtonListener(game, topBar));
     }
 
     public void showBuildingInfo(Building building) {
-        if (currentInfoPanel != null) {
-            currentInfoPanel.remove();
-        }
+        currentInfoPanel = infoPanelManager.showBuildingInfo(building, infoPanelContainer, requestDialogManager);
 
-        currentInfoPanel = BuildingInfoPanelFactory.createInfoPanel(building);
-        infoPanelContainer.clear();
-        infoPanelContainer.add(currentInfoPanel).expand().fill().top().left().pad(5);
-        infoPanelContainer.setVisible(true);
-
-        if (currentInfoPanel instanceof FactoryInfoPanel) {
-            ((FactoryInfoPanel) currentInfoPanel).getNewRequestButton().addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    showRequestDialog();
-                }
-            });
-
-            ((FactoryInfoPanel) currentInfoPanel).getRequestPolicyBox().addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    String selectedPolicy = ((FactoryInfoPanel) currentInfoPanel).getRequestPolicyBox().getSelected().toLowerCase();
-                    String buildingName = building.getName();
-                    game.setPolicy("request", selectedPolicy, buildingName);
-                    System.out.println("Setting policy to " + selectedPolicy + " for building " + buildingName);
-                }
-            });
-
-            ((FactoryInfoPanel) currentInfoPanel).getSourcePolicyBox().addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    String selectedPolicy = ((FactoryInfoPanel) currentInfoPanel).getSourcePolicyBox().getSelected().toLowerCase();
-                    String buildingName = building.getName();
-                    game.setPolicy("source", selectedPolicy, buildingName);
-                    System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
-                }
-            });
-        } else if (currentInfoPanel instanceof MineInfoPanel) {
-            ((MineInfoPanel) currentInfoPanel).getNewRequestButton().addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    showRequestDialog();
-                }
-            });
-
-            ((MineInfoPanel) currentInfoPanel).getRequestPolicyBox().addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    String selectedPolicy = ((MineInfoPanel) currentInfoPanel).getRequestPolicyBox().getSelected().toLowerCase();
-                    String buildingName = building.getName();
-                    game.setPolicy("request", selectedPolicy, buildingName);
-                    System.out.println("Setting policy to " + selectedPolicy + " for building " + buildingName);
-                }
-            });
-
-            ((MineInfoPanel) currentInfoPanel).getSourcePolicyBox().addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    String selectedPolicy = ((MineInfoPanel) currentInfoPanel).getSourcePolicyBox().getSelected().toLowerCase();
-                    String buildingName = building.getName();
-                    game.setPolicy("source", selectedPolicy, buildingName);
-                    System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
-                }
-            });
-        } else if (currentInfoPanel instanceof StorageInfoPanel) {
-            ((StorageInfoPanel) currentInfoPanel).getNewRequestButton().addListener(new ClickListener() {
-                @Override
-                public void clicked(InputEvent event, float x, float y) {
-                    showRequestDialog();
-                }
-            });
-
-            ((StorageInfoPanel) currentInfoPanel).getRequestPolicyBox().addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    String selectedPolicy = ((StorageInfoPanel) currentInfoPanel).getRequestPolicyBox().getSelected().toLowerCase();
-                    String buildingName = building.getName();
-                    game.setPolicy("request", selectedPolicy, buildingName);
-                    System.out.println("Setting policy to " + selectedPolicy + " for building " + buildingName);
-                }
-            });
-
-            ((StorageInfoPanel) currentInfoPanel).getSourcePolicyBox().addListener(new ChangeListener() {
-                @Override
-                public void changed(ChangeEvent event, Actor actor) {
-                    String selectedPolicy = ((StorageInfoPanel) currentInfoPanel).getSourcePolicyBox().getSelected().toLowerCase();
-                    String buildingName = building.getName();
-                    game.setPolicy("source", selectedPolicy, buildingName);
-                    System.out.println("Setting source policy to " + selectedPolicy + " for building " + buildingName);
-                }
-            });
-        }
+        // Attach policy listeners - delegates to the InfoPanelManager
+        infoPanelManager.attachPolicyListeners(currentInfoPanel, building, game);
     }
 
     public void hideInfoPanel() {
         infoPanelContainer.setVisible(false);
     }
 
-
-    /**
-     * Shows a dialog for creating a new request
-     */
-    private void showRequestDialog() {
-        if (currentInfoPanel == null) {
-            return;
-        }
-
-        final Building currentBuilding;
-        if (currentInfoPanel instanceof FactoryInfoPanel) {
-            currentBuilding = ((FactoryInfoPanel) currentInfoPanel).getBuilding();
-        } else if (currentInfoPanel instanceof MineInfoPanel) {
-            currentBuilding = ((MineInfoPanel) currentInfoPanel).getBuilding();
-        } else if (currentInfoPanel instanceof StorageInfoPanel) {
-            currentBuilding = ((StorageInfoPanel) currentInfoPanel).getBuilding();
-        } else {
-            return;
-        }
-
-        // create the dropdown for item selection
-        final VisSelectBox<String> itemSelectBox = new VisSelectBox<>();
-        String[] items;
-        if (currentBuilding instanceof FactoryBuilding) {
-            items = ((FactoryBuilding) currentBuilding).getFactoryType().getRecipes().stream()
-                    .map(r -> r.getOutput().getName())
-                    .toArray(String[]::new);
-        } else if (currentBuilding instanceof MineBuilding) {
-            items = new String[]{((MineBuilding) currentBuilding).getResource().getName()};
-        } else {
-            return;
-        }
-        itemSelectBox.setItems(items);
-
-        // create the dialog
-        VisDialog dialog = new VisDialog("Request items") {
-            @Override
-            protected void result(Object obj) {
-                if (Boolean.TRUE.equals(obj)) {
-                    String selectedItem = itemSelectBox.getSelected();
-                    game.makeUserRequest(selectedItem, currentBuilding.getName());
-                }
-                this.hide();
-            }
-        };
-
-        // create a container for the dialog content
-        VisTable contentTable = new VisTable();
-        contentTable.pad(10);
-
-        // create the text components
-        VisLabel selectLabel = new VisLabel("Request '");
-        VisLabel singleQuote = new VisLabel("'");
-        VisLabel fromLabel = new VisLabel(" from '" + currentBuilding.getName() + "'");
-
-        // add components to the dialog
-        contentTable.add(selectLabel).padRight(0);
-        contentTable.add(itemSelectBox).padRight(0).width(80);
-        contentTable.add(singleQuote).padRight(0);
-        contentTable.add(fromLabel);
-
-        // add buttons
-        dialog.getButtonsTable().defaults().pad(2, 10, 2, 10);
-        dialog.button("Cancel", false);
-        dialog.button("OK", true);
-
-        // set content and configure dialog
-        dialog.getContentTable().add(contentTable).pad(10);
-        dialog.setModal(true);
-        dialog.setMovable(false);
-        dialog.setResizable(false);
-        dialog.pack();
-        dialog.centerWindow();
-
-        // show the dialog
-        dialog.show(stage);
+    public void updateStepCount() {
+        currentStep = game.getCurrentStep();
+        topBar.updateStepCount(currentStep);
     }
-
 
     @Override
     public void render(float delta) {
-//        Gdx.gl.glClearColor(0.9f, 0.9f, 0.9f, 1);
-//        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         // Update step count display if it has changed (for real-time simulation)
         if (game.getCurrentStep() != currentStep) {
-            currentStep = game.getCurrentStep();
-            topBar.updateStepCount(currentStep);
+            updateStepCount();
         }
 
         stage.act(delta);

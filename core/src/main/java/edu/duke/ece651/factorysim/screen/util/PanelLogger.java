@@ -1,7 +1,8 @@
-package edu.duke.ece651.factorysim.util;
+package edu.duke.ece651.factorysim.screen.util;
 
 import edu.duke.ece651.factorysim.Logger;
-import edu.duke.ece651.factorysim.ui.LogPanel;
+import edu.duke.ece651.factorysim.screen.ui.LogPanel;
+
 import com.badlogic.gdx.Gdx;
 
 public class PanelLogger implements Logger {

@@ -1,15 +1,15 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.widget.*;
-import edu.duke.ece651.factorysim.StorageBuilding;
+import edu.duke.ece651.factorysim.MineBuilding;
 import edu.duke.ece651.factorysim.Building;
 
-public class StorageInfoPanel extends InfoPanel {
-    private final StorageBuilding building;
+public class MineInfoPanel extends InfoPanel {
+    private final MineBuilding building;
     private final VisLabel buildingLabel;
-    private final VisLabel capacityLabel;
-    private final VisLabel currentLoadLabel;
+    private final VisLabel resourceLabel;
+    private final VisLabel latencyLabel;
 
     private final VisLabel requestPolicyLabel;
     private final VisSelectBox<String> requestPolicyBox;
@@ -19,11 +19,11 @@ public class StorageInfoPanel extends InfoPanel {
 
     private final VisTextButton newRequestButton;
 
-    public StorageInfoPanel(StorageBuilding building) {
+    public MineInfoPanel(MineBuilding building) {
         super();
         this.building = building;
 
-        buildingLabel = new VisLabel("Storage: " + building.getName());
+        buildingLabel = new VisLabel("Mine: " + building.getName());
         buildingLabel.setColor(Color.BLACK);
         buildingLabel.setFontScale(1.2f);
         add(buildingLabel).left().padBottom(10).row();
@@ -32,7 +32,7 @@ public class StorageInfoPanel extends InfoPanel {
         requestPolicyLabel = new VisLabel("Request Policy:");
         requestPolicyLabel.setColor(Color.BLACK);
         requestPolicyBox = new VisSelectBox<>("blue");
-        requestPolicyBox.setItems("FIFO");
+        requestPolicyBox.setItems("FIFO", "READY", "SJF");
 
         VisTable requestPolicyRow = new VisTable(true);
         requestPolicyRow.add(requestPolicyLabel).left();
@@ -50,25 +50,25 @@ public class StorageInfoPanel extends InfoPanel {
         sourcePolicyRow.add(sourcePolicyBox).width(100).left();
         add(sourcePolicyRow).left().padBottom(10).row();
 
-        capacityLabel = new VisLabel();
-        capacityLabel.setColor(Color.DARK_GRAY);
+        resourceLabel = new VisLabel();
+        resourceLabel.setColor(Color.DARK_GRAY);
 
-        currentLoadLabel = new VisLabel();
-        currentLoadLabel.setColor(Color.DARK_GRAY);
+        latencyLabel = new VisLabel();
+        latencyLabel.setColor(Color.DARK_GRAY);
 
-        add(capacityLabel).left().padLeft(10).padTop(5).row();
-        add(currentLoadLabel).left().padLeft(10).padTop(5).row();
+        add(resourceLabel).left().padLeft(10).padTop(5).row();
+        add(latencyLabel).left().padLeft(10).padTop(5).row();
 
         // New request button
         newRequestButton = new VisTextButton("New Request", "blue");
-        // add(newRequestButton).fillX().height(32).padTop(15);
+        add(newRequestButton).fillX().height(32).padTop(15);
 
         updateData(building);
     }
 
-    public void updateData(StorageBuilding building) {
-        capacityLabel.setText("Capacity: " + building.getMaxCapacity());
-        currentLoadLabel.setText("Current Load: " + building.getCurrentStockNum());
+    public void updateData(MineBuilding building) {
+        resourceLabel.setText("Resource: " + building.getResource().getName());
+        latencyLabel.setText("Mining Latency: " + building.getMiningLatency());
     }
 
     public VisSelectBox<String> getRequestPolicyBox() {

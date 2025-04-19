@@ -1,4 +1,4 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import edu.duke.ece651.factorysim.Building;
 import edu.duke.ece651.factorysim.FactoryBuilding;
