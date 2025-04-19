@@ -6,10 +6,13 @@ import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 
 /**
- * A generic panel base class.
+ * Generic panel base class.
  */
 public class InfoPanel extends VisTable {
 
+    /**
+     * Constructor for the InfoPanel class.
+     */
     public InfoPanel() {
         super();
         setVisible(true);
@@ -25,6 +28,11 @@ public class InfoPanel extends VisTable {
 
     }
 
+    /**
+     * Get the new request button.
+     *
+     * @return the new request button
+     */
     public VisTextButton getNewRequestButton() {
         return null;
     }

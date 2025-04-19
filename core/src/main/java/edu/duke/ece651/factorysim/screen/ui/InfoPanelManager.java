@@ -7,10 +7,19 @@ import edu.duke.ece651.factorysim.screen.listeners.PolicyChangeListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
+/**
+ * Manager for info panels.
+ */
 public class InfoPanelManager {
 
+    /**
+     * Show the info panel for a building.
+     * @param building the building to show the info panel for
+     * @param infoPanelContainer the container for the info panel
+     * @param requestDialogManager the request dialog manager
+     * @return the info panel
+     */
     public InfoPanel showBuildingInfo(Building building, VisTable infoPanelContainer, RequestDialogManager requestDialogManager) {
-        // Create appropriate info panel for the building type
         InfoPanel infoPanel = BuildingInfoPanelFactory.createInfoPanel(building);
 
         // Update container
@@ -24,6 +33,12 @@ public class InfoPanelManager {
         return infoPanel;
     }
 
+    /**
+     * Attach the request button listener to the info panel.
+     * @param infoPanel the info panel
+     * @param building the building
+     * @param requestDialogManager the request dialog manager
+     */
     private void attachRequestButtonListener(InfoPanel infoPanel, Building building, RequestDialogManager requestDialogManager) {
         if (infoPanel instanceof FactoryInfoPanel) {
             ((FactoryInfoPanel) infoPanel).getNewRequestButton().addListener(new ClickListener() {
@@ -49,6 +64,12 @@ public class InfoPanelManager {
         }
     }
 
+    /**
+     * Attach the policy listeners to the info panel.
+     * @param infoPanel the info panel
+     * @param building the building
+     * @param game the game
+     */
     public void attachPolicyListeners(InfoPanel infoPanel, Building building, FactoryGame game) {
         // Use a factory to create appropriate policy listeners based on building type
         PolicyChangeListener policyListener = new PolicyChangeListener(game, building);

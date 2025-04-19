@@ -9,6 +9,9 @@ import edu.duke.ece651.factorysim.Building;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Factory info panel.
+ */
 public class FactoryInfoPanel extends InfoPanel {
     private final FactoryBuilding building;
     private final VisLabel buildingLabel;
@@ -23,8 +26,8 @@ public class FactoryInfoPanel extends InfoPanel {
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
 
-    /*
-     * FactoryInfoPanel constructor
+    /**
+     * Constructor for the FactoryInfoPanel class.
      *
      * @param building the factory building to display information for
      */
@@ -82,6 +85,11 @@ public class FactoryInfoPanel extends InfoPanel {
         updateData(building);
     }
 
+    /**
+     * Update the data for the factory info panel.
+     *
+     * @param building the factory building to display information for
+     */
     public void updateData(FactoryBuilding building) {
         List<Recipe> factoryRecipes = building.getFactoryType().getRecipes();
         String recipeNames = factoryRecipes.stream()
@@ -98,18 +106,38 @@ public class FactoryInfoPanel extends InfoPanel {
         queueLabel.setText("Request Queue: " + queueSize + " pending");
     }
 
+    /**
+     * Get the request policy box.
+     *
+     * @return the request policy box
+     */
     public VisSelectBox<String> getRequestPolicyBox() {
         return requestPolicyBox;
     }
 
+    /**
+     * Get the source policy box.
+     *
+     * @return the source policy box
+     */
     public VisSelectBox<String> getSourcePolicyBox() {
         return sourcePolicyBox;
     }
 
+    /**
+     * Get the new request button.
+     *
+     * @return the new request button
+     */
     public VisTextButton getNewRequestButton() {
         return newRequestButton;
     }
 
+    /**
+     * Get the building.
+     *
+     * @return the building
+     */
     public Building getBuilding() {
         return building;
     }

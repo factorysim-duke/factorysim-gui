@@ -5,20 +5,24 @@ import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.StorageBuilding;
 import edu.duke.ece651.factorysim.Building;
 
+/**
+ * Storage info panel.
+ */
 public class StorageInfoPanel extends InfoPanel {
     private final StorageBuilding building;
     private final VisLabel buildingLabel;
     private final VisLabel capacityLabel;
     private final VisLabel currentLoadLabel;
-
     private final VisLabel requestPolicyLabel;
     private final VisSelectBox<String> requestPolicyBox;
-
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
-
     private final VisTextButton newRequestButton;
 
+    /**
+     * Constructor for the StorageInfoPanel class.
+     * @param building the storage building to display information for
+     */
     public StorageInfoPanel(StorageBuilding building) {
         super();
         this.building = building;
@@ -66,23 +70,43 @@ public class StorageInfoPanel extends InfoPanel {
         updateData(building);
     }
 
+    /**
+     * Update the data for the storage info panel.
+     * @param building the storage building to display information for
+     */
     public void updateData(StorageBuilding building) {
         capacityLabel.setText("Capacity: " + building.getMaxCapacity());
         currentLoadLabel.setText("Current Load: " + building.getCurrentStockNum());
     }
 
+    /**
+     * Get the request policy box.
+     * @return the request policy box
+     */
     public VisSelectBox<String> getRequestPolicyBox() {
         return requestPolicyBox;
     }
 
+    /**
+     * Get the source policy box.
+     * @return the source policy box
+     */
     public VisSelectBox<String> getSourcePolicyBox() {
         return sourcePolicyBox;
     }
 
+    /**
+     * Get the new request button.
+     * @return the new request button
+     */
     public VisTextButton getNewRequestButton() {
         return newRequestButton;
     }
 
+    /**
+     * Get the building.
+     * @return the building
+     */
     public Building getBuilding() {
         return building;
     }

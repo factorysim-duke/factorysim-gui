@@ -24,6 +24,10 @@ import edu.duke.ece651.factorysim.screen.util.FileDialogUtil;
 import edu.duke.ece651.factorysim.screen.util.PanelLogger;
 import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
 
+/**
+ * This class is responsible for displaying the simulation screen and handling user input.
+ * It initializes the UI components and attaches event listeners to them.
+ */
 public class SimulationScreen implements Screen {
     private Stage stage;
     private final FactoryGame game;
@@ -37,12 +41,15 @@ public class SimulationScreen implements Screen {
     private FileChooser saveFileChooser;
     private RealTimeMenu realTimeMenu;
 
-    // New components for better SOLID compliance
     private InfoPanelManager infoPanelManager;
     private RequestDialogManager requestDialogManager;
     private UIInitializer uiInitializer;
     private UIEventListenerFactory listenerFactory;
 
+    /**
+     * Constructor for the SimulationScreen class.
+     * @param game is the FactoryGame instance
+     */
     public SimulationScreen(FactoryGame game) {
         this.game = game;
     }
@@ -57,6 +64,9 @@ public class SimulationScreen implements Screen {
         attachEventListeners();
     }
 
+    /**
+     * Initialize the UI components.
+     */
     private void initializeUI() {
         // Initialize UI helper components
         uiInitializer = new UIInitializer();
@@ -84,6 +94,10 @@ public class SimulationScreen implements Screen {
         game.setLogger(new PanelLogger(logPanel));
     }
 
+    /**
+     * Setup the layout of the simulation screen,
+     * including adding the top bar, log panel, and info panel to the screen.
+     */
     private void setupLayout() {
         // Create root layout
         VisTable root = new VisTable();
@@ -122,6 +136,9 @@ public class SimulationScreen implements Screen {
         });
     }
 
+    /**
+     * Attach event listeners to the UI components.
+     */
     private void attachEventListeners() {
         // Top bar listeners
         topBar.getLoadButton().addListener(listenerFactory.createLoadButtonListener(stage, createFileChooser, topBar));
@@ -135,6 +152,10 @@ public class SimulationScreen implements Screen {
         controlPanel.getFinishButton().addListener(listenerFactory.createFinishButtonListener(game, topBar));
     }
 
+    /**
+     * Show the building info panel.
+     * @param building is the building to show the info panel for
+     */
     public void showBuildingInfo(Building building) {
         currentInfoPanel = infoPanelManager.showBuildingInfo(building, infoPanelContainer, requestDialogManager);
 
@@ -142,15 +163,25 @@ public class SimulationScreen implements Screen {
         infoPanelManager.attachPolicyListeners(currentInfoPanel, building, game);
     }
 
+    /**
+     * Hide the info panel.
+     */
     public void hideInfoPanel() {
         infoPanelContainer.setVisible(false);
     }
 
+    /**
+     * Update the step count display.
+     */
     public void updateStepCount() {
         currentStep = game.getCurrentStep();
         topBar.updateStepCount(currentStep);
     }
 
+    /**
+     * Render the simulation screen.
+     * @param delta is the time since the last frame
+     */
     @Override
     public void render(float delta) {
         // Update step count display if it has changed (for real-time simulation)
@@ -162,6 +193,11 @@ public class SimulationScreen implements Screen {
         stage.draw();
     }
 
+    /**
+     * Resize the simulation screen.
+     * @param width is the width of the screen
+     * @param height is the height of the screen
+     */
     @Override
     public void resize(int width, int height) {
         if (stage != null) {
@@ -169,17 +205,29 @@ public class SimulationScreen implements Screen {
         }
     }
 
+    /**
+     * Pause the simulation.
+     */
     @Override
     public void pause() {}
 
+    /**
+     * Resume the simulation.
+     */
     @Override
     public void resume() {}
 
+    /**
+     * Hide the simulation screen.
+     */
     @Override
     public void hide() {
         dispose();
     }
 
+    /**
+     * Dispose of the simulation screen.
+     */
     @Override
     public void dispose() {
         stage.dispose();

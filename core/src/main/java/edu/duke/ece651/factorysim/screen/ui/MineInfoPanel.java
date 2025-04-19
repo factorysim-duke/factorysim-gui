@@ -5,20 +5,24 @@ import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.MineBuilding;
 import edu.duke.ece651.factorysim.Building;
 
+/**
+ * Mine info panel.
+ */
 public class MineInfoPanel extends InfoPanel {
     private final MineBuilding building;
     private final VisLabel buildingLabel;
     private final VisLabel resourceLabel;
     private final VisLabel latencyLabel;
-
     private final VisLabel requestPolicyLabel;
     private final VisSelectBox<String> requestPolicyBox;
-
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
-
     private final VisTextButton newRequestButton;
 
+    /**
+     * Constructor for the MineInfoPanel class.
+     * @param building the mine building to display information for
+     */
     public MineInfoPanel(MineBuilding building) {
         super();
         this.building = building;
@@ -66,23 +70,43 @@ public class MineInfoPanel extends InfoPanel {
         updateData(building);
     }
 
+    /**
+     * Update the data for the mine info panel.
+     * @param building the mine building to display information for
+     */
     public void updateData(MineBuilding building) {
         resourceLabel.setText("Resource: " + building.getResource().getName());
         latencyLabel.setText("Mining Latency: " + building.getMiningLatency());
     }
 
+    /**
+     * Get the request policy box.
+     * @return the request policy box
+     */
     public VisSelectBox<String> getRequestPolicyBox() {
         return requestPolicyBox;
     }
 
+    /**
+     * Get the source policy box.
+     * @return the source policy box
+     */
     public VisSelectBox<String> getSourcePolicyBox() {
         return sourcePolicyBox;
     }
 
+    /**
+     * Get the new request button.
+     * @return the new request button
+     */
     public VisTextButton getNewRequestButton() {
         return newRequestButton;
     }
 
+    /**
+     * Get the building.
+     * @return the building
+     */
     public Building getBuilding() {
         return building;
     }

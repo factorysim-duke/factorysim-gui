@@ -11,7 +11,7 @@ import com.kotcrab.vis.ui.widget.PopupMenu;
 import edu.duke.ece651.factorysim.FactoryGame;
 
 /**
- * A dropdown menu for real-time simulation controls.
+ * Dropdown menu for real-time simulation controls.
  */
 public class RealTimeMenu extends PopupMenu {
     private VisTextButton startPauseButton;

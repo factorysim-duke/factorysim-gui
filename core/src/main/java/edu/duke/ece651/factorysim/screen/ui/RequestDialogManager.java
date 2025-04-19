@@ -11,15 +11,27 @@ import edu.duke.ece651.factorysim.FactoryBuilding;
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.MineBuilding;
 
+/**
+ * Manager for request dialogs.
+ */
 public class RequestDialogManager {
     private final FactoryGame game;
     private final Stage stage;
 
+    /**
+     * Constructor for the RequestDialogManager class.
+     * @param game the game
+     * @param stage the stage
+     */
     public RequestDialogManager(FactoryGame game, Stage stage) {
         this.game = game;
         this.stage = stage;
     }
 
+    /**
+     * Show the request dialog for a building.
+     * @param building the building
+     */
     public void showRequestDialog(Building building) {
         // Get available items for this building
         String[] items = getAvailableItems(building);
@@ -38,6 +50,11 @@ public class RequestDialogManager {
         dialog.show(stage);
     }
 
+    /**
+     * Get the available items for a building.
+     * @param building the building
+     * @return the available items
+     */
     private String[] getAvailableItems(Building building) {
         if (building instanceof FactoryBuilding) {
             return ((FactoryBuilding) building).getFactoryType().getRecipes().stream()
@@ -49,6 +66,12 @@ public class RequestDialogManager {
         return null;
     }
 
+    /**
+     * Create the request dialog.
+     * @param building the building
+     * @param itemSelectBox the item select box
+     * @return the request dialog
+     */
     private VisDialog createRequestDialog(Building building, VisSelectBox<String> itemSelectBox) {
         VisDialog dialog = new VisDialog("Request items") {
             @Override
