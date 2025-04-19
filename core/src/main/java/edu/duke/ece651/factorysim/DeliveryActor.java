@@ -36,11 +36,34 @@ public class DeliveryActor extends Actor2D {
         this.delivery = delivery;
         this.texture = texture;
         this.coordinateToWorld = coordinateToWorld;
+
+        this.position.set(coordinateToWorld.apply(delivery.getCurrentCoordinate()));
+    }
+
+    private final Vector2 startPos = new Vector2();
+    private final Vector2 targetPos = new Vector2();
+    private float progress = 1f;
+    private float duration = 0f;
+
+    public void update(float dt, float stepsPerSecond) {
+        Vector2 newTarget = coordinateToWorld.apply(delivery.getCurrentCoordinate());
+
+        if (!newTarget.epsilonEquals(targetPos, 0.01f)) {
+            startPos.set(position);
+            targetPos.set(newTarget);
+            progress = 0f;
+            duration = 1f / stepsPerSecond;
+        }
+
+        progress = Math.min(progress + dt / duration, 1f);
+        position.set(startPos).lerp(targetPos, progress);
     }
 
     public void draw(SpriteBatch spriteBatch) {
-        Coordinate c = delivery.getCurrentCoordinate();
-        Vector2 pos = coordinateToWorld.apply(c);
-        spriteBatch.draw(texture, pos.x, pos.y);
+        spriteBatch.draw(texture, position.x, position.y);
+    }
+
+    public boolean hasArrived() {
+        return delivery.isArrive() && position.epsilonEquals(targetPos);
     }
 }

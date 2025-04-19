@@ -75,7 +75,7 @@ public class RealTimeSimulation {
         if (running) {
             paused = false;
             // Reset accumulated time to avoid executing too many steps at once
-            accumulatedTime = 0f;
+            // accumulatedTime = 0f;
         }
     }
 

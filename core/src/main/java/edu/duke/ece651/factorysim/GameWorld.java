@@ -285,8 +285,24 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             realTime.update(dt);
         }
 
+        // Update items
+        if (realTimeEnabled) {
+            if (!realTime.isPaused() && realTime.isRunning()) {
+                for (DeliveryActor delivery : deliveries) {
+                    delivery.update(dt, realTime.getSpeed());
+                }
+            }
+        } else {
+            for (DeliveryActor delivery : deliveries) {
+                delivery.update(dt, Float.MAX_VALUE);
+            }
+        }
+
         // Rendering
         render(dt);
+
+        // Release arrived delivery actors
+        deliveries.removeIf(DeliveryActor::hasArrived);
     }
 
     private void render(float dt) {
@@ -295,13 +311,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Draw background grid
         grid.drawGrid(spriteBatch);
 
-        // Draw buildings
-        for (BuildingActor building : buildingActors) {
-            building.draw(spriteBatch);
-        }
-
         // Draw paths
-        pathAnimator.step(dt);
+        float pathSpeed;
+        if (realTimeEnabled) {
+            pathSpeed = (realTime.isPaused() || !realTime.isRunning()) ? 0f : realTime.getSpeed() * 1.625f;
+        } else {
+            pathSpeed = 1f;
+        }
+        pathAnimator.step(pathSpeed * dt);
         for (Tuple<PathActor, Path> tuple : pathPairs) {
             tuple.first().drawPaths(spriteBatch);
         }
@@ -309,6 +326,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Draw items
         for (DeliveryActor delivery : deliveries) {
             delivery.draw(spriteBatch);
+        }
+
+        // Draw buildings
+        for (BuildingActor building : buildingActors) {
+            building.draw(spriteBatch);
         }
 
         // Draw crossing paths
@@ -588,6 +610,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public BuildingActor getBuildingAt(Coordinate c) {
         return buildingMap.get(c);
     }
+
 
 
     public interface Phase {
@@ -924,7 +947,5 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     }
 
     @Override
-    public void onDeliveryFinished(Delivery delivery) {
-        deliveries.removeIf((d) -> d.getDelivery() == delivery);
-    }
+    public void onDeliveryFinished(Delivery delivery) { }
 }
