@@ -40,7 +40,7 @@ public class RealTimeMenu extends PopupMenu {
         // Steps per second label and field
         VisLabel stepsPerSecondLabel = new VisLabel("Steps per second: ");
         stepsPerSecondLabel.setColor(Color.WHITE);
-        stepsPerSecondField = new VisTextField("10");
+        stepsPerSecondField = new VisTextField("5");
         stepsPerSecondField.setTextFieldFilter(new VisTextField.TextFieldFilter.DigitsOnlyFilter());
 
         // Prevent menu from closing when clicking on the text field
@@ -94,9 +94,9 @@ public class RealTimeMenu extends PopupMenu {
                         screen.startRealTimeSimulation();
                     } catch (NumberFormatException e) {
                         // If parsing fails, use default value
-                        screen.setRealTimeSpeed(10);
+                        screen.setRealTimeSpeed(5);
                         screen.startRealTimeSimulation();
-                        stepsPerSecondField.setText("10");
+                        stepsPerSecondField.setText("5");
                     }
                 }
 
