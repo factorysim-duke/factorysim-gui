@@ -1,17 +1,19 @@
-// Base SimulationScreen class with reduced responsibilities
 package edu.duke.ece651.factorysim.screen;
 
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.Building;
+import edu.duke.ece651.factorysim.screen.ui.BuildingButtonsPanel;
 import edu.duke.ece651.factorysim.screen.ui.ControlPanel;
 import edu.duke.ece651.factorysim.screen.ui.InfoPanel;
 import edu.duke.ece651.factorysim.screen.ui.InfoPanelManager;
@@ -36,15 +38,23 @@ public class SimulationScreen implements Screen {
     private VisTable infoPanelContainer;
     private InfoPanel currentInfoPanel;
     private ControlPanel controlPanel;
+    private BuildingButtonsPanel buildingButtonsPanel;
     private int currentStep = 0;
     private FileChooser createFileChooser;
     private FileChooser saveFileChooser;
     private RealTimeMenu realTimeMenu;
 
+    // UI components
     private InfoPanelManager infoPanelManager;
     private RequestDialogManager requestDialogManager;
     private UIInitializer uiInitializer;
     private UIEventListenerFactory listenerFactory;
+
+    // Textures for building buttons
+    private Texture selectTexture;
+    private Texture mineTexture;
+    private Texture factoryTexture;
+    private Texture storageTexture;
 
     /**
      * Constructor for the SimulationScreen class.
@@ -59,9 +69,23 @@ public class SimulationScreen implements Screen {
         stage = new Stage(new FitViewport(1600, 900));
         game.addInputProcessor(stage);
 
+        // Load textures first so they can be used in UI construction
+        loadTextures();
+
         initializeUI();
         setupLayout();
         attachEventListeners();
+    }
+
+    /**
+     * Load textures needed for the UI.
+     */
+    private void loadTextures() {
+        // Use the existing textures from GameWorld
+        selectTexture = new Texture("select.png");
+        mineTexture = new Texture("mine.png");
+        factoryTexture = new Texture("factory.png");
+        storageTexture = new Texture("storage.png");
     }
 
     /**
@@ -89,6 +113,17 @@ public class SimulationScreen implements Screen {
         infoPanelContainer.setVisible(false);
         controlPanel = new ControlPanel();
         realTimeMenu = new RealTimeMenu(game);
+
+        // Create building buttons panel
+        buildingButtonsPanel = new BuildingButtonsPanel(
+            game.getGameWorld(),
+            selectTexture,
+            mineTexture,
+            factoryTexture,
+            storageTexture
+        );
+        buildingButtonsPanel.setBackground(VisUI.getSkin().getDrawable("button"));
+        buildingButtonsPanel.pad(10);
 
         // Set up logging
         game.setLogger(new PanelLogger(logPanel));
@@ -119,11 +154,17 @@ public class SimulationScreen implements Screen {
         rightCol.add(infoPanelContainer).top().width(220);
         root.add(rightCol).width(240).top().padTop(10).padRight(10).padBottom(10).expandY().fillY().row();
 
-        // Bottom bar
+        // Bottom bar with building buttons in the middle
         VisTextButton realTimeButton = new VisTextButton("Real-time", "blue");
         realTimeButton.pad(5, 10, 5, 10);
+
+        // Create a bottom row that has three sections: left, center, right
         root.add(realTimeButton).left().padLeft(65).padBottom(280);
-        root.add().expand();
+
+        // Center section with building buttons
+        root.add(buildingButtonsPanel).bottom().padBottom(10);
+
+        // Right section with control panel
         root.add(controlPanel).bottom().right().pad(10);
 
         // Add real-time button listener
@@ -230,6 +271,12 @@ public class SimulationScreen implements Screen {
      */
     @Override
     public void dispose() {
+        // Dispose textures
+        selectTexture.dispose();
+        mineTexture.dispose();
+        factoryTexture.dispose();
+        storageTexture.dispose();
+
         stage.dispose();
         if (VisUI.isLoaded()) {
             VisUI.dispose();
