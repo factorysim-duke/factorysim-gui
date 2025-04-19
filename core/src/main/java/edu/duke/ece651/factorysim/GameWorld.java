@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 import java.util.*;
@@ -26,6 +27,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private static final float CAMERA_SPEED_MULTIPLIER = 2f;
     private final Vector2 cameraVelocity = new Vector2(0f, 0f);
 
+    // Rendering
+    private final SpriteBatch spriteBatch;
+
     // Zoom
     private float targetZoom = 1f;
     private static final float ZOOM_AMOUNT = 0.2f;
@@ -35,7 +39,18 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     // Simulation
     private Simulation sim;
-    private Logger logger;
+
+    public Simulation getSim() { return this.sim; }
+
+    // Real-time
+    private RealTimeSimulation realTime;
+    private boolean realTimeEnabled;
+
+    public RealTimeSimulation getRealTime() { return this.realTime; }
+
+    public boolean isRealTimeEnabled() { return this.realTimeEnabled; }
+    public void enableRealTime() { this.realTimeEnabled = true; }
+    public void disableRealTime() { this.realTimeEnabled = false; }
 
     // Resources
     private final Texture cellTexture;
@@ -75,7 +90,6 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @param gridRows number of rows in the grid.
      */
     public GameWorld(int gridCols, int gridRows, int cellSize,
-                     OrthographicCamera camera, Viewport viewport,
                      Logger logger,
                      SimulationScreen screen,
                      float x, float y) {
@@ -84,9 +98,15 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         int width = gridCols * cellSize;
         int height = gridRows * cellSize;
 
-        // Set camera and viewport
-        this.camera = camera;
-        this.viewport = viewport;
+        // Set up camera & viewport
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+        camera.position.set(0f, 0f, 0f);
+        camera.update();
+        viewport.apply();
+
+        // Create sprite batch for rendering
+        this.spriteBatch = new SpriteBatch();
 
         // Load textures
         this.cellTexture = new Texture("cell.png");
@@ -114,9 +134,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
         // Create empty world and simulation
-        this.logger = logger;
         this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
         this.sim.deliverySchedule.subscribe(this);
+        this.realTime = new RealTimeSimulation(this.sim);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
@@ -130,8 +150,6 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         syncZoom();
     }
 
-    public Simulation getSimulation() { return this.sim; }
-
     /**
      * Sets a new `Simulation` instance to the game world. Updates everything in the world.
      *
@@ -144,6 +162,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Set new simulation
         this.sim = sim;
         this.sim.getDeliverySchedule().subscribe(this);
+        this.realTime = new RealTimeSimulation(this.sim);
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
 
@@ -185,14 +204,20 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      *
      * @return the current logger instance used by the `GameWorld` instance.
      */
-    public Logger getLogger() { return this.logger; }
+    public Logger getLogger() { return this.sim.getLogger(); }
 
     /**
      * Sets a new logger for the `GameWorld` instance.
      *
      * @param logger is the new logger.
      */
-    public void setLogger(Logger logger) { this.logger = logger; }
+    public void setLogger(Logger logger) {
+        this.sim.setLogger(logger);
+    }
+
+    public void log(String s) {
+        this.getLogger().log(s);
+    }
 
     /**
      * Update target zoom to a new value while making sure it won't exceed bounds.
@@ -242,15 +267,31 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     /**
      * Update the game world.
      *
-     * @param spriteBatch is the `SpriteBatch` instance used to render.
      * @param dt is the delta time (time passed since last update).
      */
-    public void update(SpriteBatch spriteBatch, float dt) {
+    public void update(float dt) {
+        // Update camera
+        viewport.apply();
+        camera.update();
+        spriteBatch.setProjectionMatrix(camera.combined);
+
         // Zoom
         camera.zoom = MathUtils.lerp(camera.zoom, targetZoom, ZOOM_SPEED * dt);
 
         // Handle camera movement
         handleCameraMovement(dt);
+
+        // Real-time
+        if (realTimeEnabled) {
+            realTime.update(dt);
+        }
+
+        // Rendering
+        render(dt);
+    }
+
+    private void render(float dt) {
+        spriteBatch.begin();
 
         // Draw background grid
         grid.drawGrid(spriteBatch);
@@ -278,6 +319,12 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
         // Draw grid selection box
         grid.drawSelectionBox(spriteBatch);
+
+        spriteBatch.end();
+    }
+
+    public void resize(int width, int height) {
+        viewport.update(width, height, false);
     }
 
     private void handleCameraMovement(float dt) {
@@ -312,6 +359,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public void dispose() {
+        // Dispose sprite batch
+        spriteBatch.dispose();
+
+        // Dispose textures
         cellTexture.dispose();
         mineTexture.dispose();
         factoryTexture.dispose();
@@ -581,7 +632,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             try {
                 buildMine(name, miningRecipe, c);
             } catch (Exception e) {
-                logger.log(e.getMessage());
+                log(e.getMessage());
             } finally {
                 enterDefaultPhase();
             }
@@ -601,7 +652,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             try {
                 buildFactory(name, factoryType, c);
             } catch (Exception e) {
-                logger.log(e.getMessage());
+                log(e.getMessage());
             } finally {
                 enterDefaultPhase();
             }
@@ -625,7 +676,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             try {
                 buildStorage(name, storageItem, maxCapacity, priority, c);
             } catch (Exception e) {
-                logger.log(e.getMessage());
+                log(e.getMessage());
             } finally {
                 enterDefaultPhase();
             }
@@ -663,7 +714,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                 onConnect(c);
             } catch (Exception e) {
                 // Log error and resume back to default phase on error
-                logger.log(e.getMessage());
+                log(e.getMessage());
                 enterDefaultPhase();
             }
         }
@@ -680,7 +731,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                 onConnect(c);
             } catch (Exception e) {
                 // Log error and resume back to default phase on error
-                logger.log(e.getMessage());
+                log(e.getMessage());
                 enterDefaultPhase();
             }
         }
