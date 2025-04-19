@@ -1,14 +1,11 @@
 package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.*;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.viewport.*;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 import java.util.*;
 
@@ -78,6 +75,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final List<BuildingActor> buildingActors = new ArrayList<>();
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
     private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
+    private final List<Coordinate> pathCrossCoords = new ArrayList<>();
     private final List<DeliveryActor> deliveries = new ArrayList<>();
 
     // Screen
@@ -176,6 +174,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         buildingActors.clear();
         buildingMap.clear();
         pathPairs.clear();
+        pathCrossCoords.clear();
 
         // Create building actors
         for (Building building : world.getBuildings()) {
@@ -313,8 +312,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         // Draw crossing paths
-        for (Tuple<PathActor, Path> tuple : pathPairs) {
-            tuple.first().drawCrosses(spriteBatch);
+        if (!pathPairs.isEmpty()) {
+            pathPairs.getFirst().first().drawCrosses(spriteBatch, pathCrossCoords);
         }
 
         // Draw grid selection box
@@ -377,6 +376,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         selectFromTexture.dispose();
         selectToTexture.dispose();
     }
+
 
 
     /**
@@ -543,9 +543,21 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @return constructed `PathActor` instance.
      */
     private PathActor actorizePath(Path path) {
+        // Create actor
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
         pathPairs.add(new Tuple<>(actor, path));
+
+        // Cache and sort paths
+        for (Coordinate c : actor.getCrosses()) {
+            pathCrossCoords.add(c);
+        }
+        pathCrossCoords.sort((a, b) -> {
+            float ay = coordinateToWorld(a).y;
+            float by = coordinateToWorld(b).y;
+            return Float.compare(by, ay);
+        });
+
         return actor;
     }
 

@@ -360,14 +360,14 @@ public class SimulationScreen implements Screen {
     }
 
     @Override
-    public void pause() {}
+    public void pause() { }
 
     @Override
-    public void resume() {}
+    public void resume() { }
 
     @Override
     public void hide() {
-        dispose();
+        Gdx.input.setInputProcessor(null);
     }
 
     @Override

@@ -4,8 +4,7 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 public class PathActor extends Actor2D {
@@ -18,6 +17,8 @@ public class PathActor extends Actor2D {
 
     private final List<Coordinate> paths;
     private final List<Coordinate> crosses;
+
+    public Iterable<Coordinate> getCrosses() { return this.crosses; }
 
     public PathActor(Path path, TileMap tileMap,
                      Animator<TextureRegion> pathAnimator, Texture crossTexture,
@@ -81,7 +82,10 @@ public class PathActor extends Actor2D {
     }
 
     public void drawCrosses(SpriteBatch spriteBatch) {
-        int[] flowDirs = new int[2];
+        drawCrosses(spriteBatch, this.crosses);
+    }
+
+    public void drawCrosses(SpriteBatch spriteBatch, Iterable<Coordinate> crosses) {
         for (Coordinate c : crosses) {
             drawCross(spriteBatch, c);
         }
