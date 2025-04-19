@@ -133,7 +133,7 @@ public class SimulationScreen implements Screen {
         controlPanel.getFinishButton().addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                world.getSim().finish();
+                finish();
                 currentStep = world.getSim().getCurrentTime();
                 topBar.updateStepCount(currentStep);
             }
