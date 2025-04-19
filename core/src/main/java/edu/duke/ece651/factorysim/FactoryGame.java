@@ -254,4 +254,8 @@ public class FactoryGame extends Game {
             this.getScreen().dispose();
         }
     }
+
+    public GameWorld getGameWorld() {
+        return world;
+    }
 }
