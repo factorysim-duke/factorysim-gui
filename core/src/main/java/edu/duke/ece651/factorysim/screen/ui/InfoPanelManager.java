@@ -2,7 +2,7 @@ package edu.duke.ece651.factorysim.screen.ui;
 
 import com.kotcrab.vis.ui.widget.VisTable;
 import edu.duke.ece651.factorysim.Building;
-import edu.duke.ece651.factorysim.FactoryGame;
+import edu.duke.ece651.factorysim.screen.SimulationScreen;
 import edu.duke.ece651.factorysim.screen.listeners.PolicyChangeListener;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
@@ -68,11 +68,11 @@ public class InfoPanelManager {
      * Attach the policy listeners to the info panel.
      * @param infoPanel the info panel
      * @param building the building
-     * @param game the game
+     * @param screen the simulation screen
      */
-    public void attachPolicyListeners(InfoPanel infoPanel, Building building, FactoryGame game) {
+    public void attachPolicyListeners(InfoPanel infoPanel, Building building, SimulationScreen screen) {
         // Use a factory to create appropriate policy listeners based on building type
-        PolicyChangeListener policyListener = new PolicyChangeListener(game, building);
+        PolicyChangeListener policyListener = new PolicyChangeListener(screen, building);
 
         if (infoPanel instanceof FactoryInfoPanel) {
             FactoryInfoPanel factoryPanel = (FactoryInfoPanel) infoPanel;

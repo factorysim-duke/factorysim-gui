@@ -9,9 +9,6 @@ public class Actor2DTest {
         public TestActor(float x, float y) {
             super(x, y);
         }
-
-        @Override
-        public void draw(SpriteBatch spriteBatch) { }
     }
 
     @Test

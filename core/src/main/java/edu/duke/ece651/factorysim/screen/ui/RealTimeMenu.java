@@ -8,7 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.*;
 import com.kotcrab.vis.ui.widget.PopupMenu;
-import edu.duke.ece651.factorysim.FactoryGame;
+import edu.duke.ece651.factorysim.screen.SimulationScreen;
 
 /**
  * Dropdown menu for real-time simulation controls.
@@ -16,16 +16,16 @@ import edu.duke.ece651.factorysim.FactoryGame;
 public class RealTimeMenu extends PopupMenu {
     private VisTextButton startPauseButton;
     private VisTextField stepsPerSecondField;
-    private final FactoryGame game;
+    private final SimulationScreen screen;
 
     /**
      * Creates a real-time controls menu.
      *
-     * @param game the game instance
+     * @param screen the simulation screen instance
      */
-    public RealTimeMenu(final FactoryGame game) {
+    public RealTimeMenu(final SimulationScreen screen) {
         super();
-        this.game = game;
+        this.screen = screen;
 
         // Create the menu layout
         VisTable menuTable = new VisTable();
@@ -39,7 +39,7 @@ public class RealTimeMenu extends PopupMenu {
         // Steps per second label and field
         VisLabel stepsPerSecondLabel = new VisLabel("Steps per second: ");
         stepsPerSecondLabel.setColor(Color.WHITE);
-        stepsPerSecondField = new VisTextField("10");
+        stepsPerSecondField = new VisTextField("5");
         stepsPerSecondField.setTextFieldFilter(new VisTextField.TextFieldFilter.DigitsOnlyFilter());
 
         // Prevent menu from closing when clicking on the text field
@@ -77,25 +77,25 @@ public class RealTimeMenu extends PopupMenu {
         startPauseButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (game.isRealTimeEnabled() && !game.isRealTimePaused()) {
+                if (screen.isRealTimeEnabled() && !screen.isRealTimePaused()) {
                     // If running, pause it
-                    game.pauseRealTimeSimulation();
-                } else if (game.isRealTimeEnabled() && game.isRealTimePaused()) {
+                    screen.pauseRealTimeSimulation();
+                } else if (screen.isRealTimeEnabled() && screen.isRealTimePaused()) {
                     // If paused, resume it
-                    game.resumeRealTimeSimulation();
+                    screen.resumeRealTimeSimulation();
                 } else {
                     // Not running, start it
                     try {
                         // Parse steps per second
                         float stepsPerSecond = Float.parseFloat(stepsPerSecondField.getText());
                         // Set speed and start simulation
-                        game.setRealTimeSpeed(stepsPerSecond);
-                        game.startRealTimeSimulation();
+                        screen.setRealTimeSpeed(stepsPerSecond);
+                        screen.startRealTimeSimulation();
                     } catch (NumberFormatException e) {
                         // If parsing fails, use default value
-                        game.setRealTimeSpeed(10);
-                        game.startRealTimeSimulation();
-                        stepsPerSecondField.setText("10");
+                        screen.setRealTimeSpeed(5);
+                        screen.startRealTimeSimulation();
+                        stepsPerSecondField.setText("5");
                     }
                 }
 
@@ -110,7 +110,7 @@ public class RealTimeMenu extends PopupMenu {
             public void changed(ChangeEvent event, Actor actor) {
                 try {
                     float stepsPerSecond = Float.parseFloat(stepsPerSecondField.getText());
-                    game.setRealTimeSpeed(stepsPerSecond);
+                    screen.setRealTimeSpeed(stepsPerSecond);
                 } catch (NumberFormatException e) {
                     // Invalid input, don't change the speed
                 }
@@ -125,8 +125,8 @@ public class RealTimeMenu extends PopupMenu {
      * Updates the button text based on simulation state.
      */
     public void updateButtonState() {
-        if (game.isRealTimeEnabled()) {
-            if (game.isRealTimePaused()) {
+        if (screen.isRealTimeEnabled()) {
+            if (screen.isRealTimePaused()) {
                 startPauseButton.setText("Resume");
             } else {
                 startPauseButton.setText("Pause");

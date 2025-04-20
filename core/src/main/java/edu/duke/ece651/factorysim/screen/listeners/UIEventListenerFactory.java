@@ -16,14 +16,14 @@ import edu.duke.ece651.factorysim.screen.SimulationScreen;
  * Event listeners for the UI components.
  */
 public class UIEventListenerFactory {
-    private final FactoryGame game;
+    private final SimulationScreen screen;
 
     /**
      * Constructor for the UIEventListenerFactory class.
-     * @param game is the FactoryGame instance
+     * @param screen is the SimulationScreen instance
      */
-    public UIEventListenerFactory(FactoryGame game) {
-        this.game = game;
+    public UIEventListenerFactory(SimulationScreen screen) {
+        this.screen = screen;
     }
 
     /**
@@ -38,7 +38,7 @@ public class UIEventListenerFactory {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 stage.addActor(fileChooser.fadeIn());
-                topBar.updateStepCount(game.getCurrentStep());
+                topBar.updateStepCount(screen.getCurrentStep());
             }
         };
     }
@@ -55,24 +55,24 @@ public class UIEventListenerFactory {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 stage.addActor(fileChooser.fadeIn());
-                topBar.updateStepCount(game.getCurrentStep());
+                topBar.updateStepCount(screen.getCurrentStep());
             }
         };
     }
 
     /**
      * Create a listener for the verbosity change.
-     * @param game is the FactoryGame instance
+     * @param screen is the SimulationScreen instance
      * @return a ChangeListener instance
      */
-    public ChangeListener createVerbosityChangeListener(FactoryGame game) {
+    public ChangeListener createVerbosityChangeListener(SimulationScreen screen) {
         return new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 if (actor instanceof VisSelectBox<?>) {
                     @SuppressWarnings("unchecked")
                     VisSelectBox<String> box = (VisSelectBox<String>) actor;
-                    game.setVerbosity(Integer.parseInt(box.getSelected()));
+                    screen.setVerbosity(Integer.parseInt(box.getSelected()));
                 }
             }
         };
@@ -80,17 +80,16 @@ public class UIEventListenerFactory {
 
     /**
      * Create a listener for the step button.
-     * @param game is the FactoryGame instance
      * @param controlPanel is the ControlPanel instance
      * @param screen is the SimulationScreen instance
      * @return a ClickListener instance
      */
-    public ClickListener createStepButtonListener(FactoryGame game, ControlPanel controlPanel, SimulationScreen screen) {
+    public ClickListener createStepButtonListener(ControlPanel controlPanel, SimulationScreen screen) {
         return new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 int stepsToMove = controlPanel.getStepCount();
-                game.step(stepsToMove);
+                screen.step(stepsToMove);
                 screen.updateStepCount();
                 screen.hideInfoPanel();
             }
@@ -99,16 +98,16 @@ public class UIEventListenerFactory {
 
     /**
      * Create a listener for the finish button.
-     * @param game is the FactoryGame instance
+     * @param screen is the SimulationScreen instance
      * @param topBar is the TopBar instance
      * @return a ClickListener instance
      */
-    public ClickListener createFinishButtonListener(FactoryGame game, TopBar topBar) {
+    public ClickListener createFinishButtonListener(SimulationScreen screen, TopBar topBar) {
         return new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.finish();
-                topBar.updateStepCount(game.getCurrentStep());
+                screen.finish();
+                topBar.updateStepCount(screen.getCurrentStep());
             }
         };
     }

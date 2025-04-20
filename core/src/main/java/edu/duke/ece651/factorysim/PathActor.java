@@ -3,11 +3,11 @@ package edu.duke.ece651.factorysim;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
-import java.util.List;
+
+import java.util.*;
 import java.util.function.Function;
 
 public class PathActor extends Actor2D {
-    private final Path path;
     private final TileMap tileMap;
 
     private final Animator<TextureRegion> pathAnimator;
@@ -15,53 +15,79 @@ public class PathActor extends Actor2D {
 
     private final Function<Coordinate, Vector2> coordinateToWorld;
 
+    private final List<Coordinate> paths;
+    private final List<Coordinate> crosses;
+
+    public Iterable<Coordinate> getCrosses() { return this.crosses; }
+
     public PathActor(Path path, TileMap tileMap,
                      Animator<TextureRegion> pathAnimator, Texture crossTexture,
                      Function<Coordinate, Vector2> coordinateToWorld) {
         super(0f, 0f);
-        this.path = path;
         this.tileMap = tileMap;
         this.pathAnimator = pathAnimator;
         this.crossTexture = new TextureRegion(crossTexture);
         this.coordinateToWorld = coordinateToWorld;
-    }
 
-    @Override
-    public void draw(SpriteBatch spriteBatch) {
+        // Split paths and crosses
+        this.paths = new ArrayList<>();
+        this.crosses = new ArrayList<>();
         int[] flowDirs = new int[2];
-
         List<Coordinate> steps = path.getSteps();
+        for (int i = 0; i < steps.size(); i++) {
+            Coordinate c = steps.get(i);
 
-        // Draw paths
-        for (Coordinate c : steps) {
+            // Ignore coordinates that can't be drawn
             if (!canDraw(c)) {
                 continue;
             }
 
+            // Get the flow of the path
+            int[] flows = tileMap.getFlows(c);
+            int num = getFlowDirs(flows, flowDirs);
+
+            // Paths near the source and destination buildings are always crosses
+            if (i == 1 || i == steps.size() - 2) {
+                crosses.add(c);
+                continue;
+            }
+
+            // Paths with two flows and is linear are directional paths
+            if (num == 2 && isLinear(flowDirs[0], flowDirs[1])) {
+                this.paths.add(c);
+                continue;
+            }
+
+            // Default as a cross
+            crosses.add(c);
+        }
+
+        // Sort crosses by y (lower y = being drawn later)
+        crosses.sort((a, b) -> {
+            float ay = coordinateToWorld.apply(a).y;
+            float by = coordinateToWorld.apply(b).y;
+            return Float.compare(by, ay);
+        });
+    }
+
+    public void drawPaths(SpriteBatch spriteBatch) {
+        int[] flowDirs = new int[2];
+        for (Coordinate c : paths) {
             int[] flows = tileMap.getFlows(c);
             int num = getFlowDirs(flows, flowDirs);
             if (num == 2 && isLinear(flowDirs[0], flowDirs[1])) {
                 drawPath(spriteBatch, c, flows, flowDirs);
             }
         }
+    }
 
-        // Draw crosses
-        for (int i = 0; i < steps.size(); i++) {
-            Coordinate c = steps.get(i);
-            if (!canDraw(c)) {
-                continue;
-            }
+    public void drawCrosses(SpriteBatch spriteBatch) {
+        drawCrosses(spriteBatch, this.crosses);
+    }
 
-            // Always draw near the source and destination buildings
-            if (i == 1 || i == steps.size() - 2) {
-                drawCross(spriteBatch, c);
-                continue;
-            }
-
-            int num = getFlowDirs(tileMap.getFlows(c), flowDirs);
-            if (num != 2 || !isLinear(flowDirs[0], flowDirs[1])) {
-                drawCross(spriteBatch, c);
-            }
+    public void drawCrosses(SpriteBatch spriteBatch, Iterable<Coordinate> crosses) {
+        for (Coordinate c : crosses) {
+            drawCross(spriteBatch, c);
         }
     }
 

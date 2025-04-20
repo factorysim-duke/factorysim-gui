@@ -10,21 +10,22 @@ import edu.duke.ece651.factorysim.Building;
 import edu.duke.ece651.factorysim.FactoryBuilding;
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.MineBuilding;
+import edu.duke.ece651.factorysim.screen.SimulationScreen;
 
 /**
  * Manager for request dialogs.
  */
 public class RequestDialogManager {
-    private final FactoryGame game;
+    private final SimulationScreen screen;
     private final Stage stage;
 
     /**
      * Constructor for the RequestDialogManager class.
-     * @param game the game
+     * @param screen the simulation screen
      * @param stage the stage
      */
-    public RequestDialogManager(FactoryGame game, Stage stage) {
-        this.game = game;
+    public RequestDialogManager(SimulationScreen screen, Stage stage) {
+        this.screen = screen;
         this.stage = stage;
     }
 
@@ -78,7 +79,7 @@ public class RequestDialogManager {
             protected void result(Object obj) {
                 if (Boolean.TRUE.equals(obj)) {
                     String selectedItem = itemSelectBox.getSelected();
-                    game.makeUserRequest(selectedItem, building.getName());
+                    screen.makeUserRequest(selectedItem, building.getName());
                 }
                 this.hide();
             }
