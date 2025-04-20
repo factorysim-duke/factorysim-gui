@@ -63,6 +63,15 @@ public class SimulationScreen implements Screen {
             0f, 0f);
         inputMultiplexer.addProcessor(this.world);
 
+        // Load initial configuration from formula.json
+        try {
+            // This loads the formula.json which contains types and recipes
+            loadSimulation("formula.json");
+            System.out.println("Successfully loaded initial configuration from formula.json");
+        } catch (Exception e) {
+            System.out.println("Failed to load initial configuration: " + e.getMessage());
+        }
+
         // Load textures first so they can be used in UI construction
         loadTextures();
 
@@ -77,9 +86,9 @@ public class SimulationScreen implements Screen {
     private void loadTextures() {
         // Use the existing textures from GameWorld
         selectTexture = new Texture("select.png");
-        mineTexture = new Texture("mine.png");
-        factoryTexture = new Texture("factory.png");
-        storageTexture = new Texture("storage.png");
+        mineTexture = new Texture("icon_mine.png");
+        factoryTexture = new Texture("icon_factory.png");
+        storageTexture = new Texture("icon_storage.png");
     }
 
     /**
@@ -111,6 +120,7 @@ public class SimulationScreen implements Screen {
         // Create building buttons panel
         buildingButtonsPanel = new BuildingButtonsPanel(
             world,
+            stage,
             selectTexture,
             mineTexture,
             factoryTexture,
@@ -304,7 +314,11 @@ public class SimulationScreen implements Screen {
 
     // make user request
     public void makeUserRequest(String itemName, String buildingName) {
-        this.world.getSim().makeUserRequest(itemName, buildingName);
+        try {
+            this.world.getSim().makeUserRequest(itemName, buildingName);
+        } catch (Exception e) {
+            logPanel.appendLog("[ERROR] Failed to make user request: " + e.getMessage());
+        }
     }
 
     //get current step

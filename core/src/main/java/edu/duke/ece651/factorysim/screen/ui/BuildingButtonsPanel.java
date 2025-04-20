@@ -3,6 +3,7 @@ package edu.duke.ece651.factorysim.screen.ui;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -27,6 +28,8 @@ public class BuildingButtonsPanel extends VisTable {
     private final Texture factoryTexture;
     private final Texture storageTexture;
     private final ButtonGroup<VisImageButton> buttonGroup;
+    private final BuildingOutputDialog outputDialog;
+    private final Stage stage;
 
     private VisImageButton defaultButton;
     private VisImageButton mineButton;
@@ -38,22 +41,26 @@ public class BuildingButtonsPanel extends VisTable {
      * Constructor for the BuildingButtonsPanel.
      *
      * @param gameWorld is the game world to operate on
+     * @param stage is the stage to display dialogs on
      * @param selectTexture is the texture for selection
      * @param mineTexture is the texture for mining buildings
      * @param factoryTexture is the texture for factory buildings
      * @param storageTexture is the texture for storage buildings
      */
     public BuildingButtonsPanel(GameWorld gameWorld,
+                               Stage stage,
                                Texture selectTexture,
                                Texture mineTexture,
                                Texture factoryTexture,
                                Texture storageTexture) {
         this.gameWorld = gameWorld;
+        this.stage = stage;
         this.selectTexture = selectTexture;
         this.mineTexture = mineTexture;
         this.factoryTexture = factoryTexture;
         this.storageTexture = storageTexture;
         this.buttonGroup = new ButtonGroup<>();
+        this.outputDialog = new BuildingOutputDialog(stage, gameWorld);
 
         createButtons();
         setupLayout();
@@ -135,9 +142,12 @@ public class BuildingButtonsPanel extends VisTable {
         mineButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // TODO: In a real implementation, show a dialog to select recipe
-                Recipe miningRecipe = new Recipe(new Item("metal"), new HashMap<>(), 1);
-                gameWorld.enterBuildMinePhase("Mine", miningRecipe);
+                // Show dialog to select mine output
+                outputDialog.showMineOutputDialog(miningRecipe -> {
+                    // Use the output resource name as the building name
+                    String buildingName = miningRecipe.getOutput().getName() + "_Mine";
+                    gameWorld.enterBuildMinePhase(buildingName, miningRecipe);
+                });
             }
         });
 
@@ -145,9 +155,12 @@ public class BuildingButtonsPanel extends VisTable {
         factoryButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // TODO: In a real implementation, show a dialog to select factory type
-                Type factoryType = new Type("hinge", List.of());
-                gameWorld.enterBuildFactoryPhase("Factory", factoryType);
+                // Show dialog to select factory type
+                outputDialog.showFactoryOutputDialog(factoryType -> {
+                    // Use the type name as the building name
+                    String buildingName = factoryType.getName() + "_Factory";
+                    gameWorld.enterBuildFactoryPhase(buildingName, factoryType);
+                });
             }
         });
 
@@ -155,8 +168,17 @@ public class BuildingButtonsPanel extends VisTable {
         storageButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                // TODO: In a real implementation, show a dialog to select item, capacity and priority
-                gameWorld.enterBuildStoragePhase("Storage", new Item("metal"), 10, 1.0);
+                // Show dialog to select storage configuration
+                outputDialog.showStorageOutputDialog(config -> {
+                    // Use the item name as the building name
+                    String buildingName = config.getItem().getName() + "_Storage";
+                    gameWorld.enterBuildStoragePhase(
+                        buildingName,
+                        config.getItem(),
+                        config.getCapacity(),
+                        config.getPriority()
+                    );
+                });
             }
         });
 
