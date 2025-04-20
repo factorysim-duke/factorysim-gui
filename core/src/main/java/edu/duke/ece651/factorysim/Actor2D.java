@@ -18,11 +18,4 @@ public abstract class Actor2D {
     public Actor2D(float x, float y) {
         this.position = new Vector2(x, y);
     }
-
-    /**
-     * Uses a `SpriteBatch` instance to render the 2D actor.
-     *
-     * @param spriteBatch is the `SpriteBatch` instance used to render this actor.
-     */
-    public abstract void draw(SpriteBatch spriteBatch);
 }

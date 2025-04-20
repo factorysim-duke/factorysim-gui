@@ -1,29 +1,18 @@
 package edu.duke.ece651.factorysim.screen;
 
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.*;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.*;
 
-import edu.duke.ece651.factorysim.FactoryGame;
-import edu.duke.ece651.factorysim.Building;
-import edu.duke.ece651.factorysim.screen.ui.BuildingButtonsPanel;
-import edu.duke.ece651.factorysim.screen.ui.ControlPanel;
-import edu.duke.ece651.factorysim.screen.ui.InfoPanel;
-import edu.duke.ece651.factorysim.screen.ui.InfoPanelManager;
-import edu.duke.ece651.factorysim.screen.ui.LogPanel;
-import edu.duke.ece651.factorysim.screen.ui.RealTimeMenu;
-import edu.duke.ece651.factorysim.screen.ui.RequestDialogManager;
-import edu.duke.ece651.factorysim.screen.ui.TopBar;
-import edu.duke.ece651.factorysim.screen.ui.UIInitializer;
-import edu.duke.ece651.factorysim.screen.util.FileDialogUtil;
-import edu.duke.ece651.factorysim.screen.util.PanelLogger;
+import edu.duke.ece651.factorysim.*;
+import edu.duke.ece651.factorysim.screen.ui.*;
+import edu.duke.ece651.factorysim.screen.util.*;
 import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
 
 /**
@@ -31,8 +20,9 @@ import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
  * It initializes the UI components and attaches event listeners to them.
  */
 public class SimulationScreen implements Screen {
+    private GameWorld world;
+
     private Stage stage;
-    private final FactoryGame game;
     private TopBar topBar;
     private LogPanel logPanel;
     private VisTable infoPanelContainer;
@@ -56,18 +46,22 @@ public class SimulationScreen implements Screen {
     private Texture factoryTexture;
     private Texture storageTexture;
 
-    /**
-     * Constructor for the SimulationScreen class.
-     * @param game is the FactoryGame instance
-     */
-    public SimulationScreen(FactoryGame game) {
-        this.game = game;
-    }
-
     @Override
     public void show() {
-        stage = new Stage(new FitViewport(1600, 900));
-        game.addInputProcessor(stage);
+        // Create and use input multiplexer
+        InputMultiplexer inputMultiplexer = new InputMultiplexer();
+        Gdx.input.setInputProcessor(inputMultiplexer);
+
+        // Create stage
+        stage = new Stage(new FitViewport(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
+        inputMultiplexer.addProcessor(stage);
+
+        // Create game world
+        int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
+        int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
+        this.world = new GameWorld(cols, rows, Constants.CELL_SIZE, new StreamLogger(System.out), this,
+            0f, 0f);
+        inputMultiplexer.addProcessor(this.world);
 
         // Load textures first so they can be used in UI construction
         loadTextures();
@@ -94,17 +88,17 @@ public class SimulationScreen implements Screen {
     private void initializeUI() {
         // Initialize UI helper components
         uiInitializer = new UIInitializer();
-        listenerFactory = new UIEventListenerFactory(game);
+        listenerFactory = new UIEventListenerFactory(this);
         infoPanelManager = new InfoPanelManager();
-        requestDialogManager = new RequestDialogManager(game, stage);
+        requestDialogManager = new RequestDialogManager(this, stage);
 
         // Initialize UI components
         uiInitializer.initializeVisUI();
         uiInitializer.registerCustomStyles();
 
         // Create file choosers
-        createFileChooser = FileDialogUtil.createFileChooser(game);
-        saveFileChooser = FileDialogUtil.saveFileChooser(game);
+        createFileChooser = FileDialogUtil.createFileChooser(this);
+        saveFileChooser = FileDialogUtil.saveFileChooser(this);
 
         // Create UI panels
         topBar = new TopBar(currentStep);
@@ -112,11 +106,11 @@ public class SimulationScreen implements Screen {
         infoPanelContainer = new VisTable();
         infoPanelContainer.setVisible(false);
         controlPanel = new ControlPanel();
-        realTimeMenu = new RealTimeMenu(game);
+        realTimeMenu = new RealTimeMenu(this);
 
         // Create building buttons panel
         buildingButtonsPanel = new BuildingButtonsPanel(
-            game.getGameWorld(),
+            world,
             selectTexture,
             mineTexture,
             factoryTexture,
@@ -126,7 +120,7 @@ public class SimulationScreen implements Screen {
         buildingButtonsPanel.pad(10);
 
         // Set up logging
-        game.setLogger(new PanelLogger(logPanel));
+        world.setLogger(new PanelLogger(logPanel));
     }
 
     /**
@@ -186,11 +180,11 @@ public class SimulationScreen implements Screen {
         topBar.getSaveButton().addListener(listenerFactory.createSaveButtonListener(stage, saveFileChooser, topBar));
 
         // Log panel listeners
-        logPanel.getVerbosityBox().addListener(listenerFactory.createVerbosityChangeListener(game));
+        logPanel.getVerbosityBox().addListener(listenerFactory.createVerbosityChangeListener(this));
 
         // Control panel listeners
-        controlPanel.getStepButton().addListener(listenerFactory.createStepButtonListener(game, controlPanel, this));
-        controlPanel.getFinishButton().addListener(listenerFactory.createFinishButtonListener(game, topBar));
+        controlPanel.getStepButton().addListener(listenerFactory.createStepButtonListener(controlPanel, this));
+        controlPanel.getFinishButton().addListener(listenerFactory.createFinishButtonListener(this, topBar));
     }
 
     /**
@@ -201,7 +195,7 @@ public class SimulationScreen implements Screen {
         currentInfoPanel = infoPanelManager.showBuildingInfo(building, infoPanelContainer, requestDialogManager);
 
         // Attach policy listeners - delegates to the InfoPanelManager
-        infoPanelManager.attachPolicyListeners(currentInfoPanel, building, game);
+        infoPanelManager.attachPolicyListeners(currentInfoPanel, building, this);
     }
 
     /**
@@ -215,7 +209,7 @@ public class SimulationScreen implements Screen {
      * Update the step count display.
      */
     public void updateStepCount() {
-        currentStep = game.getCurrentStep();
+        currentStep = getCurrentStep();
         topBar.updateStepCount(currentStep);
     }
 
@@ -225,8 +219,14 @@ public class SimulationScreen implements Screen {
      */
     @Override
     public void render(float delta) {
+        ScreenUtils.clear(0f, 0f, 0f, 1f);
+
+        // Update and render the world
+        world.update(delta);
+        world.render(delta);
+
         // Update step count display if it has changed (for real-time simulation)
-        if (game.getCurrentStep() != currentStep) {
+        if (getCurrentStep() != currentStep) {
             updateStepCount();
         }
 
@@ -241,6 +241,8 @@ public class SimulationScreen implements Screen {
      */
     @Override
     public void resize(int width, int height) {
+        world.resize(width, height);
+
         if (stage != null) {
             stage.getViewport().update(width, height, true);
         }
@@ -250,20 +252,20 @@ public class SimulationScreen implements Screen {
      * Pause the simulation.
      */
     @Override
-    public void pause() {}
+    public void pause() { }
 
     /**
      * Resume the simulation.
      */
     @Override
-    public void resume() {}
+    public void resume() { }
 
     /**
      * Hide the simulation screen.
      */
     @Override
     public void hide() {
-        dispose();
+        Gdx.input.setInputProcessor(null);
     }
 
     /**
@@ -271,6 +273,8 @@ public class SimulationScreen implements Screen {
      */
     @Override
     public void dispose() {
+        world.dispose();
+
         // Dispose textures
         selectTexture.dispose();
         mineTexture.dispose();
@@ -281,5 +285,123 @@ public class SimulationScreen implements Screen {
         if (VisUI.isLoaded()) {
             VisUI.dispose();
         }
+    }
+
+    public void loadSimulation(String jsonPath) {
+        Simulation sim = new Simulation(jsonPath);
+        sim.setLogger(this.world.getLogger()); // Use the same logger
+        this.world.setSimulation(sim);
+    }
+
+    public void saveSimulation(String jsonPath) {
+        this.world.getSim().save(jsonPath);
+    }
+
+    // set verbosity
+    public void setVerbosity(int verbosity) {
+        this.world.getSim().setVerbosity(verbosity);
+    }
+
+    // make user request
+    public void makeUserRequest(String itemName, String buildingName) {
+        this.world.getSim().makeUserRequest(itemName, buildingName);
+    }
+
+    //get current step
+    public int getCurrentStep() {
+        return this.world.getSim().getCurrentTime();
+    }
+
+    //step simulation by n steps
+    public void step(int n) {
+        // Stop real-time simulation if user choose to step manually
+        if (this.world.isRealTimeEnabled()) {
+            stopRealTimeSimulation();
+        }
+        this.world.getSim().step(n);
+    }
+
+    //set policy
+    public void setPolicy(String type, String policy, String buildingName) {
+        this.world.getSim().setPolicy(type, policy, buildingName);
+    }
+
+    //finish simulation
+    public void finish() {
+        // Stop real-time simulation if user choose to finish
+        if (this.world.isRealTimeEnabled()) {
+            stopRealTimeSimulation();
+        }
+        this.world.getSim().finish();
+    }
+
+    /**
+     * Starts real-time simulation.
+     */
+    public void startRealTimeSimulation() {
+        this.world.getRealTime().start();
+        this.world.enableRealTime();
+    }
+
+    /**
+     * Pauses real-time simulation.
+     */
+    public void pauseRealTimeSimulation() {
+        if (this.world.isRealTimeEnabled()) {
+            this.world.getRealTime().pause();
+        }
+    }
+
+    /**
+     * Resumes real-time simulation from a paused state.
+     */
+    public void resumeRealTimeSimulation() {
+        if (this.world.isRealTimeEnabled()) {
+            this.world.getRealTime().resume();
+        }
+    }
+
+    /**
+     * Stops real-time simulation.
+     */
+    public void stopRealTimeSimulation() {
+        this.world.getRealTime().stop();
+        this.world.disableRealTime();
+    }
+
+    /**
+     * Sets the speed of real-time simulation.
+     *
+     * @param stepsPerSecond steps per second
+     */
+    public void setRealTimeSpeed(float stepsPerSecond) {
+        this.world.getRealTime().setSpeed(stepsPerSecond);
+    }
+
+    /**
+     * Gets the current real-time simulation speed.
+     *
+     * @return steps per second
+     */
+    public float getRealTimeSpeed() {
+        return this.world.getRealTime().getSpeed();
+    }
+
+    /**
+     * Checks if real-time simulation is enabled.
+     *
+     * @return true if enabled
+     */
+    public boolean isRealTimeEnabled() {
+        return this.world.isRealTimeEnabled();
+    }
+
+    /**
+     * Checks if real-time simulation is paused.
+     *
+     * @return true if paused
+     */
+    public boolean isRealTimePaused() {
+        return this.world.getRealTime().isPaused();
     }
 }

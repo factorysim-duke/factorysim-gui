@@ -82,8 +82,7 @@ public class GridActor extends Actor2D {
         this.selectTexture = selectTexture;
     }
 
-    @Override
-    public void draw(SpriteBatch spriteBatch) {
+    public void drawGrid(SpriteBatch spriteBatch) {
         // Draw the grid
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {

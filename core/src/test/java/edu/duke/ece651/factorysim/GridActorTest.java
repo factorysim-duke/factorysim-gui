@@ -54,7 +54,7 @@ public class GridActorTest {
         Texture selectTexture = mock(Texture.class);
         GridActor grid = new GridActor(3, 2, 16, cellTexture, selectTexture, 0f, 0f);
         SpriteBatch spriteBatch = mock(SpriteBatch.class);
-        grid.draw(spriteBatch);
+        grid.drawGrid(spriteBatch);
         verify(spriteBatch, times(6)).draw(eq(cellTexture), anyFloat(), anyFloat());
     }
 

@@ -1,13 +1,11 @@
 package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.*;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.viewport.*;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 import java.util.*;
 
@@ -15,7 +13,7 @@ import java.util.*;
  * Represents a central game world manager that manages resources and other actors.
  * Instances need to be explicitly disposed with `dispose` method after use.
  */
-public class GameWorld implements Disposable, InputProcessor {
+public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     // Dimension
     private final int cellSize;
 
@@ -26,8 +24,11 @@ public class GameWorld implements Disposable, InputProcessor {
     private static final float CAMERA_SPEED_MULTIPLIER = 2f;
     private final Vector2 cameraVelocity = new Vector2(0f, 0f);
 
+    // Rendering
+    private final SpriteBatch spriteBatch;
+
     // Zoom
-    private float zoom = 1f;
+    private float targetZoom = 1f;
     private static final float ZOOM_AMOUNT = 0.2f;
     private static final float ZOOM_SPEED = 5f;
     private static final float ZOOM_MIN = 0.5f;
@@ -35,13 +36,25 @@ public class GameWorld implements Disposable, InputProcessor {
 
     // Simulation
     private Simulation sim;
-    private Logger logger;
+
+    public Simulation getSim() { return this.sim; }
+
+    // Real-time
+    private RealTimeSimulation realTime;
+    private boolean realTimeEnabled;
+
+    public RealTimeSimulation getRealTime() { return this.realTime; }
+
+    public boolean isRealTimeEnabled() { return this.realTimeEnabled; }
+    public void enableRealTime() { this.realTimeEnabled = true; }
+    public void disableRealTime() { this.realTimeEnabled = false; }
 
     // Resources
     private final Texture cellTexture;
     private final Texture mineTexture;
     private final Texture factoryTexture;
     private final Texture storageTexture;
+    private final Texture itemTexture;
     private final Texture pathTexture;
     private final Texture pathCrossTexture;
     private final Texture selectTexture;
@@ -62,6 +75,8 @@ public class GameWorld implements Disposable, InputProcessor {
     private final List<BuildingActor> buildingActors = new ArrayList<>();
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
     private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
+    private final List<Coordinate> pathCrossCoords = new ArrayList<>();
+    private final List<DeliveryActor> deliveries = new ArrayList<>();
 
     // Screen
     private final SimulationScreen screen;
@@ -73,7 +88,6 @@ public class GameWorld implements Disposable, InputProcessor {
      * @param gridRows number of rows in the grid.
      */
     public GameWorld(int gridCols, int gridRows, int cellSize,
-                     OrthographicCamera camera, Viewport viewport,
                      Logger logger,
                      SimulationScreen screen,
                      float x, float y) {
@@ -82,15 +96,22 @@ public class GameWorld implements Disposable, InputProcessor {
         int width = gridCols * cellSize;
         int height = gridRows * cellSize;
 
-        // Set camera and viewport
-        this.camera = camera;
-        this.viewport = viewport;
+        // Set up camera & viewport
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(Constants.VIEW_WIDTH, Constants.VIEW_HEIGHT, camera);
+        camera.position.set(0f, 0f, 0f);
+        camera.update();
+        viewport.apply();
+
+        // Create sprite batch for rendering
+        this.spriteBatch = new SpriteBatch();
 
         // Load textures
         this.cellTexture = new Texture("cell.png");
         this.mineTexture = new Texture("mine.png");
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
+        this.itemTexture = new Texture("item.png");
         this.pathTexture = new Texture("path.png");
         this.pathCrossTexture = new Texture("path_cross.png");
         this.selectTexture = new Texture("select.png");
@@ -111,8 +132,9 @@ public class GameWorld implements Disposable, InputProcessor {
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
         // Create empty world and simulation
-        this.logger = logger;
         this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
+        this.sim.deliverySchedule.subscribe(this);
+        this.realTime = new RealTimeSimulation(this.sim);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
@@ -120,22 +142,39 @@ public class GameWorld implements Disposable, InputProcessor {
 
         // Set screen
         this.screen = screen;
+
+        // Initialize camera zoom
+        updateTargetZoom(targetZoom);
+        syncZoom();
     }
 
-    public Simulation getSimulation() { return this.sim; }
-
+    /**
+     * Sets a new `Simulation` instance to the game world. Updates everything in the world.
+     *
+     * @param sim is the new `Simulation` instance to set.
+     */
     public void setSimulation(Simulation sim) {
+        // Unsubscribe as a listener from the previous simulation
+        this.sim.getDeliverySchedule().unsubscribe(this);
+
+        // Set new simulation
         this.sim = sim;
+        this.sim.getDeliverySchedule().subscribe(this);
+        this.realTime = new RealTimeSimulation(this.sim);
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
 
         // Resize the grid
         grid.resize(tileMap.getWidth(), tileMap.getHeight());
 
+        // Sync camera zoom instantly
+        syncZoom();
+
         // Release actors associated with the previous simulation
         buildingActors.clear();
         buildingMap.clear();
         pathPairs.clear();
+        pathCrossCoords.clear();
 
         // Create building actors
         for (Building building : world.getBuildings()) {
@@ -159,8 +198,42 @@ public class GameWorld implements Disposable, InputProcessor {
         }
     }
 
-    public Logger getLogger() { return this.logger; }
-    public void setLogger(Logger logger) { this.logger = logger; }
+    /**
+     * Gets the current logger instance used by the `GameWorld` instance.
+     *
+     * @return the current logger instance used by the `GameWorld` instance.
+     */
+    public Logger getLogger() { return this.sim.getLogger(); }
+
+    /**
+     * Sets a new logger for the `GameWorld` instance.
+     *
+     * @param logger is the new logger.
+     */
+    public void setLogger(Logger logger) {
+        this.sim.setLogger(logger);
+    }
+
+    public void log(String s) {
+        this.getLogger().log(s);
+    }
+
+    /**
+     * Update target zoom to a new value while making sure it won't exceed bounds.
+     *
+     * @param newZoom is the new target zoom.
+     */
+    private void updateTargetZoom(float newZoom) {
+        newZoom = MathUtils.clamp(newZoom, ZOOM_MIN, ZOOM_MAX);
+        targetZoom = Math.min(newZoom, calculateZoomLimit());
+    }
+
+    /**
+     * Sync camera zoom to target zoom instantly.
+     */
+    private void syncZoom() {
+        camera.zoom = targetZoom;
+    }
 
     /**
      * Splits a texture into frames based on frame dimension, then creates an animation from it.
@@ -193,23 +266,63 @@ public class GameWorld implements Disposable, InputProcessor {
     /**
      * Update the game world.
      *
-     * @param spriteBatch is the `SpriteBatch` instance used to render.
      * @param dt is the delta time (time passed since last update).
      */
-    public void update(SpriteBatch spriteBatch, float dt) {
+    public void update(float dt) {
+        // Update camera
+        viewport.apply();
+        camera.update();
+        spriteBatch.setProjectionMatrix(camera.combined);
+
         // Zoom
-        camera.zoom = MathUtils.lerp(camera.zoom, zoom, ZOOM_SPEED * dt);
+        camera.zoom = MathUtils.lerp(camera.zoom, targetZoom, ZOOM_SPEED * dt);
 
         // Handle camera movement
         handleCameraMovement(dt);
 
+        // Real-time
+        if (realTimeEnabled) {
+            realTime.update(dt);
+        }
+
+        // Update items
+        if (realTimeEnabled) {
+            if (!realTime.isPaused() && realTime.isRunning()) {
+                for (DeliveryActor delivery : deliveries) {
+                    delivery.update(dt, realTime.getSpeed());
+                }
+            }
+        } else {
+            for (DeliveryActor delivery : deliveries) {
+                delivery.update(dt, Float.MAX_VALUE);
+            }
+        }
+
+        // Release arrived delivery actors
+        deliveries.removeIf(DeliveryActor::hasArrived);
+    }
+
+    public void render(float dt) {
+        spriteBatch.begin();
+
         // Draw background grid
-        grid.draw(spriteBatch);
+        grid.drawGrid(spriteBatch);
 
         // Draw paths
-        pathAnimator.step(dt);
+        float pathSpeed;
+        if (realTimeEnabled) {
+            pathSpeed = (realTime.isPaused() || !realTime.isRunning()) ? 0f : realTime.getSpeed() * 1.625f;
+        } else {
+            pathSpeed = 1f;
+        }
+        pathAnimator.step(pathSpeed * dt);
         for (Tuple<PathActor, Path> tuple : pathPairs) {
-            tuple.first().draw(spriteBatch);
+            tuple.first().drawPaths(spriteBatch);
+        }
+
+        // Draw items
+        for (DeliveryActor delivery : deliveries) {
+            delivery.draw(spriteBatch);
         }
 
         // Draw buildings
@@ -217,8 +330,19 @@ public class GameWorld implements Disposable, InputProcessor {
             building.draw(spriteBatch);
         }
 
+        // Draw crossing paths
+        if (!pathPairs.isEmpty()) {
+            pathPairs.getFirst().first().drawCrosses(spriteBatch, pathCrossCoords);
+        }
+
         // Draw grid selection box
         grid.drawSelectionBox(spriteBatch);
+
+        spriteBatch.end();
+    }
+
+    public void resize(int width, int height) {
+        viewport.update(width, height, false);
     }
 
     private void handleCameraMovement(float dt) {
@@ -234,7 +358,7 @@ public class GameWorld implements Disposable, InputProcessor {
         } else if (isHoldingRight) {
             cameraVelocity.x = 1f;
         }
-        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * zoom * dt);
+        cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * camera.zoom * dt);
         camera.position.add(cameraVelocity.x, cameraVelocity.y, 0f);
 
         // Invoke mouse movement event if camera is moved
@@ -253,10 +377,15 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public void dispose() {
+        // Dispose sprite batch
+        spriteBatch.dispose();
+
+        // Dispose textures
         cellTexture.dispose();
         mineTexture.dispose();
         factoryTexture.dispose();
         storageTexture.dispose();
+        itemTexture.dispose();
         pathTexture.dispose();
         pathCrossTexture.dispose();
         selectTexture.dispose();
@@ -269,6 +398,12 @@ public class GameWorld implements Disposable, InputProcessor {
 
 
 
+    /**
+     * Converts a position on the screen to where it is in the world.
+     *
+     * @param screenPos is the screen position to convert.
+     * @return converted world position of the screen position.
+     */
     private Vector2 screenToWorld(Vector2 screenPos) {
         viewport.unproject(screenPos);
         return screenPos;
@@ -420,10 +555,28 @@ public class GameWorld implements Disposable, InputProcessor {
         return buildBuilding(factory, storageAnimation, coordinate);
     }
 
+    /**
+     * Takes an existing path and creates an actor from it.
+     *
+     * @param path is the path instance to be an actor.
+     * @return constructed `PathActor` instance.
+     */
     private PathActor actorizePath(Path path) {
+        // Create actor
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
         pathPairs.add(new Tuple<>(actor, path));
+
+        // Cache and sort paths
+        for (Coordinate c : actor.getCrosses()) {
+            pathCrossCoords.add(c);
+        }
+        pathCrossCoords.sort((a, b) -> {
+            float ay = coordinateToWorld(a).y;
+            float by = coordinateToWorld(b).y;
+            return Float.compare(by, ay);
+        });
+
         return actor;
     }
 
@@ -445,6 +598,12 @@ public class GameWorld implements Disposable, InputProcessor {
         actorizePath(path);
     }
 
+    /**
+     * Gets the building actor at a certain coordinate.
+     *
+     * @param c is the coordinate to get the actor.
+     * @return the building actor instance at that coordinate or null.
+     */
     public BuildingActor getBuildingAt(Coordinate c) {
         return buildingMap.get(c);
     }
@@ -452,8 +611,9 @@ public class GameWorld implements Disposable, InputProcessor {
 
 
     public interface Phase {
-        void onClick(Coordinate c);
-        void onEnter();
+        default void onClick(Coordinate c) { }
+        default void onRelease(Coordinate c) { }
+        default void onEnter() { }
     }
 
     public class DefaultPhase implements Phase {
@@ -504,7 +664,7 @@ public class GameWorld implements Disposable, InputProcessor {
             try {
                 buildMine(name, miningRecipe, c);
             } catch (Exception e) {
-                logger.log(e.getMessage());
+                log(e.getMessage());
             } finally {
                 enterDefaultPhase();
             }
@@ -524,7 +684,7 @@ public class GameWorld implements Disposable, InputProcessor {
             try {
                 buildFactory(name, factoryType, c);
             } catch (Exception e) {
-                logger.log(e.getMessage());
+                log(e.getMessage());
             } finally {
                 enterDefaultPhase();
             }
@@ -548,7 +708,7 @@ public class GameWorld implements Disposable, InputProcessor {
             try {
                 buildStorage(name, storageItem, maxCapacity, priority, c);
             } catch (Exception e) {
-                logger.log(e.getMessage());
+                log(e.getMessage());
             } finally {
                 enterDefaultPhase();
             }
@@ -557,6 +717,18 @@ public class GameWorld implements Disposable, InputProcessor {
 
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
+
+        private void onConnect(Coordinate c) {
+            // Get destination
+            BuildingActor to = getBuildingAt(c);
+            if (to == null) {
+                return;
+            }
+
+            // Try to connect
+            connectPath(from, to);
+            enterDefaultPhase(); // Connected successfully, resume to default phase
+        }
 
         @Override
         public void onClick(Coordinate c) {
@@ -570,18 +742,28 @@ public class GameWorld implements Disposable, InputProcessor {
                     return; // Intentional. If clicked on a coordinate with no building, do nothing
                 }
 
-                // Get destination
-                BuildingActor to = getBuildingAt(c);
-                if (to == null) {
+                // Try to connect to the coordinate
+                onConnect(c);
+            } catch (Exception e) {
+                // Log error and resume back to default phase on error
+                log(e.getMessage());
+                enterDefaultPhase();
+            }
+        }
+
+        @Override
+        public void onRelease(Coordinate c) {
+            try {
+                // Ignore if no source or release coordinate is where source is
+                if (from == null || from.getBuilding().getLocation().equals(c)) {
                     return;
                 }
 
-                // Try to connect
-                connectPath(from, to);
-                enterDefaultPhase(); // Connected successfully, resume to default phase
+                // Try to connect to the coordinate
+                onConnect(c);
             } catch (Exception e) {
                 // Log error and resume back to default phase on error
-                logger.log(e.getMessage());
+                log(e.getMessage());
                 enterDefaultPhase();
             }
         }
@@ -704,7 +886,15 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false;
+        if (button == Input.Buttons.LEFT) {
+            // Get coordinate based on touch screen position
+            Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
+            Coordinate c = worldToCoordinate(pos);
+
+            // Invoke current phase's `onRelease` event
+            phase.onRelease(c);
+        }
+        return true;
     }
 
     @Override
@@ -714,7 +904,7 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        return false;
+        return mouseMoved(screenX, screenY);
     }
 
     private int mouseScreenX = 0;
@@ -732,8 +922,27 @@ public class GameWorld implements Disposable, InputProcessor {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        zoom += amountY * ZOOM_AMOUNT;
-        zoom = MathUtils.clamp(zoom, ZOOM_MIN, ZOOM_MAX);
+        updateTargetZoom(targetZoom + amountY * ZOOM_AMOUNT);
         return true;
     }
+
+    /**
+     * Calculates a zoom limit based on the grid size and viewport size.
+     * A zoom limit is the maximum zoom that makes sure all grid is shown while no out-of-bound is visible.
+     *
+     * @return the camera zoom limit.
+     */
+    private float calculateZoomLimit() {
+        float zoomMaxX = grid.getWidth() / viewport.getWorldWidth();
+        float zoomMaxY = grid.getHeight() / viewport.getWorldHeight();
+        return Math.min(zoomMaxX, zoomMaxY);
+    }
+
+    @Override
+    public void onDeliveryAdded(Delivery delivery) {
+        deliveries.add(new DeliveryActor(delivery, itemTexture, this::coordinateToWorld));
+    }
+
+    @Override
+    public void onDeliveryFinished(Delivery delivery) { }
 }

@@ -8,17 +8,17 @@ import com.kotcrab.vis.ui.widget.file.FileChooser.SelectionMode;
 import com.kotcrab.vis.ui.widget.file.FileChooser.Mode;
 import com.kotcrab.vis.ui.widget.file.FileTypeFilter;
 
-import edu.duke.ece651.factorysim.FactoryGame;
+import edu.duke.ece651.factorysim.screen.SimulationScreen;
 
 public class FileDialogUtil {
 
     /**
      * Creates and returns a configured FileChooser for loading simulations.
      *
-     * @param game the FactoryGame instance for which simulations should be loaded
+     * @param simScreen is the SimulationScreen instance for which simulations should be loaded
      * @return a fully configured FileChooser
      */
-    public static FileChooser createFileChooser(final FactoryGame game) {
+    public static FileChooser createFileChooser(final SimulationScreen simScreen) {
         // If you want to set a custom favorites preferences name:
         FileChooser.setDefaultPrefsName("edu.duke.ece651.factorysim.filechooser");
 
@@ -39,7 +39,7 @@ public class FileDialogUtil {
                 if (files.size > 0) {
                     String jsonPath = files.first().file().getAbsolutePath();
                     try {
-                        game.loadSimulation(jsonPath);
+                        simScreen.loadSimulation(jsonPath);
                         System.out.println("Simulation loaded from: " + jsonPath);
                     } catch (Exception e) {
                         System.err.println("Failed to load simulation: " + e.getMessage());
@@ -51,7 +51,7 @@ public class FileDialogUtil {
         return fileChooser;
     }
 
-    public static FileChooser saveFileChooser(final FactoryGame game) {
+    public static FileChooser saveFileChooser(final SimulationScreen simScreen) {
         FileChooser.setDefaultPrefsName("edu.duke.ece651.factorysim.filechooser");
 
         FileChooser fileChooser = new FileChooser(Mode.SAVE);
@@ -67,7 +67,7 @@ public class FileDialogUtil {
                 if (files.size > 0) {
                     String jsonPath = files.first().file().getAbsolutePath();
                     try {
-                        game.saveSimulation(jsonPath);
+                        simScreen.saveSimulation(jsonPath);
                         System.out.println("Simulation saved to: " + jsonPath);
                     } catch (Exception e) {
                         System.err.println("Failed to save simulation: " + e.getMessage());
