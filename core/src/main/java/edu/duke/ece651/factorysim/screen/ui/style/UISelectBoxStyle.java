@@ -1,4 +1,4 @@
-package edu.duke.ece651.factorysim.ui.style;
+package edu.duke.ece651.factorysim.screen.ui.style;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.ui.*;

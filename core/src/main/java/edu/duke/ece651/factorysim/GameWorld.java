@@ -298,14 +298,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             }
         }
 
-        // Rendering
-        render(dt);
-
         // Release arrived delivery actors
         deliveries.removeIf(DeliveryActor::hasArrived);
     }
 
-    private void render(float dt) {
+    public void render(float dt) {
         spriteBatch.begin();
 
         // Draw background grid

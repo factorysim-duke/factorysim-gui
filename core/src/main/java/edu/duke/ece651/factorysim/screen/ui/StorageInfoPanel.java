@@ -1,29 +1,33 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.widget.*;
-import edu.duke.ece651.factorysim.MineBuilding;
+import edu.duke.ece651.factorysim.StorageBuilding;
 import edu.duke.ece651.factorysim.Building;
 
-public class MineInfoPanel extends InfoPanel {
-    private final MineBuilding building;
+/**
+ * Storage info panel.
+ */
+public class StorageInfoPanel extends InfoPanel {
+    private final StorageBuilding building;
     private final VisLabel buildingLabel;
-    private final VisLabel resourceLabel;
-    private final VisLabel latencyLabel;
-
+    private final VisLabel capacityLabel;
+    private final VisLabel currentLoadLabel;
     private final VisLabel requestPolicyLabel;
     private final VisSelectBox<String> requestPolicyBox;
-
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
-
     private final VisTextButton newRequestButton;
 
-    public MineInfoPanel(MineBuilding building) {
+    /**
+     * Constructor for the StorageInfoPanel class.
+     * @param building the storage building to display information for
+     */
+    public StorageInfoPanel(StorageBuilding building) {
         super();
         this.building = building;
 
-        buildingLabel = new VisLabel("Mine: " + building.getName());
+        buildingLabel = new VisLabel("Storage: " + building.getName());
         buildingLabel.setColor(Color.BLACK);
         buildingLabel.setFontScale(1.2f);
         add(buildingLabel).left().padBottom(10).row();
@@ -32,7 +36,7 @@ public class MineInfoPanel extends InfoPanel {
         requestPolicyLabel = new VisLabel("Request Policy:");
         requestPolicyLabel.setColor(Color.BLACK);
         requestPolicyBox = new VisSelectBox<>("blue");
-        requestPolicyBox.setItems("FIFO", "READY", "SJF");
+        requestPolicyBox.setItems("FIFO");
 
         VisTable requestPolicyRow = new VisTable(true);
         requestPolicyRow.add(requestPolicyLabel).left();
@@ -50,39 +54,59 @@ public class MineInfoPanel extends InfoPanel {
         sourcePolicyRow.add(sourcePolicyBox).width(100).left();
         add(sourcePolicyRow).left().padBottom(10).row();
 
-        resourceLabel = new VisLabel();
-        resourceLabel.setColor(Color.DARK_GRAY);
+        capacityLabel = new VisLabel();
+        capacityLabel.setColor(Color.DARK_GRAY);
 
-        latencyLabel = new VisLabel();
-        latencyLabel.setColor(Color.DARK_GRAY);
+        currentLoadLabel = new VisLabel();
+        currentLoadLabel.setColor(Color.DARK_GRAY);
 
-        add(resourceLabel).left().padLeft(10).padTop(5).row();
-        add(latencyLabel).left().padLeft(10).padTop(5).row();
+        add(capacityLabel).left().padLeft(10).padTop(5).row();
+        add(currentLoadLabel).left().padLeft(10).padTop(5).row();
 
         // New request button
         newRequestButton = new VisTextButton("New Request", "blue");
-        add(newRequestButton).fillX().height(32).padTop(15);
+        // add(newRequestButton).fillX().height(32).padTop(15);
 
         updateData(building);
     }
 
-    public void updateData(MineBuilding building) {
-        resourceLabel.setText("Resource: " + building.getResource().getName());
-        latencyLabel.setText("Mining Latency: " + building.getMiningLatency());
+    /**
+     * Update the data for the storage info panel.
+     * @param building the storage building to display information for
+     */
+    public void updateData(StorageBuilding building) {
+        capacityLabel.setText("Capacity: " + building.getMaxCapacity());
+        currentLoadLabel.setText("Current Load: " + building.getCurrentStockNum());
     }
 
+    /**
+     * Get the request policy box.
+     * @return the request policy box
+     */
     public VisSelectBox<String> getRequestPolicyBox() {
         return requestPolicyBox;
     }
 
+    /**
+     * Get the source policy box.
+     * @return the source policy box
+     */
     public VisSelectBox<String> getSourcePolicyBox() {
         return sourcePolicyBox;
     }
 
+    /**
+     * Get the new request button.
+     * @return the new request button
+     */
     public VisTextButton getNewRequestButton() {
         return newRequestButton;
     }
 
+    /**
+     * Get the building.
+     * @return the building
+     */
     public Building getBuilding() {
         return building;
     }

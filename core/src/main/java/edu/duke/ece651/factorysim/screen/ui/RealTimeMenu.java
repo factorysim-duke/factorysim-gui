@@ -1,4 +1,4 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -11,20 +11,19 @@ import com.kotcrab.vis.ui.widget.PopupMenu;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 
 /**
- * A dropdown menu for real-time simulation controls.
+ * Dropdown menu for real-time simulation controls.
  */
 public class RealTimeMenu extends PopupMenu {
-    private final SimulationScreen screen;
-
     private VisTextButton startPauseButton;
     private VisTextField stepsPerSecondField;
+    private final SimulationScreen screen;
 
     /**
-     * Creates a real-time control menu.
+     * Creates a real-time controls menu.
      *
      * @param screen the simulation screen instance
      */
-    public RealTimeMenu(SimulationScreen screen) {
+    public RealTimeMenu(final SimulationScreen screen) {
         super();
         this.screen = screen;
 
@@ -153,7 +152,6 @@ public class RealTimeMenu extends PopupMenu {
         float buttonX = actor.getX();
         float buttonY = actor.getY();
         float buttonWidth = actor.getWidth();
-        float buttonHeight = actor.getHeight();
 
         // Get the menu width and height
         float menuWidth = getWidth();

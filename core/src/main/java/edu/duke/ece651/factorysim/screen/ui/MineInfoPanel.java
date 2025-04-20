@@ -1,40 +1,33 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
-import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.*;
-import edu.duke.ece651.factorysim.FactoryBuilding;
-import edu.duke.ece651.factorysim.Recipe;
+import edu.duke.ece651.factorysim.MineBuilding;
 import edu.duke.ece651.factorysim.Building;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-public class FactoryInfoPanel extends InfoPanel {
-    private final FactoryBuilding building;
+/**
+ * Mine info panel.
+ */
+public class MineInfoPanel extends InfoPanel {
+    private final MineBuilding building;
     private final VisLabel buildingLabel;
-    private final VisLabel outputsLabel;
-    private final VisLabel sourcesLabel;
-    private final VisLabel queueLabel;
-
+    private final VisLabel resourceLabel;
+    private final VisLabel latencyLabel;
     private final VisLabel requestPolicyLabel;
     private final VisSelectBox<String> requestPolicyBox;
-    private final VisTextButton newRequestButton;
-
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
+    private final VisTextButton newRequestButton;
 
-    /*
-     * FactoryInfoPanel constructor
-     *
-     * @param building the factory building to display information for
+    /**
+     * Constructor for the MineInfoPanel class.
+     * @param building the mine building to display information for
      */
-    public FactoryInfoPanel(FactoryBuilding building) {
+    public MineInfoPanel(MineBuilding building) {
         super();
         this.building = building;
 
-        // Factory title
-        buildingLabel = new VisLabel("Factory: " + building.getName());
+        buildingLabel = new VisLabel("Mine: " + building.getName());
         buildingLabel.setColor(Color.BLACK);
         buildingLabel.setFontScale(1.2f);
         add(buildingLabel).left().padBottom(10).row();
@@ -61,56 +54,59 @@ public class FactoryInfoPanel extends InfoPanel {
         sourcePolicyRow.add(sourcePolicyBox).width(100).left();
         add(sourcePolicyRow).left().padBottom(10).row();
 
-        // Outputs label
-        outputsLabel = new VisLabel();
-        outputsLabel.setColor(Color.DARK_GRAY);
-        add(outputsLabel).left().padBottom(5).row();
+        resourceLabel = new VisLabel();
+        resourceLabel.setColor(Color.DARK_GRAY);
 
-        // Sources label
-        sourcesLabel = new VisLabel();
-        sourcesLabel.setColor(Color.DARK_GRAY);
-        add(sourcesLabel).left().padBottom(5).row();
+        latencyLabel = new VisLabel();
+        latencyLabel.setColor(Color.DARK_GRAY);
 
-        // Queue label
-        queueLabel = new VisLabel();
-        queueLabel.setColor(Color.DARK_GRAY);
-        add(queueLabel).left().padBottom(15).row();
+        add(resourceLabel).left().padLeft(10).padTop(5).row();
+        add(latencyLabel).left().padLeft(10).padTop(5).row();
 
         // New request button
         newRequestButton = new VisTextButton("New Request", "blue");
-        add(newRequestButton).fillX().height(32);
+        add(newRequestButton).fillX().height(32).padTop(15);
 
         updateData(building);
     }
 
-    public void updateData(FactoryBuilding building) {
-        List<Recipe> factoryRecipes = building.getFactoryType().getRecipes();
-        String recipeNames = factoryRecipes.stream()
-                .map(r -> r.getOutput().getName())
-                .collect(Collectors.joining(", "));
-        outputsLabel.setText("Outputs: " + recipeNames);
-
-        String sourceNames = building.getSources().stream()
-                .map(b -> b.getName())
-                .collect(Collectors.joining(", "));
-        sourcesLabel.setText("Sources: " + sourceNames);
-
-        int queueSize = building.getPendingRequests().size();
-        queueLabel.setText("Request Queue: " + queueSize + " pending");
+    /**
+     * Update the data for the mine info panel.
+     * @param building the mine building to display information for
+     */
+    public void updateData(MineBuilding building) {
+        resourceLabel.setText("Resource: " + building.getResource().getName());
+        latencyLabel.setText("Mining Latency: " + building.getMiningLatency());
     }
 
+    /**
+     * Get the request policy box.
+     * @return the request policy box
+     */
     public VisSelectBox<String> getRequestPolicyBox() {
         return requestPolicyBox;
     }
 
+    /**
+     * Get the source policy box.
+     * @return the source policy box
+     */
     public VisSelectBox<String> getSourcePolicyBox() {
         return sourcePolicyBox;
     }
 
+    /**
+     * Get the new request button.
+     * @return the new request button
+     */
     public VisTextButton getNewRequestButton() {
         return newRequestButton;
     }
 
+    /**
+     * Get the building.
+     * @return the building
+     */
     public Building getBuilding() {
         return building;
     }

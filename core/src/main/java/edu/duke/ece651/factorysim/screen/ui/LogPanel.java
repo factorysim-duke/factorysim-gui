@@ -1,4 +1,4 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -7,16 +7,25 @@ import com.badlogic.gdx.utils.Align;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.*;
 
+/**
+ * Log panel.
+ */
 public class LogPanel extends VisTable {
     private VisLabel logLabel;
     private VisScrollPane scrollPane;
     private VisSelectBox<String> verbosityBox;
 
+    /**
+     * Constructor for the LogPanel class.
+     */
     public LogPanel() {
         super();
         init();
     }
 
+    /**
+     * Initialize the log panel.
+     */
     private void init() {
         setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
         top();
@@ -72,16 +81,27 @@ public class LogPanel extends VisTable {
         add(scrollPane).expand().fill().pad(10).row();
     }
 
+    /**
+     * Append a log message to the log panel.
+     * @param message the message to append
+     */
     public void appendLog(String message) {
         logLabel.setText(logLabel.getText() + message + "\n");
         scrollPane.layout();
         scrollPane.setScrollPercentY(1f);
     }
 
+    /**
+     * Clear the logs.
+     */
     public void clearLogs() {
         logLabel.setText("");
     }
 
+    /**
+     * Get the verbosity box.
+     * @return the verbosity box
+     */
     public VisSelectBox<String> getVerbosityBox() {
         return verbosityBox;
     }

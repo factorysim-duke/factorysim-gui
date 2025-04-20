@@ -7,7 +7,7 @@ public class RealTimeSimulation {
     private final Simulation simulation;
 
     // Timing settings
-    private float stepsPerSecond = 5f; // Default: 10 steps per second
+    private float stepsPerSecond = 5f; // Default: 5 steps per second
     private float accumulatedTime = 0f;
 
     // State

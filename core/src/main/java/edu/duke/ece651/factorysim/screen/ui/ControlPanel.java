@@ -1,4 +1,4 @@
-package edu.duke.ece651.factorysim.ui;
+package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -10,17 +10,26 @@ import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.*;
 import com.kotcrab.vis.ui.widget.spinner.*;
 
+/**
+ * Control panel of the simulation.
+ */
 public class ControlPanel extends VisTable {
     private VisTextButton stepButton;
     private VisTextButton finishButton;
     private Spinner stepSpinner;
     private int currentSteps = 1;
 
+    /**
+     * Constructor for the ControlPanel class.
+     */
     public ControlPanel() {
         super();
         init();
     }
 
+    /**
+     * Initialize the control panel.
+     */
     private void init() {
         setBackground(VisUI.getSkin().newDrawable("white", new Color(0.95f, 0.95f, 0.95f, 0.9f)));
 
@@ -66,14 +75,26 @@ public class ControlPanel extends VisTable {
         add(finishButton).pad(5).row();
     }
 
+    /**
+     * Get the step button.
+     * @return the step button
+     */
     public VisTextButton getStepButton() {
         return stepButton;
     }
 
+    /**
+     * Get the finish button.
+     * @return the finish button
+     */
     public VisTextButton getFinishButton() {
         return finishButton;
     }
 
+    /**
+     * Get the step count.
+     * @return the step count
+     */
     public int getStepCount() {
         return currentSteps;
     }
