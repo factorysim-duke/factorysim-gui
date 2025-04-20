@@ -314,7 +314,11 @@ public class SimulationScreen implements Screen {
 
     // make user request
     public void makeUserRequest(String itemName, String buildingName) {
-        this.world.getSim().makeUserRequest(itemName, buildingName);
+        try {
+            this.world.getSim().makeUserRequest(itemName, buildingName);
+        } catch (Exception e) {
+            logPanel.appendLog("[ERROR] Failed to make user request: " + e.getMessage());
+        }
     }
 
     //get current step
