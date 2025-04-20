@@ -83,9 +83,9 @@ public class SimulationScreen implements Screen {
     private void loadTextures() {
         // Use the existing textures from GameWorld
         selectTexture = new Texture("select.png");
-        mineTexture = new Texture("mine.png");
-        factoryTexture = new Texture("factory.png");
-        storageTexture = new Texture("storage.png");
+        mineTexture = new Texture("icon_mine.png");
+        factoryTexture = new Texture("icon_factory.png");
+        storageTexture = new Texture("icon_storage.png");
     }
 
     /**
