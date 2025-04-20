@@ -19,41 +19,7 @@
             ]
         }
     ],
-    "buildings" : [
-        {
-            "name" : "D",
-            "type" : "door",
-            "sources" : [
-                "W",
-                "Hi",
-                "Ha"
-            ]
-        },
-        {
-            "name" : "Ha",
-            "type" : "handle",
-            "sources" : [
-                "M"
-            ]
-        },
-        {
-            "name" : "Hi",
-            "type" : "hinge",
-            "sources" : [
-                "M"
-            ]
-        },
-        {
-            "name" : "W",
-            "mine" : "wood",
-            "sources" : []
-        },
-        {
-            "name" : "M",
-            "mine" : "metal",
-            "sources" : []
-        }
-    ],
+    "buildings" : [],
     "recipes" : [
         {
             "output" : "door",

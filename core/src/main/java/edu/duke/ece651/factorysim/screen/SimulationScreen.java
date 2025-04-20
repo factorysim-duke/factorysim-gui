@@ -63,6 +63,15 @@ public class SimulationScreen implements Screen {
             0f, 0f);
         inputMultiplexer.addProcessor(this.world);
 
+        // Load initial configuration from formula.json
+        try {
+            // This loads the formula.json which contains types and recipes
+            loadSimulation("formula.json");
+            System.out.println("Successfully loaded initial configuration from formula.json");
+        } catch (Exception e) {
+            System.out.println("Failed to load initial configuration: " + e.getMessage());
+        }
+
         // Load textures first so they can be used in UI construction
         loadTextures();
 
@@ -111,6 +120,7 @@ public class SimulationScreen implements Screen {
         // Create building buttons panel
         buildingButtonsPanel = new BuildingButtonsPanel(
             world,
+            stage,
             selectTexture,
             mineTexture,
             factoryTexture,
