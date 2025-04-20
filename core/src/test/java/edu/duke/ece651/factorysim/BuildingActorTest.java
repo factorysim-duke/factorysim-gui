@@ -1,6 +1,7 @@
 package edu.duke.ece651.factorysim;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,6 +12,7 @@ public class BuildingActorTest {
     private Building mockBuilding;
     private Animation<TextureRegion> mockAnimation;
     private TextureRegion mockFrame;
+    private Texture mockTexture;
     private SpriteBatch mockBatch;
 
     @BeforeEach
@@ -18,6 +20,7 @@ public class BuildingActorTest {
         mockBuilding = mock(Building.class);
         mockAnimation = mock(Animation.class);
         mockFrame = mock(TextureRegion.class);
+        mockTexture = mock(Texture.class);
         mockBatch = mock(SpriteBatch.class);
 
         Graphics mockGraphics = mock(Graphics.class);
@@ -27,7 +30,7 @@ public class BuildingActorTest {
 
     @Test
     public void test_constructor_getBuilding() {
-        BuildingActor actor = new BuildingActor(mockBuilding, mockAnimation, 1f, 2f);
+        BuildingActor actor = new BuildingActor(mockBuilding, mockAnimation, mockTexture, 1f, 2f);
         assertSame(mockBuilding, actor.getBuilding());
         assertEquals(1f, actor.position.x);
         assertEquals(2f, actor.position.y);
@@ -37,7 +40,7 @@ public class BuildingActorTest {
     public void test_draw() {
         when(mockAnimation.getKeyFrame(anyFloat(), eq(true))).thenReturn(mockFrame);
 
-        BuildingActor actor = new BuildingActor(mockBuilding, mockAnimation, 5f, 10f);
+        BuildingActor actor = new BuildingActor(mockBuilding, mockAnimation, mockTexture, 5f, 10f);
         actor.draw(mockBatch);
 
         verify(mockAnimation).getKeyFrame(anyFloat(), eq(true));

@@ -63,6 +63,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture selectStorageTexture;
     private final Texture selectFromTexture;
     private final Texture selectToTexture;
+    private final Texture removeTexture;
 
     // Animation
     private final Animation<TextureRegion> mineAnimation;
@@ -120,6 +121,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.selectStorageTexture = new Texture("select_storage.png");
         this.selectFromTexture = new Texture("select_from.png");
         this.selectToTexture = new Texture("select_to.png");
+        this.removeTexture = new Texture("remove.png");
 
         // Create animations
         this.mineAnimation = createAnimation(mineTexture, mineTexture.getHeight(),
@@ -131,11 +133,6 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
-        // Create empty world and simulation
-        this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
-        this.sim.deliverySchedule.subscribe(this);
-        this.realTime = new RealTimeSimulation(this.sim);
-
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
             x - (width / 2f), y - (height / 2f));
@@ -146,6 +143,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Initialize camera zoom
         updateTargetZoom(targetZoom);
         syncZoom();
+
+        // Create empty world and simulation
+        this.setSimulation(new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger));
     }
 
     /**
@@ -155,14 +155,20 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      */
     public void setSimulation(Simulation sim) {
         // Unsubscribe as a listener from the previous simulation
-        this.sim.getDeliverySchedule().unsubscribe(this);
+        if (this.sim != null) {
+            this.sim.getDeliverySchedule().unsubscribe(this);
+            this.sim.unsubscribeToOnBuildingRemoved(this::onBuildingRemoved);
+        }
 
         // Set new simulation
         this.sim = sim;
-        this.sim.getDeliverySchedule().subscribe(this);
         this.realTime = new RealTimeSimulation(this.sim);
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
+
+        // Subscribe to events
+        this.sim.getDeliverySchedule().subscribe(this);
+        this.sim.subscribeToOnBuildingRemoved(this::onBuildingRemoved);
 
         // Resize the grid
         grid.resize(tileMap.getWidth(), tileMap.getHeight());
@@ -481,11 +487,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @return constructed building actor.
      */
     private BuildingActor actorizeBuilding(Building building, Animation<TextureRegion> animation) {
+        // Create the actor instance
         Coordinate location = building.getLocation();
         Vector2 worldPos = coordinateToWorld(location);
-        BuildingActor actor = new BuildingActor(building, animation, worldPos.x, worldPos.y);
+        BuildingActor actor = new BuildingActor(building, animation, removeTexture, worldPos.x, worldPos.y);
+
+        // Add the actor
         buildingActors.add(actor);
-        buildingMap.put(location, actor);
+        buildingMap.put(location, actor); // Add to building map for fast lookup
         return actor;
     }
 
@@ -556,6 +565,48 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     }
 
     /**
+     * Asks to remove a building and its actor.
+     *
+     * @param buildingActor is the building actor to remove.
+     */
+    public void removeBuilding(BuildingActor buildingActor) {
+        sim.removeBuilding(buildingActor.getBuilding());
+    }
+
+    /**
+     * The event listener being called when a building is fully removed.
+     *
+     * @param building is the building that got fully removed.
+     * @throws IllegalArgumentException when the building is not an actor in the game world.
+     */
+    private void onBuildingRemoved(Building building) {
+        // Find its actor
+        BuildingActor actor = null;
+        for (BuildingActor a : buildingActors) {
+            if (a.getBuilding() == building) {
+                actor = a;
+                break;
+            }
+        }
+        if (actor == null) {
+            throw new IllegalArgumentException("The building does not have an actor in the game world");
+        }
+
+        // Demolish the building (delete its actor)
+        demolishBuilding(actor);
+    }
+
+    /**
+     * Completely remove a building's actor.
+     *
+     * @param buildingActor is the building actor to remove.
+     */
+    private void demolishBuilding(BuildingActor buildingActor) {
+        buildingMap.remove(buildingActor.getBuilding().getLocation());
+        buildingActors.remove(buildingActor);
+    }
+
+    /**
      * Takes an existing path and creates an actor from it.
      *
      * @param path is the path instance to be an actor.
@@ -590,10 +641,6 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             return;
         }
 
-        // TODO: Add 'from' as a new source of 'to'
-//        Building source = from.getBuilding();
-//        Building target = to.getBuilding();
-
         // Create the actor
         actorizePath(path);
     }
@@ -611,19 +658,29 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
 
     public interface Phase {
-        default void onClick(Coordinate c) { }
+        default void onLeftClick(Coordinate c) { }
+        default void onRightClick(Coordinate c) { }
         default void onRelease(Coordinate c) { }
         default void onEnter() { }
     }
 
     public class DefaultPhase implements Phase {
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             BuildingActor actor = getBuildingAt(c);
             if (actor == null) {
                 return;
             }
             screen.showBuildingInfo(actor.getBuilding());
+        }
+
+        @Override
+        public void onRightClick(Coordinate c) {
+            BuildingActor actor = getBuildingAt(c);
+            if (actor == null) {
+                return;
+            }
+            removeBuilding(actor);
         }
 
         @Override
@@ -643,7 +700,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public abstract void onClick(Coordinate c);
+        public abstract void onLeftClick(Coordinate c);
 
         @Override
         public void onEnter() {
@@ -660,7 +717,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 buildMine(name, miningRecipe, c);
             } catch (Exception e) {
@@ -680,7 +737,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 buildFactory(name, factoryType, c);
             } catch (Exception e) {
@@ -704,7 +761,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 buildStorage(name, storageItem, maxCapacity, priority, c);
             } catch (Exception e) {
@@ -731,7 +788,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 // Get source if not already
                 if (from == null) {
@@ -873,13 +930,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        if (button == Input.Buttons.LEFT) {
+        if (button == Input.Buttons.LEFT || button == Input.Buttons.RIGHT) {
             // Get coordinate based on touch screen position
             Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
             Coordinate c = worldToCoordinate(pos);
 
             // Invoke current phase's `onClick` event
-            phase.onClick(c);
+            if (button == Input.Buttons.LEFT) {
+                phase.onLeftClick(c);
+            } else {
+                phase.onRightClick(c);
+            }
         }
         return true;
     }
