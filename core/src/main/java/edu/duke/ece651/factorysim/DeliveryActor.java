@@ -19,9 +19,7 @@ public class DeliveryActor extends Actor2D {
      *
      * @return the `Delivery` instance of the actor.
      */
-    public Delivery getDelivery() {
-        return delivery;
-    }
+    public Delivery getDelivery() { return this.delivery; }
 
     /**
      * Constructs a `DeliveryActor` instance with a given absolute position.

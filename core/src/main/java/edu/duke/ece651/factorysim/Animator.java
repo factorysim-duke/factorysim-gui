@@ -14,7 +14,8 @@ public class Animator<T> {
 
     private float timer;
 
-    float getCurrentTime() { return timer; }
+    public float getCurrentTime() { return timer; }
+    public void setCurrentTime(float time) { this.timer = time; }
 
     /**
      * Constructs an animator with the given animation and loop setting.
@@ -44,5 +45,14 @@ public class Animator<T> {
      */
     public T getCurrentKeyFrame() {
         return animation.getKeyFrame(timer, looping);
+    }
+
+    /**
+     * Gets the current frame's index based on the internal timer.
+     *
+     * @return the current animation frame's index.
+     */
+    public int getCurrentKeyFrameIndex() {
+        return animation.getKeyFrameIndex(timer);
     }
 }

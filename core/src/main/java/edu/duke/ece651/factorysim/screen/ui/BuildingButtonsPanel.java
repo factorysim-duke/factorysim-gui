@@ -1,22 +1,14 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.kotcrab.vis.ui.widget.VisImageButton;
-import com.kotcrab.vis.ui.widget.VisTable;
+import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.*;
+import com.kotcrab.vis.ui.widget.*;
 
-import edu.duke.ece651.factorysim.GameWorld;
-import edu.duke.ece651.factorysim.Item;
-import edu.duke.ece651.factorysim.Recipe;
-import edu.duke.ece651.factorysim.Type;
-
-import java.util.HashMap;
-import java.util.List;
+import edu.duke.ece651.factorysim.*;
 
 /**
  * A panel containing building buttons for the simulation.
@@ -27,15 +19,17 @@ public class BuildingButtonsPanel extends VisTable {
     private final Texture mineTexture;
     private final Texture factoryTexture;
     private final Texture storageTexture;
+    private final Texture dronePortTexture;
     private final ButtonGroup<VisImageButton> buttonGroup;
     private final BuildingOutputDialog outputDialog;
     private final Stage stage;
 
     private VisImageButton defaultButton;
+    private VisImageButton connectButton;
     private VisImageButton mineButton;
     private VisImageButton factoryButton;
     private VisImageButton storageButton;
-    private VisImageButton connectButton;
+    private VisImageButton dronePortButton;
 
     /**
      * Constructor for the BuildingButtonsPanel.
@@ -46,19 +40,22 @@ public class BuildingButtonsPanel extends VisTable {
      * @param mineTexture is the texture for mining buildings
      * @param factoryTexture is the texture for factory buildings
      * @param storageTexture is the texture for storage buildings
+     * @param dronePortTexture is the texture for drone port buildings
      */
     public BuildingButtonsPanel(GameWorld gameWorld,
                                Stage stage,
                                Texture selectTexture,
                                Texture mineTexture,
                                Texture factoryTexture,
-                               Texture storageTexture) {
+                               Texture storageTexture,
+                               Texture dronePortTexture) {
         this.gameWorld = gameWorld;
         this.stage = stage;
         this.selectTexture = selectTexture;
         this.mineTexture = mineTexture;
         this.factoryTexture = factoryTexture;
         this.storageTexture = storageTexture;
+        this.dronePortTexture = dronePortTexture;
         this.buttonGroup = new ButtonGroup<>();
         this.outputDialog = new BuildingOutputDialog(stage, gameWorld);
 
@@ -73,17 +70,19 @@ public class BuildingButtonsPanel extends VisTable {
     private void createButtons() {
         // Create buttons using the textures
         defaultButton = createImageButton(selectTexture);
+        connectButton = createImageButton(selectTexture); // Using selectTexture for connect button
         mineButton = createImageButton(mineTexture);
         factoryButton = createImageButton(factoryTexture);
         storageButton = createImageButton(storageTexture);
-        connectButton = createImageButton(selectTexture); // Using selectTexture for connect button
+        dronePortButton = createImageButton(dronePortTexture);
 
         // Add buttons to button group for exclusive selection
         buttonGroup.add(defaultButton);
+        buttonGroup.add(connectButton);
         buttonGroup.add(mineButton);
         buttonGroup.add(factoryButton);
         buttonGroup.add(storageButton);
-        buttonGroup.add(connectButton);
+        buttonGroup.add(dronePortButton);
 
         // Make default button checked initially
         defaultButton.setChecked(true);
@@ -113,17 +112,19 @@ public class BuildingButtonsPanel extends VisTable {
 
         // Add buttons side by side
         add(defaultButton).pad(5);
+        add(connectButton).pad(5);
         add(mineButton).pad(5);
         add(factoryButton).pad(5);
         add(storageButton).pad(5);
-        add(connectButton).pad(5).row();
+        add(dronePortButton).row();
 
         // Add labels under buttons
         add("Select").pad(2);
+        add("Connect").pad(2);
         add("Mine").pad(2);
         add("Factory").pad(2);
         add("Storage").pad(2);
-        add("Connect").pad(2);
+        add("Drone Port").pad(2);
     }
 
     /**
@@ -138,10 +139,23 @@ public class BuildingButtonsPanel extends VisTable {
             }
         });
 
+        // Connect buildings tool
+        connectButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                gameWorld.enterConnectPhase();
+            }
+        });
+
         // Mine building tool
         mineButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Skip if dialog is open
+                if (isDialogOpen()) {
+                    return;
+                }
+
                 // Show dialog to select mine output
                 outputDialog.showMineOutputDialog(miningRecipe -> {
                     // Use the output resource name as the building name
@@ -155,6 +169,11 @@ public class BuildingButtonsPanel extends VisTable {
         factoryButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Skip if dialog is open
+                if (isDialogOpen()) {
+                    return;
+                }
+
                 // Show dialog to select factory type
                 outputDialog.showFactoryOutputDialog(factoryType -> {
                     // Use the type name as the building name
@@ -168,6 +187,11 @@ public class BuildingButtonsPanel extends VisTable {
         storageButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
+                // Skip if dialog is open
+                if (isDialogOpen()) {
+                    return;
+                }
+
                 // Show dialog to select storage configuration
                 outputDialog.showStorageOutputDialog(config -> {
                     // Use the item name as the building name
@@ -182,12 +206,71 @@ public class BuildingButtonsPanel extends VisTable {
             }
         });
 
-        // Connect buildings tool
-        connectButton.addListener(new ClickListener() {
+        // Drone port building tool
+        dronePortButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                gameWorld.enterConnectPhase();
+                gameWorld.enterBuildDronePortPhase("DronePort");
             }
         });
+
+        stage.addListener(new InputListener() {
+            @Override
+            public boolean keyDown(InputEvent event, int keycode) {
+                Actor focused = stage.getKeyboardFocus();
+                if (focused instanceof VisTextField) {
+                    return false;
+                }
+
+                return switch (keycode) {
+                    case Input.Keys.NUM_1 -> {
+                        simulateClick(defaultButton);
+                        yield true;
+                    }
+                    case Input.Keys.NUM_2 -> {
+                        simulateClick(connectButton);
+                        yield true;
+                    }
+                    case Input.Keys.NUM_3 -> {
+                        simulateClick(mineButton);
+                        yield true;
+                    }
+                    case Input.Keys.NUM_4 -> {
+                        simulateClick(factoryButton);
+                        yield true;
+                    }
+                    case Input.Keys.NUM_5 -> {
+                        simulateClick(storageButton);
+                        yield true;
+                    }
+                    case Input.Keys.NUM_6 -> {
+                        simulateClick(dronePortButton);
+                        yield true;
+                    }
+                    default -> false;
+                };
+            }
+        });
+    }
+
+    private boolean isDialogOpen() {
+        for (Actor actor : stage.getRoot().getChildren()) {
+            if (actor instanceof VisDialog && actor.isVisible()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void simulateClick(VisImageButton button) {
+        InputEvent down = new InputEvent();
+        down.setType(InputEvent.Type.touchDown);
+        down.setStage(stage);
+        button.fire(down);
+
+        InputEvent up = new InputEvent();
+        up.setType(InputEvent.Type.touchUp);
+        up.setStage(stage);
+        button.fire(up);
     }
 }

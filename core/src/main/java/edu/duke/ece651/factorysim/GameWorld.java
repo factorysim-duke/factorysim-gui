@@ -54,29 +54,54 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture mineTexture;
     private final Texture factoryTexture;
     private final Texture storageTexture;
+    private final Texture dronePortTexture;
     private final Texture itemTexture;
+    private final Texture droneTexture;
+
     private final Texture pathTexture;
     private final Texture pathCrossTexture;
+
     private final Texture selectTexture;
     private final Texture selectMineTexture;
     private final Texture selectFactoryTexture;
     private final Texture selectStorageTexture;
+    private final Texture selectDronePortTexture;
     private final Texture selectFromTexture;
     private final Texture selectToTexture;
+
+    private final Texture removeTexture;
 
     // Animation
     private final Animation<TextureRegion> mineAnimation;
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
+    private final Animation<TextureRegion> dronePortAnimation;
     private final Animator<TextureRegion> pathAnimator;
+    private final Animation<TextureRegion> droneAnimation;
+
+    // Path
+    private static class PathEntry {
+        public PathActor actor;
+        public Path path;
+        public Building from;
+        public Building to;
+
+        public PathEntry(PathActor actor, Path path, Building from, Building to) {
+            this.actor = actor;
+            this.path = path;
+            this.from = from;
+            this.to = to;
+        }
+    }
 
     // Actors
     private final GridActor grid;
     private final List<BuildingActor> buildingActors = new ArrayList<>();
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
-    private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
+    private final List<PathEntry> pathEntries = new ArrayList<>();
     private final List<Coordinate> pathCrossCoords = new ArrayList<>();
     private final List<DeliveryActor> deliveries = new ArrayList<>();
+    private final List<DroneDeliveryActor> droneDeliveries = new ArrayList<>();
 
     // Screen
     private final SimulationScreen screen;
@@ -108,18 +133,27 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
         // Load textures
         this.cellTexture = new Texture("cell.png");
+
         this.mineTexture = new Texture("mine.png");
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
+        this.dronePortTexture = new Texture("droneport.png");
+
         this.itemTexture = new Texture("item.png");
+        this.droneTexture = new Texture("drone.png");
+
         this.pathTexture = new Texture("path.png");
         this.pathCrossTexture = new Texture("path_cross.png");
+
         this.selectTexture = new Texture("select.png");
         this.selectMineTexture = new Texture("select_mine.png");
         this.selectFactoryTexture = new Texture("select_factory.png");
         this.selectStorageTexture = new Texture("select_storage.png");
+        this.selectDronePortTexture = new Texture("select_droneport.png");
         this.selectFromTexture = new Texture("select_from.png");
         this.selectToTexture = new Texture("select_to.png");
+
+        this.removeTexture = new Texture("remove.png");
 
         // Create animations
         this.mineAnimation = createAnimation(mineTexture, mineTexture.getHeight(),
@@ -128,13 +162,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             factoryTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.storageAnimation = createAnimation(storageTexture, storageTexture.getHeight(),
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.dronePortAnimation = createAnimation(dronePortTexture, dronePortTexture.getHeight() / 2,
+            dronePortTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
-        // Create empty world and simulation
-        this.sim = new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger);
-        this.sim.deliverySchedule.subscribe(this);
-        this.realTime = new RealTimeSimulation(this.sim);
+        this.droneAnimation = createAnimation(droneTexture, droneTexture.getHeight(),
+            droneTexture.getHeight(), 0.025f, Animation.PlayMode.LOOP);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
@@ -146,6 +181,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Initialize camera zoom
         updateTargetZoom(targetZoom);
         syncZoom();
+
+        // Create empty world and simulation
+        this.setSimulation(new Simulation(WorldBuilder.buildEmptyWorld(gridCols, gridRows), 0, logger));
     }
 
     /**
@@ -155,14 +193,20 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      */
     public void setSimulation(Simulation sim) {
         // Unsubscribe as a listener from the previous simulation
-        this.sim.getDeliverySchedule().unsubscribe(this);
+        if (this.sim != null) {
+            this.sim.getDeliverySchedule().unsubscribe(this);
+            this.sim.unsubscribeToOnBuildingRemoved(this::onBuildingRemoved);
+        }
 
         // Set new simulation
         this.sim = sim;
-        this.sim.getDeliverySchedule().subscribe(this);
         this.realTime = new RealTimeSimulation(this.sim);
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
+
+        // Subscribe to events
+        this.sim.getDeliverySchedule().subscribe(this);
+        this.sim.subscribeToOnBuildingRemoved(this::onBuildingRemoved);
 
         // Resize the grid
         grid.resize(tileMap.getWidth(), tileMap.getHeight());
@@ -173,8 +217,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Release actors associated with the previous simulation
         buildingActors.clear();
         buildingMap.clear();
-        pathPairs.clear();
+        pathEntries.clear();
         pathCrossCoords.clear();
+        deliveries.clear();
+        droneDeliveries.clear();
 
         // Create building actors
         for (Building building : world.getBuildings()) {
@@ -195,6 +241,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                     connectPath(sourceActor, buildingActor);
                 });
             }
+        }
+
+        // Create delivery actors
+        for (Delivery delivery : sim.getDeliverySchedule().deliveryList) {
+            onDeliveryAdded(delivery);
         }
     }
 
@@ -282,10 +333,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
         // Real-time
         if (realTimeEnabled) {
-            realTime.update(dt);
+            try {
+                realTime.update(dt);
+            } catch (Exception e) {
+                log(e.getMessage());
+            }
         }
 
-        // Update items
+        // Update deliveries
         if (realTimeEnabled) {
             if (!realTime.isPaused() && realTime.isRunning()) {
                 for (DeliveryActor delivery : deliveries) {
@@ -298,8 +353,32 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             }
         }
 
+        // Update drone deliveries
+        for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+            droneDelivery.update(dt, realTime.getSpeed(), realTimeEnabled);
+        }
+
+        // Update buildings
+        for (BuildingActor buildingActor : buildingActors) {
+            buildingActor.update(dt);
+        }
+
         // Release arrived delivery actors
         deliveries.removeIf(DeliveryActor::hasArrived);
+    }
+
+    public void step(int n) {
+        // Step the simulation
+        sim.step(n);
+
+        for (int i = 0; i < n; i++) {
+            // Step drone actors
+            if (!realTimeEnabled) {
+                for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+                    droneDelivery.step();
+                }
+            }
+        }
     }
 
     public void render(float dt) {
@@ -316,11 +395,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             pathSpeed = 1f;
         }
         pathAnimator.step(pathSpeed * dt);
-        for (Tuple<PathActor, Path> tuple : pathPairs) {
-            tuple.first().drawPaths(spriteBatch);
+        for (PathEntry path : pathEntries) {
+            path.actor.drawPaths(spriteBatch);
         }
 
-        // Draw items
+        // Draw package deliveries
         for (DeliveryActor delivery : deliveries) {
             delivery.draw(spriteBatch);
         }
@@ -331,8 +410,13 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         // Draw crossing paths
-        if (!pathPairs.isEmpty()) {
-            pathPairs.getFirst().first().drawCrosses(spriteBatch, pathCrossCoords);
+        if (!pathEntries.isEmpty()) {
+            pathEntries.getFirst().actor.drawCrosses(spriteBatch, pathCrossCoords);
+        }
+
+        // Draw drone deliveries
+        for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+            droneDelivery.render(spriteBatch);
         }
 
         // Draw grid selection box
@@ -385,7 +469,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         mineTexture.dispose();
         factoryTexture.dispose();
         storageTexture.dispose();
+        dronePortTexture.dispose();
         itemTexture.dispose();
+        droneTexture.dispose();
         pathTexture.dispose();
         pathCrossTexture.dispose();
         selectTexture.dispose();
@@ -394,6 +480,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         selectStorageTexture.dispose();
         selectFromTexture.dispose();
         selectToTexture.dispose();
+        removeTexture.dispose();
     }
 
 
@@ -481,11 +568,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @return constructed building actor.
      */
     private BuildingActor actorizeBuilding(Building building, Animation<TextureRegion> animation) {
+        // Create the actor instance
         Coordinate location = building.getLocation();
         Vector2 worldPos = coordinateToWorld(location);
-        BuildingActor actor = new BuildingActor(building, animation, worldPos.x, worldPos.y);
+        BuildingActor actor = new BuildingActor(building, animation, removeTexture, worldPos.x, worldPos.y);
+
+        // Add the actor
         buildingActors.add(actor);
-        buildingMap.put(location, actor);
+        buildingMap.put(location, actor); // Add to building map for fast lookup
         return actor;
     }
 
@@ -551,24 +641,74 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public BuildingActor buildStorage(String name, Item storageItem, int maxCapacity,
                                       double priority, Coordinate coordinate) {
         name = sim.getWorld().resolveBuildingNameConflict(name);
-        StorageBuilding factory = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
-        return buildBuilding(factory, storageAnimation, coordinate);
+        StorageBuilding storage = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
+        return buildBuilding(storage, storageAnimation, coordinate);
+    }
+
+    public BuildingActor buildDronePort(String name, Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
+        DronePortBuilding dronePort = new DronePortBuilding(name, Collections.emptyList(), sim);
+        return buildBuilding(dronePort, dronePortAnimation, coordinate);
+    }
+
+    /**
+     * Asks to remove a building and its actor.
+     *
+     * @param buildingActor is the building actor to remove.
+     */
+    public void removeBuilding(BuildingActor buildingActor) {
+        sim.removeBuilding(buildingActor.getBuilding());
+    }
+
+    /**
+     * The event listener being called when a building is fully removed.
+     *
+     * @param building is the building that got fully removed.
+     * @throws IllegalArgumentException when the building is not an actor in the game world.
+     */
+    private void onBuildingRemoved(Building building) {
+        // Find its actor
+        BuildingActor actor = null;
+        for (BuildingActor a : buildingActors) {
+            if (a.getBuilding() == building) {
+                actor = a;
+                break;
+            }
+        }
+        if (actor == null) {
+            throw new IllegalArgumentException("The building does not have an actor in the game world");
+        }
+
+        // Demolish the building (delete its actor)
+        demolishBuilding(actor);
+    }
+
+    /**
+     * Completely remove a building's actor.
+     *
+     * @param buildingActor is the building actor to remove.
+     */
+    private void demolishBuilding(BuildingActor buildingActor) {
+        buildingMap.remove(buildingActor.getBuilding().getLocation());
+        buildingActors.remove(buildingActor);
     }
 
     /**
      * Takes an existing path and creates an actor from it.
      *
      * @param path is the path instance to be an actor.
+     * @param from is the source building actor.
+     * @param to is the destination building actor.
      * @return constructed `PathActor` instance.
      */
-    private PathActor actorizePath(Path path) {
+    private PathActor actorizePath(Path path, BuildingActor from, BuildingActor to) {
         // Create actor
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
-        pathPairs.add(new Tuple<>(actor, path));
+        pathEntries.add(new PathEntry(actor, path, from.getBuilding(), to.getBuilding()));
 
         // Cache and sort paths
-        for (Coordinate c : actor.getCrosses()) {
+        for (Coordinate c : actor.getCrossCoordinates()) {
             pathCrossCoords.add(c);
         }
         pathCrossCoords.sort((a, b) -> {
@@ -580,22 +720,45 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         return actor;
     }
 
-    public void connectPath(BuildingActor from, BuildingActor to) {
+    public PathActor connectPath(BuildingActor from, BuildingActor to) {
         // Connect the two buildings
         Path path = sim.connectBuildings(from.getBuilding(), to.getBuilding());
         if (path == null) {
             throw new IllegalArgumentException("Cannot connect " + from.getBuilding().getName() + " to " + to.getBuilding().getName() + ": No valid path");
         }
-        if (pathPairs.stream().anyMatch((t) -> t.second() == path)) {
-            return;
+
+        // If the path is already an actor, return the actor
+        for (PathEntry entry : pathEntries) {
+            if (entry.path == path) {
+                return entry.actor;
+            }
         }
 
-        // TODO: Add 'from' as a new source of 'to'
-//        Building source = from.getBuilding();
-//        Building target = to.getBuilding();
-
         // Create the actor
-        actorizePath(path);
+        return actorizePath(path, from, to);
+    }
+
+    public void disconnectPath(BuildingActor from, BuildingActor to) {
+        // Disconnect the two buildings
+        sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
+
+        // Remove the path actor
+        PathActor actor = null;
+        for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
+            PathEntry entry = iterator.next();
+            if (entry.from == from.getBuilding() && entry.to == to.getBuilding()) {
+                iterator.remove();
+                actor = entry.actor;
+            }
+        }
+
+        // Remove cached cross coordinates
+        if (actor == null) {
+            return;
+        }
+        for (Coordinate c : actor.getCrossCoordinates()) {
+            pathCrossCoords.remove(c);
+        }
     }
 
     /**
@@ -604,26 +767,34 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @param c is the coordinate to get the actor.
      * @return the building actor instance at that coordinate or null.
      */
-    public BuildingActor getBuildingAt(Coordinate c) {
+    private BuildingActor getBuildingAt(Coordinate c) {
         return buildingMap.get(c);
     }
 
 
 
     public interface Phase {
-        default void onClick(Coordinate c) { }
+        default void onLeftClick(Coordinate c) { }
+        default void onRightClick(Coordinate c) { }
         default void onRelease(Coordinate c) { }
         default void onEnter() { }
     }
 
     public class DefaultPhase implements Phase {
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             BuildingActor actor = getBuildingAt(c);
-            if (actor == null) {
-                return;
+            if (actor != null) {
+                screen.showBuildingInfo(actor.getBuilding());
             }
-            screen.showBuildingInfo(actor.getBuilding());
+        }
+
+        @Override
+        public void onRightClick(Coordinate c) {
+            BuildingActor actor = getBuildingAt(c);
+            if (actor != null) {
+                removeBuilding(actor);
+            }
         }
 
         @Override
@@ -643,7 +814,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public abstract void onClick(Coordinate c);
+        public abstract void onLeftClick(Coordinate c);
 
         @Override
         public void onEnter() {
@@ -660,7 +831,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 buildMine(name, miningRecipe, c);
             } catch (Exception e) {
@@ -680,7 +851,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 buildFactory(name, factoryType, c);
             } catch (Exception e) {
@@ -704,7 +875,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
                 buildStorage(name, storageItem, maxCapacity, priority, c);
             } catch (Exception e) {
@@ -715,8 +886,27 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
     }
 
+    public class BuildDronePortPhase extends BuildPhase {
+        public BuildDronePortPhase(String name) {
+            super(selectDronePortTexture, name);
+        }
+
+        @Override
+        public void onLeftClick(Coordinate c) {
+            try {
+                buildDronePort(name, c);
+            } catch (Exception e) {
+                log(e.getMessage());
+            } finally {
+                enterDefaultPhase();
+            }
+        }
+    }
+
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
+
+        private boolean isConnecting = true;
 
         private void onConnect(Coordinate c) {
             // Get destination
@@ -730,9 +920,28 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             enterDefaultPhase(); // Connected successfully, resume to default phase
         }
 
+        private void onDisconnect(Coordinate c) {
+            // Get destination
+            BuildingActor to = getBuildingAt(c);
+            if (to == null) {
+                return;
+            }
+
+            // Disconnect
+            disconnectPath(from, to);
+            enterDefaultPhase(); // Disconnected successfully, resume to default phase
+        }
+
         @Override
-        public void onClick(Coordinate c) {
+        public void onLeftClick(Coordinate c) {
             try {
+                // Update flag to indicate is connecting
+                if (!isConnecting) {
+                    from = null; // Clear from
+                    grid.setSelectColor(Color.WHITE); // Update selection color
+                    isConnecting = true;
+                }
+
                 // Get source if not already
                 if (from == null) {
                     from = getBuildingAt(c);
@@ -748,6 +957,38 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                 // Log error and resume back to default phase on error
                 log(e.getMessage());
                 enterDefaultPhase();
+            }
+        }
+
+        @Override
+        public void onRightClick(Coordinate c) {
+            try {
+                // Update flag to indicate is disconnecting
+                if (isConnecting) {
+                    from = null; // Clear from
+                    grid.setSelectColor(Color.RED); // Update selection color
+                    isConnecting = false;
+                }
+
+                // Get source if not already
+                if (from == null) {
+                    from = getBuildingAt(c);
+                    if (from != null) {
+                        grid.setSelectTexture(selectToTexture); // Update select box texture
+                    }
+                    return; // Intentional. If clicked on a coordinate with no building, do nothing
+                }
+
+                // Try to disconnect
+                onDisconnect(c);
+                grid.setSelectColor(Color.WHITE); // Resume color when success
+            } catch (Exception e) {
+                // Log error and resume back to default phase on error
+                log(e.getMessage());
+                enterDefaultPhase();
+
+                // Resume color when error
+                grid.setSelectColor(Color.WHITE);
             }
         }
 
@@ -781,6 +1022,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         phase.onEnter();
     }
 
+    public void enterConnectPhase() {
+        phase = new ConnectPhase();
+        phase.onEnter();
+    }
+
     public void enterBuildMinePhase(String name, Recipe miningRecipe) {
         phase = new BuildMinePhase(name, miningRecipe);
         phase.onEnter();
@@ -796,8 +1042,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         phase.onEnter();
     }
 
-    public void enterConnectPhase() {
-        phase = new ConnectPhase();
+    public void enterBuildDronePortPhase(String name) {
+        phase = new BuildDronePortPhase(name);
         phase.onEnter();
     }
 
@@ -827,20 +1073,6 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         if (keycode == Input.Keys.SHIFT_LEFT) {
             isHoldingSpeed = true;
         }
-
-        // Tool selection
-        if (keycode == Input.Keys.NUM_1) { // Default
-            enterDefaultPhase();
-        } else if (keycode == Input.Keys.NUM_2) { // Mine
-            enterBuildMinePhase("M", new Recipe(new Item("metal"), new HashMap<>(), 1));
-        } else if (keycode == Input.Keys.NUM_3) { // Factory
-            enterBuildFactoryPhase("Hi", new Type("hinge", List.of()));
-        } else if (keycode == Input.Keys.NUM_4) { // Storage
-            enterBuildStoragePhase("St", new Item("metal"), 10, 1.0);
-        } else if (keycode == Input.Keys.NUM_5) { // Connect
-            enterConnectPhase();
-        }
-
         return true;
     }
 
@@ -873,13 +1105,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        if (button == Input.Buttons.LEFT) {
+        if (button == Input.Buttons.LEFT || button == Input.Buttons.RIGHT) {
             // Get coordinate based on touch screen position
             Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
             Coordinate c = worldToCoordinate(pos);
 
             // Invoke current phase's `onClick` event
-            phase.onClick(c);
+            if (button == Input.Buttons.LEFT) {
+                phase.onLeftClick(c);
+            } else {
+                phase.onRightClick(c);
+            }
         }
         return true;
     }
@@ -940,9 +1176,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public void onDeliveryAdded(Delivery delivery) {
-        deliveries.add(new DeliveryActor(delivery, itemTexture, this::coordinateToWorld));
+        if (delivery instanceof DroneDelivery droneDelivery) {
+            droneDeliveries.add(new DroneDeliveryActor(droneDelivery, droneAnimation, this::coordinateToWorld));
+        } else {
+            deliveries.add(new DeliveryActor(delivery, itemTexture, this::coordinateToWorld));
+        }
     }
 
     @Override
-    public void onDeliveryFinished(Delivery delivery) { }
+    public void onDeliveryFinished(Delivery delivery) {
+        if (delivery instanceof DroneDelivery droneDelivery) {
+            droneDeliveries.removeIf((actor) -> actor.getDroneDelivery() == droneDelivery);
+        }
+    }
 }

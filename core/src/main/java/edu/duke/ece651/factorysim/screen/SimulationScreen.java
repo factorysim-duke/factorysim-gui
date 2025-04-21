@@ -45,6 +45,7 @@ public class SimulationScreen implements Screen {
     private Texture mineTexture;
     private Texture factoryTexture;
     private Texture storageTexture;
+    private Texture dronePortTexture;
 
     @Override
     public void show() {
@@ -89,6 +90,7 @@ public class SimulationScreen implements Screen {
         mineTexture = new Texture("icon_mine.png");
         factoryTexture = new Texture("icon_factory.png");
         storageTexture = new Texture("icon_storage.png");
+        dronePortTexture = new Texture("icon_droneport.png");
     }
 
     /**
@@ -124,7 +126,8 @@ public class SimulationScreen implements Screen {
             selectTexture,
             mineTexture,
             factoryTexture,
-            storageTexture
+            storageTexture,
+            dronePortTexture
         );
         buildingButtonsPanel.setBackground(VisUI.getSkin().getDrawable("button"));
         buildingButtonsPanel.pad(10);
@@ -290,6 +293,7 @@ public class SimulationScreen implements Screen {
         mineTexture.dispose();
         factoryTexture.dispose();
         storageTexture.dispose();
+        dronePortTexture.dispose();
 
         stage.dispose();
         if (VisUI.isLoaded()) {
@@ -298,8 +302,8 @@ public class SimulationScreen implements Screen {
     }
 
     public void loadSimulation(String jsonPath) {
-        Simulation sim = new Simulation(jsonPath);
-        sim.setLogger(this.world.getLogger()); // Use the same logger
+        Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
+        sim.load(jsonPath);
         this.world.setSimulation(sim);
     }
 
@@ -332,7 +336,7 @@ public class SimulationScreen implements Screen {
         if (this.world.isRealTimeEnabled()) {
             stopRealTimeSimulation();
         }
-        this.world.getSim().step(n);
+        this.world.step(n);
     }
 
     //set policy
