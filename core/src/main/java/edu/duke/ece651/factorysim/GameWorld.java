@@ -54,24 +54,30 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture mineTexture;
     private final Texture factoryTexture;
     private final Texture storageTexture;
+    private final Texture dronePortTexture;
     private final Texture itemTexture;
     private final Texture droneTexture;
+
     private final Texture pathTexture;
     private final Texture pathCrossTexture;
+
     private final Texture selectTexture;
     private final Texture selectMineTexture;
     private final Texture selectFactoryTexture;
     private final Texture selectStorageTexture;
+    private final Texture selectDronePortTexture;
     private final Texture selectFromTexture;
     private final Texture selectToTexture;
+
     private final Texture removeTexture;
 
     // Animation
     private final Animation<TextureRegion> mineAnimation;
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
-    private final Animation<TextureRegion> droneAnimation;
+    private final Animation<TextureRegion> dronePortAnimation;
     private final Animator<TextureRegion> pathAnimator;
+    private final Animation<TextureRegion> droneAnimation;
 
     // Path
     private static class PathEntry {
@@ -127,19 +133,26 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
         // Load textures
         this.cellTexture = new Texture("cell.png");
+
         this.mineTexture = new Texture("mine.png");
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
+        this.dronePortTexture = new Texture("droneport.png");
+
         this.itemTexture = new Texture("item.png");
         this.droneTexture = new Texture("drone.png");
+
         this.pathTexture = new Texture("path.png");
         this.pathCrossTexture = new Texture("path_cross.png");
+
         this.selectTexture = new Texture("select.png");
         this.selectMineTexture = new Texture("select_mine.png");
         this.selectFactoryTexture = new Texture("select_factory.png");
         this.selectStorageTexture = new Texture("select_storage.png");
+        this.selectDronePortTexture = new Texture("select_droneport.png");
         this.selectFromTexture = new Texture("select_from.png");
         this.selectToTexture = new Texture("select_to.png");
+
         this.removeTexture = new Texture("remove.png");
 
         // Create animations
@@ -149,10 +162,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             factoryTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.storageAnimation = createAnimation(storageTexture, storageTexture.getHeight(),
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
-        this.droneAnimation = createAnimation(droneTexture, droneTexture.getHeight(),
-            droneTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.dronePortAnimation = createAnimation(dronePortTexture, dronePortTexture.getHeight() / 2,
+            dronePortTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
+
+        this.droneAnimation = createAnimation(droneTexture, droneTexture.getHeight(),
+            droneTexture.getHeight(), 0.025f, Animation.PlayMode.LOOP);
 
         // Create the grid
         this.grid = new GridActor(gridCols, gridRows, cellSize, this.cellTexture, this.selectTexture,
@@ -329,15 +346,16 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                 for (DeliveryActor delivery : deliveries) {
                     delivery.update(dt, realTime.getSpeed());
                 }
-
-                for (DroneDeliveryActor droneDelivery : droneDeliveries) {
-                    droneDelivery.update(dt, realTime.getSpeed());
-                }
             }
         } else {
             for (DeliveryActor delivery : deliveries) {
                 delivery.update(dt, Float.MAX_VALUE);
             }
+        }
+
+        // Update drone deliveries
+        for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+            droneDelivery.update(dt, realTime.getSpeed(), realTimeEnabled);
         }
 
         // Update buildings
@@ -451,6 +469,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         mineTexture.dispose();
         factoryTexture.dispose();
         storageTexture.dispose();
+        dronePortTexture.dispose();
         itemTexture.dispose();
         droneTexture.dispose();
         pathTexture.dispose();
@@ -622,8 +641,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public BuildingActor buildStorage(String name, Item storageItem, int maxCapacity,
                                       double priority, Coordinate coordinate) {
         name = sim.getWorld().resolveBuildingNameConflict(name);
-        StorageBuilding factory = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
-        return buildBuilding(factory, storageAnimation, coordinate);
+        StorageBuilding storage = new StorageBuilding(name, new ArrayList<>(), sim, storageItem, maxCapacity, priority);
+        return buildBuilding(storage, storageAnimation, coordinate);
+    }
+
+    public BuildingActor buildDronePort(String name, Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
+        DronePortBuilding dronePort = new DronePortBuilding(name, Collections.emptyList(), sim);
+        return buildBuilding(dronePort, dronePortAnimation, coordinate);
     }
 
     /**
@@ -861,6 +886,23 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
     }
 
+    public class BuildDronePortPhase extends BuildPhase {
+        public BuildDronePortPhase(String name) {
+            super(selectDronePortTexture, name);
+        }
+
+        @Override
+        public void onLeftClick(Coordinate c) {
+            try {
+                buildDronePort(name, c);
+            } catch (Exception e) {
+                log(e.getMessage());
+            } finally {
+                enterDefaultPhase();
+            }
+        }
+    }
+
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
 
@@ -980,6 +1022,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         phase.onEnter();
     }
 
+    public void enterConnectPhase() {
+        phase = new ConnectPhase();
+        phase.onEnter();
+    }
+
     public void enterBuildMinePhase(String name, Recipe miningRecipe) {
         phase = new BuildMinePhase(name, miningRecipe);
         phase.onEnter();
@@ -995,8 +1042,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         phase.onEnter();
     }
 
-    public void enterConnectPhase() {
-        phase = new ConnectPhase();
+    public void enterBuildDronePortPhase(String name) {
+        phase = new BuildDronePortPhase(name);
         phase.onEnter();
     }
 
@@ -1026,20 +1073,6 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         if (keycode == Input.Keys.SHIFT_LEFT) {
             isHoldingSpeed = true;
         }
-
-        // Tool selection
-        if (keycode == Input.Keys.NUM_1) { // Default
-            enterDefaultPhase();
-        } else if (keycode == Input.Keys.NUM_2) { // Mine
-            enterBuildMinePhase("M", new Recipe(new Item("metal"), new HashMap<>(), 1));
-        } else if (keycode == Input.Keys.NUM_3) { // Factory
-            enterBuildFactoryPhase("Hi", new Type("hinge", List.of()));
-        } else if (keycode == Input.Keys.NUM_4) { // Storage
-            enterBuildStoragePhase("St", new Item("metal"), 10, 1.0);
-        } else if (keycode == Input.Keys.NUM_5) { // Connect
-            enterConnectPhase();
-        }
-
         return true;
     }
 
@@ -1151,5 +1184,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     }
 
     @Override
-    public void onDeliveryFinished(Delivery delivery) { }
+    public void onDeliveryFinished(Delivery delivery) {
+        if (delivery instanceof DroneDelivery droneDelivery) {
+            droneDeliveries.removeIf((actor) -> actor.getDroneDelivery() == droneDelivery);
+        }
+    }
 }

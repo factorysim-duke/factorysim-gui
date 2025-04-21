@@ -15,6 +15,8 @@ public class DroneDeliveryActor extends Actor2D {
 
     private final Vector2 target;
 
+    public DroneDelivery getDroneDelivery() { return this.droneDelivery; }
+
     public DroneDeliveryActor(DroneDelivery droneDelivery, Animation<TextureRegion> animation,
                               Function<Coordinate, Vector2> coordinateToWorld) {
         super(0f, 0f);
@@ -26,14 +28,18 @@ public class DroneDeliveryActor extends Actor2D {
         this.target = coordinateToWorld.apply(droneDelivery.destination.getLocation());
     }
 
-    public void update(float dt, float stepsPerSecond) {
+    public void update(float dt, float stepsPerSecond, boolean realTimeEnabled) {
         // Step animator
         animator.step(dt);
 
         // Movement
+        if (!realTimeEnabled) {
+            return;
+        }
         if (droneDelivery.deliveryTime <= 0) {
             return;
         }
+        target.set(coordinateToWorld.apply(droneDelivery.getTargetCoordinate()));
         float speed = dt * stepsPerSecond / droneDelivery.deliveryTime;
         position.mulAdd(new Vector2(target).sub(position).nor(), target.dst(position) * speed);
     }
@@ -56,7 +62,7 @@ public class DroneDeliveryActor extends Actor2D {
         float originY = height / 2f;
         spriteBatch.draw(
             frame,
-            position.x - originX, position.y - originY,
+            position.x, position.y,
             originX, originY,
             width, height,
             1f, 1f,
