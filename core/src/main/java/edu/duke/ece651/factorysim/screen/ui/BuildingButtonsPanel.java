@@ -272,5 +272,8 @@ public class BuildingButtonsPanel extends VisTable {
         up.setType(InputEvent.Type.touchUp);
         up.setStage(stage);
         button.fire(up);
+
+        stage.unfocusAll();
+        stage.cancelTouchFocus();
     }
 }
