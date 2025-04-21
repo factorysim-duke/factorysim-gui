@@ -55,6 +55,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture factoryTexture;
     private final Texture storageTexture;
     private final Texture itemTexture;
+    private final Texture droneTexture;
     private final Texture pathTexture;
     private final Texture pathCrossTexture;
     private final Texture selectTexture;
@@ -69,6 +70,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Animation<TextureRegion> mineAnimation;
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
+    private final Animation<TextureRegion> droneAnimation;
     private final Animator<TextureRegion> pathAnimator;
 
     // Path
@@ -93,6 +95,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final List<PathEntry> pathEntries = new ArrayList<>();
     private final List<Coordinate> pathCrossCoords = new ArrayList<>();
     private final List<DeliveryActor> deliveries = new ArrayList<>();
+    private final List<DroneDeliveryActor> droneDeliveries = new ArrayList<>();
 
     // Screen
     private final SimulationScreen screen;
@@ -128,6 +131,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
         this.itemTexture = new Texture("item.png");
+        this.droneTexture = new Texture("drone.png");
         this.pathTexture = new Texture("path.png");
         this.pathCrossTexture = new Texture("path_cross.png");
         this.selectTexture = new Texture("select.png");
@@ -145,6 +149,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             factoryTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.storageAnimation = createAnimation(storageTexture, storageTexture.getHeight(),
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.droneAnimation = createAnimation(droneTexture, droneTexture.getHeight(),
+            droneTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
 
@@ -196,6 +202,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         buildingMap.clear();
         pathEntries.clear();
         pathCrossCoords.clear();
+        deliveries.clear();
+        droneDeliveries.clear();
 
         // Create building actors
         for (Building building : world.getBuildings()) {
@@ -216,6 +224,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                     connectPath(sourceActor, buildingActor);
                 });
             }
+        }
+
+        // Create delivery actors
+        for (Delivery delivery : sim.getDeliverySchedule().deliveryList) {
+            onDeliveryAdded(delivery);
         }
     }
 
@@ -310,11 +323,15 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             }
         }
 
-        // Update items
+        // Update deliveries
         if (realTimeEnabled) {
             if (!realTime.isPaused() && realTime.isRunning()) {
                 for (DeliveryActor delivery : deliveries) {
                     delivery.update(dt, realTime.getSpeed());
+                }
+
+                for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+                    droneDelivery.update(dt, realTime.getSpeed());
                 }
             }
         } else {
@@ -323,8 +340,27 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             }
         }
 
+        // Update buildings
+        for (BuildingActor buildingActor : buildingActors) {
+            buildingActor.update(dt);
+        }
+
         // Release arrived delivery actors
         deliveries.removeIf(DeliveryActor::hasArrived);
+    }
+
+    public void step(int n) {
+        // Step the simulation
+        sim.step(n);
+
+        for (int i = 0; i < n; i++) {
+            // Step drone actors
+            if (!realTimeEnabled) {
+                for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+                    droneDelivery.step();
+                }
+            }
+        }
     }
 
     public void render(float dt) {
@@ -345,7 +381,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             path.actor.drawPaths(spriteBatch);
         }
 
-        // Draw items
+        // Draw package deliveries
         for (DeliveryActor delivery : deliveries) {
             delivery.draw(spriteBatch);
         }
@@ -358,6 +394,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Draw crossing paths
         if (!pathEntries.isEmpty()) {
             pathEntries.getFirst().actor.drawCrosses(spriteBatch, pathCrossCoords);
+        }
+
+        // Draw drone deliveries
+        for (DroneDeliveryActor droneDelivery : droneDeliveries) {
+            droneDelivery.render(spriteBatch);
         }
 
         // Draw grid selection box
@@ -411,6 +452,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         factoryTexture.dispose();
         storageTexture.dispose();
         itemTexture.dispose();
+        droneTexture.dispose();
         pathTexture.dispose();
         pathCrossTexture.dispose();
         selectTexture.dispose();
@@ -419,6 +461,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         selectStorageTexture.dispose();
         selectFromTexture.dispose();
         selectToTexture.dispose();
+        removeTexture.dispose();
     }
 
 
@@ -1100,7 +1143,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public void onDeliveryAdded(Delivery delivery) {
-        deliveries.add(new DeliveryActor(delivery, itemTexture, this::coordinateToWorld));
+        if (delivery instanceof DroneDelivery droneDelivery) {
+            droneDeliveries.add(new DroneDeliveryActor(droneDelivery, droneAnimation, this::coordinateToWorld));
+        } else {
+            deliveries.add(new DeliveryActor(delivery, itemTexture, this::coordinateToWorld));
+        }
     }
 
     @Override

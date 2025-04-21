@@ -298,8 +298,8 @@ public class SimulationScreen implements Screen {
     }
 
     public void loadSimulation(String jsonPath) {
-        Simulation sim = new Simulation(jsonPath);
-        sim.setLogger(this.world.getLogger()); // Use the same logger
+        Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
+        sim.load(jsonPath);
         this.world.setSimulation(sim);
     }
 
@@ -332,7 +332,7 @@ public class SimulationScreen implements Screen {
         if (this.world.isRealTimeEnabled()) {
             stopRealTimeSimulation();
         }
-        this.world.getSim().step(n);
+        this.world.step(n);
     }
 
     //set policy

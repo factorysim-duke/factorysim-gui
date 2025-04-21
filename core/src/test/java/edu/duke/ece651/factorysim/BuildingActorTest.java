@@ -37,10 +37,11 @@ public class BuildingActorTest {
     }
 
     @Test
-    public void test_draw() {
+    public void test_update_draw() {
         when(mockAnimation.getKeyFrame(anyFloat(), eq(true))).thenReturn(mockFrame);
 
         BuildingActor actor = new BuildingActor(mockBuilding, mockAnimation, mockTexture, 5f, 10f);
+        actor.update(0.01f);
         actor.draw(mockBatch);
 
         verify(mockAnimation).getKeyFrame(anyFloat(), eq(true));

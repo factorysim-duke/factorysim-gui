@@ -38,8 +38,11 @@ public class BuildingActor extends Actor2D {
         this.removeTexture = removeTexture;
     }
 
+    public void update(float dt) {
+        animator.step(dt);
+    }
+
     public void draw(SpriteBatch spriteBatch) {
-        animator.step(Gdx.graphics.getDeltaTime()); // Update the animator
         spriteBatch.draw(animator.getCurrentKeyFrame(), position.x, position.y);
         if (building.isPendingRemoval()) {
             spriteBatch.draw(removeTexture, position.x, position.y);

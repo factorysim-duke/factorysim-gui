@@ -1,7 +1,7 @@
 package edu.duke.ece651.factorysim;
 
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.math.Vector2;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,26 +63,31 @@ public class GridActorTest {
         Texture selectTexture = mock(Texture.class);
         GridActor grid = createGridActor(5, 5, 16, selectTexture);
         SpriteBatch spriteBatch = mock(SpriteBatch.class);
+        when(spriteBatch.getColor()).thenReturn(new Color(Color.WHITE));
         grid.onMouseMoved(new Vector2(24f, 32f));
         grid.drawSelectionBox(spriteBatch);
         verify(spriteBatch).draw(eq(selectTexture), eq(16f), eq(32f));
 
         spriteBatch = mock(SpriteBatch.class);
+        when(spriteBatch.getColor()).thenReturn(new Color(Color.WHITE));
         grid.onMouseMoved(new Vector2(100f, 32f));
         grid.drawSelectionBox(spriteBatch);
         verify(spriteBatch, never()).draw(eq(selectTexture), anyFloat(), anyFloat());
 
         spriteBatch = mock(SpriteBatch.class);
+        when(spriteBatch.getColor()).thenReturn(new Color(Color.WHITE));
         grid.onMouseMoved(new Vector2(-17f, 32f));
         grid.drawSelectionBox(spriteBatch);
         verify(spriteBatch, never()).draw(eq(selectTexture), anyFloat(), anyFloat());
 
         spriteBatch = mock(SpriteBatch.class);
+        when(spriteBatch.getColor()).thenReturn(new Color(Color.WHITE));
         grid.onMouseMoved(new Vector2(16f, -17f));
         grid.drawSelectionBox(spriteBatch);
         verify(spriteBatch, never()).draw(eq(selectTexture), anyFloat(), anyFloat());
 
         spriteBatch = mock(SpriteBatch.class);
+        when(spriteBatch.getColor()).thenReturn(new Color(Color.WHITE));
         grid.onMouseMoved(new Vector2(16f, 100f));
         grid.drawSelectionBox(spriteBatch);
         verify(spriteBatch, never()).draw(eq(selectTexture), anyFloat(), anyFloat());
