@@ -689,8 +689,13 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @param buildingActor is the building actor to remove.
      */
     private void demolishBuilding(BuildingActor buildingActor) {
+        // Remove building actor
         buildingMap.remove(buildingActor.getBuilding().getLocation());
         buildingActors.remove(buildingActor);
+
+        // Remove paths associated with the building
+        Building building = buildingActor.getBuilding();
+        pathEntries.removeIf((entry) -> entry.from == building || entry.to == building);
     }
 
     /**
@@ -908,7 +913,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
         private boolean isConnecting = true;
-        
+
         private boolean pressedLeft = true;
         private boolean buttonPressed = false;
 
