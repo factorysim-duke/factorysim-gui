@@ -1013,6 +1013,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
         @Override
         public void onExit() {
+            grid.setSelectColor(Color.WHITE);
             grid.setSelectTexture(selectTexture);
         }
     }
