@@ -4,7 +4,7 @@ import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.*;
-import com.badlogic.gdx.scenes.scene2d.ui.ButtonGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.*;
 import com.kotcrab.vis.ui.widget.*;
 
@@ -217,6 +217,11 @@ public class BuildingButtonsPanel extends VisTable {
         stage.addListener(new InputListener() {
             @Override
             public boolean keyDown(InputEvent event, int keycode) {
+                Actor focused = stage.getKeyboardFocus();
+                if (focused instanceof VisTextField) {
+                    return false;
+                }
+
                 return switch (keycode) {
                     case Input.Keys.NUM_1 -> {
                         simulateClick(defaultButton);
