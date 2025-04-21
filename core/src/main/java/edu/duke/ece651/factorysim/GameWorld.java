@@ -776,8 +776,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public interface Phase {
         default void onLeftClick(Coordinate c) { }
         default void onRightClick(Coordinate c) { }
-        default void onRelease(Coordinate c) { }
+        default void onLeftRelease(Coordinate c) { }
+        default void onRightRelease(Coordinate c) { }
         default void onEnter() { }
+        default void onExit() { }
     }
 
     public class DefaultPhase implements Phase {
@@ -905,144 +907,145 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
-
         private boolean isConnecting = true;
-
-        private void onConnect(Coordinate c) {
-            // Get destination
-            BuildingActor to = getBuildingAt(c);
-            if (to == null) {
-                return;
-            }
-
-            // Try to connect
-            connectPath(from, to);
-            enterDefaultPhase(); // Connected successfully, resume to default phase
-        }
-
-        private void onDisconnect(Coordinate c) {
-            // Get destination
-            BuildingActor to = getBuildingAt(c);
-            if (to == null) {
-                return;
-            }
-
-            // Disconnect
-            disconnectPath(from, to);
-            enterDefaultPhase(); // Disconnected successfully, resume to default phase
-        }
+        
+        private boolean pressedLeft = true;
+        private boolean buttonPressed = false;
 
         @Override
         public void onLeftClick(Coordinate c) {
-            try {
-                // Update flag to indicate is connecting
-                if (!isConnecting) {
-                    from = null; // Clear from
-                    grid.setSelectColor(Color.WHITE); // Update selection color
-                    isConnecting = true;
-                }
-
-                // Get source if not already
-                if (from == null) {
-                    from = getBuildingAt(c);
-                    if (from != null) {
-                        grid.setSelectTexture(selectToTexture); // Update select box texture
-                    }
-                    return; // Intentional. If clicked on a coordinate with no building, do nothing
-                }
-
-                // Try to connect to the coordinate
-                onConnect(c);
-            } catch (Exception e) {
-                // Log error and resume back to default phase on error
-                log(e.getMessage());
-                enterDefaultPhase();
-            }
+            handleClick(c, true);
         }
 
         @Override
         public void onRightClick(Coordinate c) {
+            handleClick(c, false);
+        }
+
+        private void handleClick(Coordinate c, boolean connect) {
             try {
-                // Update flag to indicate is disconnecting
-                if (isConnecting) {
-                    from = null; // Clear from
-                    grid.setSelectColor(Color.RED); // Update selection color
-                    isConnecting = false;
+                pressedLeft = connect;
+                buttonPressed = true;
+
+                if (isConnecting != connect) {
+                    from = null;
+                    isConnecting = connect;
+                    grid.setSelectColor(connect ? Color.WHITE : Color.RED);
                 }
 
-                // Get source if not already
                 if (from == null) {
                     from = getBuildingAt(c);
                     if (from != null) {
-                        grid.setSelectTexture(selectToTexture); // Update select box texture
+                        grid.setSelectTexture(selectToTexture);
                     }
-                    return; // Intentional. If clicked on a coordinate with no building, do nothing
+                    return;
                 }
 
-                // Try to disconnect
-                onDisconnect(c);
-                grid.setSelectColor(Color.WHITE); // Resume color when success
+                performAction(c);
             } catch (Exception e) {
-                // Log error and resume back to default phase on error
                 log(e.getMessage());
-                enterDefaultPhase();
-
-                // Resume color when error
-                grid.setSelectColor(Color.WHITE);
+                resetState();
             }
         }
 
         @Override
-        public void onRelease(Coordinate c) {
+        public void onLeftRelease(Coordinate c) {
+            handleRelease(c, true);
+        }
+
+        @Override
+        public void onRightRelease(Coordinate c) {
+            handleRelease(c, false);
+        }
+
+        private void handleRelease(Coordinate c, boolean releasedLeft) {
             try {
-                // Ignore if no source or release coordinate is where source is
+                if (!buttonPressed || pressedLeft != releasedLeft) {
+                    return;
+                }
+
                 if (from == null || from.getBuilding().getLocation().equals(c)) {
                     return;
                 }
 
-                // Try to connect to the coordinate
-                onConnect(c);
+                performAction(c);
+                grid.setSelectColor(Color.WHITE);
             } catch (Exception e) {
-                // Log error and resume back to default phase on error
                 log(e.getMessage());
-                enterDefaultPhase();
+                resetState();
+            } finally {
+                buttonPressed = false;
             }
+        }
+
+        private void performAction(Coordinate c) {
+            BuildingActor to = getBuildingAt(c);
+            if (to == null) {
+                return;
+            }
+
+            if (isConnecting) {
+                connectPath(from, to);
+            } else {
+                disconnectPath(from, to);
+            }
+
+            enterDefaultPhase();
+        }
+
+        private void resetState() {
+            from = null;
+            isConnecting = true;
+            buttonPressed = false;
+            grid.setSelectColor(Color.WHITE);
+            enterDefaultPhase();
         }
 
         @Override
         public void onEnter() {
             grid.setSelectTexture(selectFromTexture);
         }
+
+        @Override
+        public void onExit() {
+            grid.setSelectTexture(selectTexture);
+        }
     }
 
     private Phase phase = new DefaultPhase();
 
     public void enterDefaultPhase() {
+        phase.onExit();
         phase = new DefaultPhase();
         phase.onEnter();
     }
 
     public void enterConnectPhase() {
+        phase.onExit();
         phase = new ConnectPhase();
         phase.onEnter();
     }
 
     public void enterBuildMinePhase(String name, Recipe miningRecipe) {
+        phase.onExit();
         phase = new BuildMinePhase(name, miningRecipe);
         phase.onEnter();
     }
 
     public void enterBuildFactoryPhase(String name, Type factoryType) {
+        phase.onExit();
         phase = new BuildFactoryPhase(name, factoryType);
         phase.onEnter();
     }
 
     public void enterBuildStoragePhase(String name, Item storageItem, int maxCapacity, double priority) {
+        phase.onExit();
         phase = new BuildStoragePhase(name, storageItem, maxCapacity, priority);
         phase.onEnter();
     }
 
     public void enterBuildDronePortPhase(String name) {
+        phase.onExit();
         phase = new BuildDronePortPhase(name);
         phase.onEnter();
     }
@@ -1122,13 +1125,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if (button == Input.Buttons.LEFT) {
+        if (button == Input.Buttons.LEFT || button == Input.Buttons.RIGHT) {
             // Get coordinate based on touch screen position
             Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
             Coordinate c = worldToCoordinate(pos);
 
             // Invoke current phase's `onRelease` event
-            phase.onRelease(c);
+            if (button == Input.Buttons.LEFT) {
+                phase.onLeftRelease(c);
+            } else {
+                phase.onRightRelease(c);
+            }
         }
         return true;
     }
