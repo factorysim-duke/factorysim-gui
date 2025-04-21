@@ -18,7 +18,8 @@ public class PathActor extends Actor2D {
     private final List<Coordinate> paths;
     private final List<Coordinate> crosses;
 
-    public Iterable<Coordinate> getCrosses() { return this.crosses; }
+    public Iterable<Coordinate> getNonCrossPathCoordinates() { return this.paths; }
+    public Iterable<Coordinate> getCrossCoordinates() { return this.crosses; }
 
     public PathActor(Path path, TileMap tileMap,
                      Animator<TextureRegion> pathAnimator, Texture crossTexture,

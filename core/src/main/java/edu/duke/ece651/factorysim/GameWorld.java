@@ -71,11 +71,26 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Animation<TextureRegion> storageAnimation;
     private final Animator<TextureRegion> pathAnimator;
 
+    // Path
+    private static class PathEntry {
+        public PathActor actor;
+        public Path path;
+        public Building from;
+        public Building to;
+
+        public PathEntry(PathActor actor, Path path, Building from, Building to) {
+            this.actor = actor;
+            this.path = path;
+            this.from = from;
+            this.to = to;
+        }
+    }
+
     // Actors
     private final GridActor grid;
     private final List<BuildingActor> buildingActors = new ArrayList<>();
     private final Map<Coordinate, BuildingActor> buildingMap = new HashMap<>();
-    private final List<Tuple<PathActor, Path>> pathPairs = new ArrayList<>();
+    private final List<PathEntry> pathEntries = new ArrayList<>();
     private final List<Coordinate> pathCrossCoords = new ArrayList<>();
     private final List<DeliveryActor> deliveries = new ArrayList<>();
 
@@ -179,7 +194,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Release actors associated with the previous simulation
         buildingActors.clear();
         buildingMap.clear();
-        pathPairs.clear();
+        pathEntries.clear();
         pathCrossCoords.clear();
 
         // Create building actors
@@ -288,7 +303,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
         // Real-time
         if (realTimeEnabled) {
-            realTime.update(dt);
+            try {
+                realTime.update(dt);
+            } catch (Exception e) {
+                log(e.getMessage());
+            }
         }
 
         // Update items
@@ -322,8 +341,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             pathSpeed = 1f;
         }
         pathAnimator.step(pathSpeed * dt);
-        for (Tuple<PathActor, Path> tuple : pathPairs) {
-            tuple.first().drawPaths(spriteBatch);
+        for (PathEntry path : pathEntries) {
+            path.actor.drawPaths(spriteBatch);
         }
 
         // Draw items
@@ -337,8 +356,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         // Draw crossing paths
-        if (!pathPairs.isEmpty()) {
-            pathPairs.getFirst().first().drawCrosses(spriteBatch, pathCrossCoords);
+        if (!pathEntries.isEmpty()) {
+            pathEntries.getFirst().actor.drawCrosses(spriteBatch, pathCrossCoords);
         }
 
         // Draw grid selection box
@@ -610,16 +629,18 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * Takes an existing path and creates an actor from it.
      *
      * @param path is the path instance to be an actor.
+     * @param from is the source building actor.
+     * @param to is the destination building actor.
      * @return constructed `PathActor` instance.
      */
-    private PathActor actorizePath(Path path) {
+    private PathActor actorizePath(Path path, BuildingActor from, BuildingActor to) {
         // Create actor
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
-        pathPairs.add(new Tuple<>(actor, path));
+        pathEntries.add(new PathEntry(actor, path, from.getBuilding(), to.getBuilding()));
 
         // Cache and sort paths
-        for (Coordinate c : actor.getCrosses()) {
+        for (Coordinate c : actor.getCrossCoordinates()) {
             pathCrossCoords.add(c);
         }
         pathCrossCoords.sort((a, b) -> {
@@ -631,18 +652,45 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         return actor;
     }
 
-    public void connectPath(BuildingActor from, BuildingActor to) {
+    public PathActor connectPath(BuildingActor from, BuildingActor to) {
         // Connect the two buildings
         Path path = sim.connectBuildings(from.getBuilding(), to.getBuilding());
         if (path == null) {
             throw new IllegalArgumentException("Cannot connect " + from.getBuilding().getName() + " to " + to.getBuilding().getName() + ": No valid path");
         }
-        if (pathPairs.stream().anyMatch((t) -> t.second() == path)) {
-            return;
+
+        // If the path is already an actor, return the actor
+        for (PathEntry entry : pathEntries) {
+            if (entry.path == path) {
+                return entry.actor;
+            }
         }
 
         // Create the actor
-        actorizePath(path);
+        return actorizePath(path, from, to);
+    }
+
+    public void disconnectPath(BuildingActor from, BuildingActor to) {
+        // Disconnect the two buildings
+        sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
+
+        // Remove the path actor
+        PathActor actor = null;
+        for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
+            PathEntry entry = iterator.next();
+            if (entry.from == from.getBuilding() && entry.to == to.getBuilding()) {
+                iterator.remove();
+                actor = entry.actor;
+            }
+        }
+
+        // Remove cached cross coordinates
+        if (actor == null) {
+            return;
+        }
+        for (Coordinate c : actor.getCrossCoordinates()) {
+            pathCrossCoords.remove(c);
+        }
     }
 
     /**
@@ -651,7 +699,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @param c is the coordinate to get the actor.
      * @return the building actor instance at that coordinate or null.
      */
-    public BuildingActor getBuildingAt(Coordinate c) {
+    private BuildingActor getBuildingAt(Coordinate c) {
         return buildingMap.get(c);
     }
 
@@ -668,19 +716,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         @Override
         public void onLeftClick(Coordinate c) {
             BuildingActor actor = getBuildingAt(c);
-            if (actor == null) {
-                return;
+            if (actor != null) {
+                screen.showBuildingInfo(actor.getBuilding());
             }
-            screen.showBuildingInfo(actor.getBuilding());
         }
 
         @Override
         public void onRightClick(Coordinate c) {
             BuildingActor actor = getBuildingAt(c);
-            if (actor == null) {
-                return;
+            if (actor != null) {
+                removeBuilding(actor);
             }
-            removeBuilding(actor);
         }
 
         @Override
@@ -775,6 +821,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
 
+        private boolean isConnecting = true;
+
         private void onConnect(Coordinate c) {
             // Get destination
             BuildingActor to = getBuildingAt(c);
@@ -787,9 +835,28 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             enterDefaultPhase(); // Connected successfully, resume to default phase
         }
 
+        private void onDisconnect(Coordinate c) {
+            // Get destination
+            BuildingActor to = getBuildingAt(c);
+            if (to == null) {
+                return;
+            }
+
+            // Disconnect
+            disconnectPath(from, to);
+            enterDefaultPhase(); // Disconnected successfully, resume to default phase
+        }
+
         @Override
         public void onLeftClick(Coordinate c) {
             try {
+                // Update flag to indicate is connecting
+                if (!isConnecting) {
+                    from = null; // Clear from
+                    grid.setSelectColor(Color.WHITE); // Update selection color
+                    isConnecting = true;
+                }
+
                 // Get source if not already
                 if (from == null) {
                     from = getBuildingAt(c);
@@ -805,6 +872,38 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
                 // Log error and resume back to default phase on error
                 log(e.getMessage());
                 enterDefaultPhase();
+            }
+        }
+
+        @Override
+        public void onRightClick(Coordinate c) {
+            try {
+                // Update flag to indicate is disconnecting
+                if (isConnecting) {
+                    from = null; // Clear from
+                    grid.setSelectColor(Color.RED); // Update selection color
+                    isConnecting = false;
+                }
+
+                // Get source if not already
+                if (from == null) {
+                    from = getBuildingAt(c);
+                    if (from != null) {
+                        grid.setSelectTexture(selectToTexture); // Update select box texture
+                    }
+                    return; // Intentional. If clicked on a coordinate with no building, do nothing
+                }
+
+                // Try to disconnect
+                onDisconnect(c);
+                grid.setSelectColor(Color.WHITE); // Resume color when success
+            } catch (Exception e) {
+                // Log error and resume back to default phase on error
+                log(e.getMessage());
+                enterDefaultPhase();
+
+                // Resume color when error
+                grid.setSelectColor(Color.WHITE);
             }
         }
 

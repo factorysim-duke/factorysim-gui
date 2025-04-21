@@ -15,6 +15,8 @@ public class GridActor extends Actor2D {
     private final Texture cellTexture;
     private Texture selectTexture;
 
+    private final Color selectColor = Color.WHITE.cpy();
+
     private final Vector2 mousePos = new Vector2(0f, 0f);
 
     /**
@@ -60,6 +62,13 @@ public class GridActor extends Actor2D {
     public void setSelectTexture(Texture t) { this.selectTexture = t; }
 
     /**
+     * Sets a new color for the selection box.
+     *
+     * @param c the new selection box color.
+     */
+    public void setSelectColor(Color c) { this.selectColor.set(c); }
+
+    /**
      * Constructs a `GridActor` instance based on grid dimension, texture, and <b>bottom-left</b> absolute position of
      * the actor.
      *
@@ -99,12 +108,24 @@ public class GridActor extends Actor2D {
      * @param spriteBatch is the `SpriteBatch` instance used to draw.
      */
     public void drawSelectionBox(SpriteBatch spriteBatch) {
+        // Record original color
+        float r = spriteBatch.getColor().r;
+        float g = spriteBatch.getColor().g;
+        float b = spriteBatch.getColor().b;
+        float a = spriteBatch.getColor().a;
+
+        // Set to selection color
+        spriteBatch.setColor(selectColor.r, selectColor.g, selectColor.b, selectColor.a);
+
         // Draw selection box
         int col = (int)((mousePos.x - position.x) / cellSize);
         int row = (int)((mousePos.y - position.y) / cellSize);
         if (col >= 0 && col < cols && row >= 0 && row < rows) {
             spriteBatch.draw(selectTexture, position.x + col * cellSize, position.y + row * cellSize);
         }
+
+        // Resume original color
+        spriteBatch.setColor(r, g, b, a);
     }
 
     public void resize(int cols, int rows) {
