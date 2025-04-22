@@ -20,9 +20,10 @@ public class BuildingInfoPanelFactory {
             return new StorageInfoPanel(storage);
         } else if (b instanceof DronePortBuilding port) {
             return new DronePortInfoPanel(port);
-        } else {
-            throw new IllegalArgumentException("Unknown building type: " + b.getClass().getSimpleName());
+        } else if (b instanceof WasteDisposalBuilding disposal) {
+            return new WasteDisposalInfoPanel(disposal);
         }
+        throw new IllegalArgumentException("Unknown building type: " + b.getClass().getSimpleName());
     }
 }
 

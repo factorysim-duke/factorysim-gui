@@ -46,6 +46,7 @@ public class SimulationScreen implements Screen {
     private Texture factoryTexture;
     private Texture storageTexture;
     private Texture dronePortTexture;
+    private Texture wasteDisposalTexture;
 
     @Override
     public void show() {
@@ -91,6 +92,7 @@ public class SimulationScreen implements Screen {
         factoryTexture = new Texture("icon_factory.png");
         storageTexture = new Texture("icon_storage.png");
         dronePortTexture = new Texture("icon_droneport.png");
+        wasteDisposalTexture = new Texture("icon_wastedisposal.png");
     }
 
     /**
@@ -127,7 +129,8 @@ public class SimulationScreen implements Screen {
             mineTexture,
             factoryTexture,
             storageTexture,
-            dronePortTexture
+            dronePortTexture,
+            wasteDisposalTexture
         );
         buildingButtonsPanel.setBackground(VisUI.getSkin().getDrawable("button"));
         buildingButtonsPanel.pad(10);
@@ -294,6 +297,7 @@ public class SimulationScreen implements Screen {
         factoryTexture.dispose();
         storageTexture.dispose();
         dronePortTexture.dispose();
+        wasteDisposalTexture.dispose();
 
         stage.dispose();
         if (VisUI.isLoaded()) {

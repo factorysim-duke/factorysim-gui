@@ -1,22 +1,16 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.widget.VisDialog;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisSelectBox;
 import com.kotcrab.vis.ui.widget.VisTable;
 
-import edu.duke.ece651.factorysim.GameWorld;
-import edu.duke.ece651.factorysim.Item;
-import edu.duke.ece651.factorysim.Recipe;
-import edu.duke.ece651.factorysim.Type;
-import edu.duke.ece651.factorysim.World;
+import edu.duke.ece651.factorysim.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -261,7 +255,7 @@ public class BuildingOutputDialog {
             }
         };
 
-        // In a more complete implementation, you'd add fields for capacity and priority
+        // Maybe add fields for capacity and priority in the future
 
         VisTable contentTable = new VisTable(true);
         contentTable.add(new VisLabel("Store item:")).padRight(10);
@@ -306,5 +300,46 @@ public class BuildingOutputDialog {
         public double getPriority() {
             return priority;
         }
+    }
+
+    /**
+     * Shows a dialog for selecting a waste disposal output (waste type).
+     *
+     * @param onSelect callback for when a selection is made
+     */
+    public void showWasteDisposalOutputDialog(BiConsumer<String, WasteDisposalDTO.WasteConfig> onSelect) {
+        Map<String, WasteDisposalDTO.WasteConfig> wasteMap = gameWorld.getSim().getWorld().wasteConfigMap;
+
+        final VisSelectBox<String> wasteTypeSelect = new VisSelectBox<>();
+        wasteTypeSelect.setItems(wasteMap.keySet().toArray(new String[0]));
+
+        VisDialog dialog = new VisDialog("Configure Waste Disposal") {
+            @Override
+            protected void result(Object result) {
+                if (Boolean.TRUE.equals(result)) {
+                    String selectedItem = wasteTypeSelect.getSelected();
+                    if (selectedItem != null) {
+                        onSelect.accept(selectedItem, wasteMap.get(selectedItem));
+                    }
+                }
+            }
+        };
+
+        VisTable contentTable = new VisTable(true);
+        contentTable.add(new VisLabel("Waste type:")).padRight(10);
+        contentTable.add(wasteTypeSelect).growX();
+
+        dialog.getContentTable().add(contentTable).pad(10).growX();
+
+        // Add buttons
+        dialog.button("Cancel", false);
+        dialog.button("OK", true);
+
+        dialog.setModal(true);
+        dialog.setMovable(true);
+        dialog.setResizable(false);
+        dialog.pack();
+        dialog.centerWindow();
+        dialog.show(stage);
     }
 }

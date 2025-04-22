@@ -55,6 +55,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture factoryTexture;
     private final Texture storageTexture;
     private final Texture dronePortTexture;
+    private final Texture wasteDisposalTexture;
+
     private final Texture itemTexture;
     private final Texture droneTexture;
 
@@ -66,6 +68,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture selectFactoryTexture;
     private final Texture selectStorageTexture;
     private final Texture selectDronePortTexture;
+    private final Texture selectWasteDisposalTexture;
     private final Texture selectFromTexture;
     private final Texture selectToTexture;
 
@@ -76,7 +79,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
     private final Animation<TextureRegion> dronePortAnimation;
+    private final Animation<TextureRegion> wasteDisposalAnimation;
+
     private final Animator<TextureRegion> pathAnimator;
+
     private final Animation<TextureRegion> droneAnimation;
 
     // Path
@@ -138,6 +144,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
         this.dronePortTexture = new Texture("droneport.png");
+        this.wasteDisposalTexture = new Texture("wastedisposal.png");
 
         this.itemTexture = new Texture("item.png");
         this.droneTexture = new Texture("drone.png");
@@ -150,6 +157,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.selectFactoryTexture = new Texture("select_factory.png");
         this.selectStorageTexture = new Texture("select_storage.png");
         this.selectDronePortTexture = new Texture("select_droneport.png");
+        this.selectWasteDisposalTexture = new Texture("select_wastedisposal.png");
         this.selectFromTexture = new Texture("select_from.png");
         this.selectToTexture = new Texture("select_to.png");
 
@@ -164,6 +172,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.dronePortAnimation = createAnimation(dronePortTexture, dronePortTexture.getHeight() / 2,
             dronePortTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.wasteDisposalAnimation = createAnimation(wasteDisposalTexture,
+            wasteDisposalTexture.getHeight() / 2, wasteDisposalTexture.getHeight(), 0.1f,
+            Animation.PlayMode.LOOP);
 
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
@@ -470,6 +481,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         factoryTexture.dispose();
         storageTexture.dispose();
         dronePortTexture.dispose();
+        wasteDisposalTexture.dispose();
         itemTexture.dispose();
         droneTexture.dispose();
         pathTexture.dispose();
@@ -478,6 +490,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         selectMineTexture.dispose();
         selectFactoryTexture.dispose();
         selectStorageTexture.dispose();
+        selectDronePortTexture.dispose();
+        selectWasteDisposalTexture.dispose();
         selectFromTexture.dispose();
         selectToTexture.dispose();
         removeTexture.dispose();
@@ -597,6 +611,12 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         if (building instanceof StorageBuilding) {
             return actorizeBuilding(building, storageAnimation);
         }
+        if (building instanceof DronePortBuilding) {
+            return actorizeBuilding(building, dronePortAnimation);
+        }
+        if (building instanceof WasteDisposalBuilding) {
+            return actorizeBuilding(building, wasteDisposalAnimation);
+        }
         throw new IllegalArgumentException("Unsupported building type: " + building.getClass().getName());
     }
 
@@ -649,6 +669,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         name = sim.getWorld().resolveBuildingNameConflict(name);
         DronePortBuilding dronePort = new DronePortBuilding(name, Collections.emptyList(), sim);
         return buildBuilding(dronePort, dronePortAnimation, coordinate);
+    }
+
+    public BuildingActor buildWasteDisposal(String name,
+                                            LinkedHashMap<Item, Integer> wasteTypes,
+                                            LinkedHashMap<Item, Integer> disposalRateMaps,
+                                            LinkedHashMap<Item, Integer> timeSteps,
+                                            Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
+        WasteDisposalBuilding wasteDisposal =
+            new WasteDisposalBuilding(name, wasteTypes, disposalRateMaps, timeSteps, sim);
+        return buildBuilding(wasteDisposal, wasteDisposalAnimation, coordinate);
     }
 
     /**
@@ -910,6 +941,33 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
     }
 
+    public class BuildWasteDisposalPhase extends BuildPhase {
+        private final LinkedHashMap<Item, Integer> wasteTypes;
+        private final LinkedHashMap<Item, Integer> disposalRateMaps;
+        private final LinkedHashMap<Item, Integer> timeSteps;
+
+        public BuildWasteDisposalPhase(String name,
+                                       LinkedHashMap<Item, Integer> wasteTypes,
+                                       LinkedHashMap<Item, Integer> disposalRateMaps,
+                                       LinkedHashMap<Item, Integer> timeSteps) {
+            super(selectWasteDisposalTexture, name);
+            this.wasteTypes = wasteTypes;
+            this.disposalRateMaps = disposalRateMaps;
+            this.timeSteps = timeSteps;
+        }
+
+        @Override
+        public void onLeftClick(Coordinate c) {
+            try {
+                buildWasteDisposal(name, wasteTypes, disposalRateMaps, timeSteps, c);
+            } catch (Exception e) {
+                log(e.getMessage());
+            } finally {
+                enterDefaultPhase();
+            }
+        }
+    }
+
     public class ConnectPhase implements Phase {
         private BuildingActor from = null;
         private boolean isConnecting = true;
@@ -1053,6 +1111,15 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public void enterBuildDronePortPhase(String name) {
         phase.onExit();
         phase = new BuildDronePortPhase(name);
+        phase.onEnter();
+    }
+
+    public void enterBuildWasteDisposalPhase(String name,
+                                             LinkedHashMap<Item, Integer> wasteTypes,
+                                             LinkedHashMap<Item, Integer> disposalRateMaps,
+                                             LinkedHashMap<Item, Integer> timeSteps) {
+        phase.onExit();
+        phase = new BuildWasteDisposalPhase(name, wasteTypes, disposalRateMaps, timeSteps);
         phase.onEnter();
     }
 
