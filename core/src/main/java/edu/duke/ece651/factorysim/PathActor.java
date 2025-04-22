@@ -78,6 +78,8 @@ public class PathActor extends Actor2D {
             int num = getFlowDirs(flows, flowDirs);
             if (num == 2 && isLinear(flowDirs[0], flowDirs[1])) {
                 drawPath(spriteBatch, c, flows, flowDirs);
+            } else {
+                drawCross(spriteBatch, c);
             }
         }
     }
