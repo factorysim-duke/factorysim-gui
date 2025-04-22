@@ -21,7 +21,8 @@ import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
  */
 public class SimulationScreen implements Screen {
     private GameWorld world;
-    private final FactoryGame game;
+    private int gridCols;
+    private int gridRows;
 
     private Stage stage;
     private TopBar topBar;
@@ -50,17 +51,9 @@ public class SimulationScreen implements Screen {
 
     /**
      * Constructor for SimulationScreen.
-     *
-     * @param game the main game instance
      */
-    public SimulationScreen(FactoryGame game) {
-        this.game = game;
-    }
+    public SimulationScreen() {}
 
-    // For backward compatibility
-    public SimulationScreen() {
-        this.game = null;
-    }
 
     @Override
     public void show() {
@@ -74,23 +67,23 @@ public class SimulationScreen implements Screen {
 
         // Get grid dimensions from settings (or use defaults)
         int[] gridDimensions = SettingsScreen.getStoredGridDimensions();
-        int cols = gridDimensions[0];
-        int rows = gridDimensions[1];
+        gridCols = gridDimensions[0];
+        gridRows = gridDimensions[1];
 
         // Calculate view dimensions based on grid size
-        int viewWidth = cols * Constants.DEFAULT_CELL_SIZE;
-        int viewHeight = rows * Constants.DEFAULT_CELL_SIZE;
+        int viewWidth = gridCols * Constants.DEFAULT_CELL_SIZE;
+        int viewHeight = gridRows * Constants.DEFAULT_CELL_SIZE;
         Constants.setViewDimensions(viewWidth, viewHeight);
 
         // Create game world
-        this.world = new GameWorld(cols, rows, Constants.CELL_SIZE, new StreamLogger(System.out), this,
+        this.world = new GameWorld(gridCols, gridRows, Constants.CELL_SIZE, new StreamLogger(System.out), this,
             0f, 0f);
         inputMultiplexer.addProcessor(this.world);
 
         // Load initial configuration from formula.json
         try {
             // This loads the formula.json which contains types and recipes
-            loadSimulation("formula.json");
+            loadFormula("formula.json");
             System.out.println("Successfully loaded initial configuration from formula.json");
         } catch (Exception e) {
             System.out.println("Failed to load initial configuration: " + e.getMessage());
@@ -322,6 +315,13 @@ public class SimulationScreen implements Screen {
         if (VisUI.isLoaded()) {
             VisUI.dispose();
         }
+    }
+
+    public void loadFormula(String jsonPath) {
+        Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
+        sim.load(jsonPath);
+        sim.setTileMapDimensions(gridCols, gridRows);
+        this.world.setSimulation(sim);
     }
 
     public void loadSimulation(String jsonPath) {
