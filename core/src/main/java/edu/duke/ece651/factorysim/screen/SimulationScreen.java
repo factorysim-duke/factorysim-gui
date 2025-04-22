@@ -2,6 +2,7 @@ package edu.duke.ece651.factorysim.screen;
 
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.*;
@@ -62,11 +63,9 @@ public class SimulationScreen implements Screen {
     public void show() {
         // Create and use input multiplexer
         InputMultiplexer inputMultiplexer = new InputMultiplexer();
-        Gdx.input.setInputProcessor(inputMultiplexer);
 
         // Create stage
         stage = new Stage(new FitViewport(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
-        inputMultiplexer.addProcessor(stage);
 
         // Get grid dimensions from settings (or use defaults)
         int[] gridDimensions = SettingsScreen.getStoredGridDimensions();
@@ -76,7 +75,42 @@ public class SimulationScreen implements Screen {
         // Create game world
         this.world = new GameWorld(gridCols, gridRows, Constants.CELL_SIZE, new StreamLogger(System.out), this,
             0f, 0f);
+
+        // Add scroll dispatcher first to handle scroll input based on position
+        inputMultiplexer.addProcessor(new InputAdapter() {
+            @Override
+            public boolean scrolled(float amountX, float amountY) {
+                // Convert screen coordinates to stage coordinates
+                Vector2 stageCoords = new Vector2(Gdx.input.getX(), Gdx.input.getY());
+                stage.screenToStageCoordinates(stageCoords);
+
+                // Check if cursor is over ScrollPane or its children
+                Actor hit = stage.hit(stageCoords.x, stageCoords.y, true);
+
+                // Walk up the hierarchy to find if we're over a ScrollPane or FileChooser
+                Actor current = hit;
+                while (current != null) {
+                    // If we've hit a scrollable component (log panel) or file dialog, let the stage handle it
+                    if (current instanceof VisScrollPane || current instanceof FileChooser) {
+                        return false;  // Let the Stage handle scrolling
+                    }
+                    current = current.getParent();
+                }
+
+                // If not over ScrollPane or FileChooser, let the world handle zooming
+                world.scrolled(amountX, amountY);
+                return true;  // Event consumed
+            }
+        });
+
+        // Add stage next to handle UI interactions
+        inputMultiplexer.addProcessor(stage);
+
+        // Add world last for other input processing
         inputMultiplexer.addProcessor(this.world);
+
+        // Set the input processor
+        Gdx.input.setInputProcessor(inputMultiplexer);
 
         // Load initial configuration from formula.json
         try {
