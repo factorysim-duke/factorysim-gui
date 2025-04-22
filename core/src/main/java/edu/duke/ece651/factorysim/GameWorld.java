@@ -803,7 +803,12 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
 
         // Disconnect the two buildings
-        sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
+        try {
+            sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
+        } catch (Exception e) {
+            log(e.getMessage());
+            return;
+        }
 
         // Remove the path actor
         PathActor actor = null;
