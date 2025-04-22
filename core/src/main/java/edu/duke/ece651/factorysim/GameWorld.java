@@ -265,6 +265,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             Vector2 focus = coordinateToWorld(buildingActors.getFirst().getBuilding().getLocation());
             setCameraPosition(focus.x, focus.y);
         }
+
+        // Initialize camera zoom
+        updateTargetZoom(targetZoom);
+        syncZoom();
     }
 
     /**
