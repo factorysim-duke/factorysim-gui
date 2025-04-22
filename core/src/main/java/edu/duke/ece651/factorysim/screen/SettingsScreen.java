@@ -160,11 +160,6 @@ public class SettingsScreen implements Screen {
         prefs.putInteger(GRID_ROWS_KEY, rows);
         prefs.flush();
 
-        // Calculate view dimensions based on grid size and cell size for backward compatibility
-        int viewWidth = cols * Constants.DEFAULT_CELL_SIZE;
-        int viewHeight = rows * Constants.DEFAULT_CELL_SIZE;
-        Constants.setViewDimensions(viewWidth, viewHeight);
-
         Gdx.app.log("SettingsScreen",
             String.format("Settings saved: grid=%dx%d", cols, rows));
     }
