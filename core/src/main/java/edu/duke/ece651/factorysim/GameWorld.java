@@ -859,6 +859,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             BuildingActor actor = getBuildingAt(c);
             if (actor != null) {
                 screen.showBuildingInfo(actor.getBuilding());
+            } else {
+                screen.hideInfoPanel();
             }
         }
 
