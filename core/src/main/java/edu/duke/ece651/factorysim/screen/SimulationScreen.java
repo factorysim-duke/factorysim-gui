@@ -321,12 +321,14 @@ public class SimulationScreen implements Screen {
         Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
         sim.load(jsonPath);
         sim.setTileMapDimensions(gridCols, gridRows);
+        realTimeMenu = new RealTimeMenu(this);
         this.world.setSimulation(sim);
     }
 
     public void loadSimulation(String jsonPath) {
         Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
         sim.load(jsonPath);
+        realTimeMenu = new RealTimeMenu(this);
         this.world.setSimulation(sim);
     }
 
