@@ -774,6 +774,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     }
 
     public PathActor connectPath(BuildingActor from, BuildingActor to) {
+        // Prevent connecting to self
+        if (from == to) {
+            throw new IllegalArgumentException("Cannot connect to self");
+        }
+
         // Connect the two buildings
         Path path = sim.connectBuildings(from.getBuilding(), to.getBuilding());
         if (path == null) {
@@ -792,6 +797,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     }
 
     public void disconnectPath(BuildingActor from, BuildingActor to) {
+        // Ignore self disconnection
+        if (from == to) {
+            return;
+        }
+
         // Disconnect the two buildings
         sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
 
