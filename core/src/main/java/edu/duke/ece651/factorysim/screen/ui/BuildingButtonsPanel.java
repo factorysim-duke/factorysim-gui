@@ -117,7 +117,7 @@ public class BuildingButtonsPanel extends VisTable {
      */
     private void setupLayout() {
         // Add a label above the buttons
-        add("Building Tools").colspan(5).padBottom(10).row();
+        add("Building Tools").colspan(7).center().padBottom(10).row();
 
         // Add buttons side by side
         add(defaultButton).pad(5);
