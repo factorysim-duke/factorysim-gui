@@ -89,10 +89,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private static class PathEntry {
         public PathActor actor;
         public Path path;
-        public Building from;
-        public Building to;
+        public BuildingActor from;
+        public BuildingActor to;
 
-        public PathEntry(PathActor actor, Path path, Building from, Building to) {
+        public PathEntry(PathActor actor, Path path, BuildingActor from, BuildingActor to) {
             this.actor = actor;
             this.path = path;
             this.from = from;
@@ -724,9 +724,14 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         buildingMap.remove(buildingActor.getBuilding().getLocation());
         buildingActors.remove(buildingActor);
 
-        // Remove paths associated with the building
-        Building building = buildingActor.getBuilding();
-        pathEntries.removeIf((entry) -> entry.from == building || entry.to == building);
+        // Disconnect paths associated with the building
+        for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
+            PathEntry entry = iterator.next();
+            if (entry.from == buildingActor || entry.to == buildingActor) {
+                disconnectPath(entry.from, entry.to);
+                iterator.remove();
+            }
+        }
     }
 
     /**
@@ -741,7 +746,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Create actor
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
-        pathEntries.add(new PathEntry(actor, path, from.getBuilding(), to.getBuilding()));
+        pathEntries.add(new PathEntry(actor, path, from, to));
 
         // Cache and sort paths
         for (Coordinate c : actor.getCrossCoordinates()) {
@@ -782,7 +787,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         PathActor actor = null;
         for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
             PathEntry entry = iterator.next();
-            if (entry.from == from.getBuilding() && entry.to == to.getBuilding()) {
+            if (entry.from == from && entry.to == to) {
                 iterator.remove();
                 actor = entry.actor;
             }
