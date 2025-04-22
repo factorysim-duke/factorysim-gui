@@ -134,6 +134,9 @@ public class SimulationScreen implements Screen {
         controlPanel = new ControlPanel();
         realTimeMenu = new RealTimeMenu(this);
 
+        // Add menu to stage
+        stage.addActor(realTimeMenu);
+
         // Create building buttons panel
         buildingButtonsPanel = new BuildingButtonsPanel(
             world,
@@ -195,7 +198,7 @@ public class SimulationScreen implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 if (isRealTimeMenuVisible) {
-                    realTimeMenu.remove();
+                    realTimeMenu.hideMenu();
                     isRealTimeMenuVisible = false;
                 } else {
                     realTimeMenu.updateButtonState();
@@ -328,16 +331,34 @@ public class SimulationScreen implements Screen {
         Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
         sim.load(jsonPath);
         sim.setTileMapDimensions(gridCols, gridRows);
-        realTimeMenu = new RealTimeMenu(this);
+
+        // Remove old menu from stage if it exists
+        if (realTimeMenu != null) {
+            realTimeMenu.remove();
+        }
+
+        // Create a new menu and add it to the stage
         isRealTimeMenuVisible = false;
+        realTimeMenu = new RealTimeMenu(this);
+        stage.addActor(realTimeMenu);
+
         this.world.setSimulation(sim);
     }
 
     public void loadSimulation(String jsonPath) {
         Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
         sim.load(jsonPath);
-        realTimeMenu = new RealTimeMenu(this);
+
+        // Remove old menu from stage if it exists
+        if (realTimeMenu != null) {
+            realTimeMenu.remove();
+        }
+
+        // Create a new menu and add it to the stage
         isRealTimeMenuVisible = false;
+        realTimeMenu = new RealTimeMenu(this);
+        stage.addActor(realTimeMenu);
+
         this.world.setSimulation(sim);
 
         logPanel.setVerbosity(sim.getVerbosity());

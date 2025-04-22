@@ -2,18 +2,15 @@ package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.*;
-import com.kotcrab.vis.ui.widget.PopupMenu;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 
 /**
- * Dropdown menu for real-time simulation controls.
+ * Menu for real-time simulation controls.
  */
-public class RealTimeMenu extends PopupMenu {
+public class RealTimeMenu extends VisWindow {
     private VisTextButton startPauseButton;
     private VisTextField stepsPerSecondField;
     private final SimulationScreen screen;
@@ -24,14 +21,17 @@ public class RealTimeMenu extends PopupMenu {
      * @param screen the simulation screen instance
      */
     public RealTimeMenu(final SimulationScreen screen) {
-        super();
+        super("Real Time Controls");
         this.screen = screen;
 
-        // Create the menu layout
-        VisTable menuTable = new VisTable();
-        menuTable.setBackground(new VisTable().getBackground());
-        menuTable.setColor(new Color(0.2f, 0.4f, 0.8f, 1f)); // Blue background
-        menuTable.pad(10);
+        // Remove default window decorations
+        getTitleLabel().setVisible(false);
+        getTitleTable().clear();
+        setMovable(false);
+        setResizable(false);
+
+        // Set window style
+        pad(10);
 
         // Start/Pause button
         startPauseButton = new VisTextButton("Start", "orange");
@@ -42,28 +42,20 @@ public class RealTimeMenu extends PopupMenu {
         stepsPerSecondField = new VisTextField("5");
         stepsPerSecondField.setTextFieldFilter(new VisTextField.TextFieldFilter.DigitsOnlyFilter());
 
-        // Prevent menu from closing when clicking on the text field
-        stepsPerSecondField.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                event.stop(); // Stop event propagation to prevent menu from closing
-            }
-        });
-
         // Add components to the menu
-        menuTable.add(startPauseButton).fillX().expandX().padBottom(10).row();
+        add(startPauseButton).fillX().expandX().padBottom(10).row();
 
         VisTable controlsTable = new VisTable();
         controlsTable.add(stepsPerSecondLabel).left();
         controlsTable.add(stepsPerSecondField).width(50).padLeft(5);
 
-        menuTable.add(controlsTable).fillX().expandX();
-
-        // Add the table to the popup menu
-        add(menuTable);
+        add(controlsTable).fillX().expandX();
 
         // Setup listeners
         setupListeners();
+
+        // Initially hide the menu
+        setVisible(false);
 
         // Set initial state based on the game's real-time status
         updateButtonState();
@@ -142,7 +134,6 @@ public class RealTimeMenu extends PopupMenu {
      * @param stage the stage
      * @param actor the actor to align with
      */
-    @Override
     public void showMenu(Stage stage, Actor actor) {
         // First pack the menu to calculate its dimensions
         pack();
@@ -163,8 +154,20 @@ public class RealTimeMenu extends PopupMenu {
         // Position the menu just below the button
         float y = buttonY - menuHeight - 1;
 
-        // Set the position and add to stage
+        // Set the position and add to stage if not already
         setPosition(x, y);
-        stage.addActor(this);
+
+        if (getStage() == null) {
+            stage.addActor(this);
+        }
+
+        setVisible(true);
+    }
+
+    /**
+     * Hides the menu.
+     */
+    public void hideMenu() {
+        setVisible(false);
     }
 }
