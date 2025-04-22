@@ -41,7 +41,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     // Real-time
     private RealTimeSimulation realTime;
-    private boolean realTimeEnabled;
+    private boolean realTimeEnabled = false;
 
     public RealTimeSimulation getRealTime() { return this.realTime; }
 
@@ -212,6 +212,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Set new simulation
         this.sim = sim;
         this.realTime = new RealTimeSimulation(this.sim);
+        this.realTimeEnabled = false;
         World world = sim.getWorld();
         TileMap tileMap = world.getTileMap();
 
