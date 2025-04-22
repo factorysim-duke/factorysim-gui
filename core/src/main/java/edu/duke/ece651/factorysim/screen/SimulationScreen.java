@@ -329,6 +329,8 @@ public class SimulationScreen implements Screen {
         sim.load(jsonPath);
         realTimeMenu = new RealTimeMenu(this);
         this.world.setSimulation(sim);
+
+        logPanel.setVerbosity(sim.getVerbosity());
     }
 
     public void saveSimulation(String jsonPath) {

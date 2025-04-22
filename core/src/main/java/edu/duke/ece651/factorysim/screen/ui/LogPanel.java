@@ -105,4 +105,18 @@ public class LogPanel extends VisTable {
     public VisSelectBox<String> getVerbosityBox() {
         return verbosityBox;
     }
+
+    /**
+     * Sets the verbosity selection of the log panel if the verbosity is a valid selection item.
+     *
+     * @param verbosity is the verbosity level to set.
+     */
+    public void setVerbosity(int verbosity) {
+        for (String item : verbosityBox.getItems()) {
+            if (Integer.toString(verbosity).equals(item)) {
+                verbosityBox.setSelected(item);
+                return;
+            }
+        }
+    }
 }
