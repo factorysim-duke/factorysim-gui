@@ -598,6 +598,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         if (building instanceof StorageBuilding) {
             return actorizeBuilding(building, storageAnimation);
         }
+        if (building instanceof DronePortBuilding) {
+            return actorizeBuilding(building, dronePortAnimation);
+        }
         throw new IllegalArgumentException("Unsupported building type: " + building.getClass().getName());
     }
 
