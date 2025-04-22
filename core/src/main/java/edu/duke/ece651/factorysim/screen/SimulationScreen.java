@@ -21,6 +21,7 @@ import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
  */
 public class SimulationScreen implements Screen {
     private GameWorld world;
+    private final FactoryGame game;
 
     private Stage stage;
     private TopBar topBar;
@@ -47,6 +48,20 @@ public class SimulationScreen implements Screen {
     private Texture storageTexture;
     private Texture dronePortTexture;
 
+    /**
+     * Constructor for SimulationScreen.
+     *
+     * @param game the main game instance
+     */
+    public SimulationScreen(FactoryGame game) {
+        this.game = game;
+    }
+
+    // For backward compatibility
+    public SimulationScreen() {
+        this.game = null;
+    }
+
     @Override
     public void show() {
         // Create and use input multiplexer
@@ -57,9 +72,17 @@ public class SimulationScreen implements Screen {
         stage = new Stage(new FitViewport(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
         inputMultiplexer.addProcessor(stage);
 
+        // Get grid dimensions from settings (or use defaults)
+        int[] gridDimensions = SettingsScreen.getStoredGridDimensions();
+        int cols = gridDimensions[0];
+        int rows = gridDimensions[1];
+
+        // Calculate view dimensions based on grid size
+        int viewWidth = cols * Constants.DEFAULT_CELL_SIZE;
+        int viewHeight = rows * Constants.DEFAULT_CELL_SIZE;
+        Constants.setViewDimensions(viewWidth, viewHeight);
+
         // Create game world
-        int cols = Math.ceilDiv(Constants.VIEW_WIDTH, Constants.CELL_SIZE);
-        int rows = Math.ceilDiv(Constants.VIEW_HEIGHT, Constants.CELL_SIZE);
         this.world = new GameWorld(cols, rows, Constants.CELL_SIZE, new StreamLogger(System.out), this,
             0f, 0f);
         inputMultiplexer.addProcessor(this.world);
