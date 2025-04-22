@@ -259,6 +259,12 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         for (Delivery delivery : sim.getDeliverySchedule().deliveryList) {
             onDeliveryAdded(delivery);
         }
+
+        // Focus on a building actor
+        if (!buildingActors.isEmpty()) {
+            Vector2 focus = coordinateToWorld(buildingActors.getFirst().getBuilding().getLocation());
+            setCameraPosition(focus.x, focus.y);
+        }
     }
 
     /**
@@ -441,6 +447,18 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         viewport.update(width, height, false);
     }
 
+    private void setCameraPosition(float x, float y) {
+        camera.position.set(x, y, camera.position.z);
+
+        // Make sure camera don't go off the world
+        float vwHalf = camera.viewportWidth * camera.zoom / 2f;
+        float vhHalf = camera.viewportHeight * camera.zoom / 2f;
+        camera.position.x = MathUtils.clamp(camera.position.x,
+            grid.position.x + vwHalf, grid.position.x + grid.getWidth() - vwHalf);
+        camera.position.y = MathUtils.clamp(camera.position.y,
+            grid.position.y + vhHalf, grid.position.y + grid.getHeight() - vhHalf);
+    }
+
     private void handleCameraMovement(float dt) {
         // Camera movement
         cameraVelocity.set(0f, 0f);
@@ -455,20 +473,13 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             cameraVelocity.x = 1f;
         }
         cameraVelocity.nor().scl(CAMERA_SPEED * (isHoldingSpeed ? CAMERA_SPEED_MULTIPLIER : 1f) * camera.zoom * dt);
-        camera.position.add(cameraVelocity.x, cameraVelocity.y, 0f);
 
         // Invoke mouse movement event if camera is moved
         if (cameraVelocity.x != 0f || cameraVelocity.y != 0f) {
             mouseMoved(mouseScreenX, mouseScreenY);
         }
 
-        // Make sure camera don't go off the world
-        float vwHalf = camera.viewportWidth * camera.zoom / 2f;
-        float vhHalf = camera.viewportHeight * camera.zoom / 2f;
-        camera.position.x = MathUtils.clamp(camera.position.x,
-            grid.position.x + vwHalf, grid.position.x + grid.getWidth() - vwHalf);
-        camera.position.y = MathUtils.clamp(camera.position.y,
-            grid.position.y + vhHalf, grid.position.y + grid.getHeight() - vhHalf);
+        setCameraPosition(camera.position.x + cameraVelocity.x, camera.position.y + cameraVelocity.y);
     }
 
     @Override
