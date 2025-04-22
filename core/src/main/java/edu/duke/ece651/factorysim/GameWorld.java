@@ -391,7 +391,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     public void step(int n) {
         // Step the simulation
-        sim.step(n);
+        try {
+            sim.step(n);
+        } catch (Exception e) {
+            log(e.getMessage());
+        }
 
         for (int i = 0; i < n; i++) {
             // Step drone actors
