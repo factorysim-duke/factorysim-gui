@@ -736,13 +736,18 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         buildingMap.remove(buildingActor.getBuilding().getLocation());
         buildingActors.remove(buildingActor);
 
-        // Disconnect paths associated with the building
-        for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
-            PathEntry entry = iterator.next();
+        // Collect paths
+        List<PathEntry> toRemove = new ArrayList<>();
+        for (PathEntry entry : pathEntries) {
             if (entry.from == buildingActor || entry.to == buildingActor) {
-                disconnectPath(entry.from, entry.to);
-                iterator.remove();
+                toRemove.add(entry);
             }
+        }
+
+        // Disconnect
+        for (PathEntry entry : toRemove) {
+            disconnectPath(entry.from, entry.to);
+            disconnectPath(entry.to, entry.from);
         }
     }
 
@@ -802,30 +807,28 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             return;
         }
 
-        // Disconnect the two buildings
-        try {
-            sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
-        } catch (Exception e) {
-            log(e.getMessage());
-            return;
-        }
-
-        // Remove the path actor
-        PathActor actor = null;
-        for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
-            PathEntry entry = iterator.next();
+        // Find matching path entries
+        List<PathEntry> toRemove = new ArrayList<>();
+        for (PathEntry entry : pathEntries) {
             if (entry.from == from && entry.to == to) {
-                iterator.remove();
-                actor = entry.actor;
+                toRemove.add(entry);
             }
         }
-
-        // Remove cached cross coordinates
-        if (actor == null) {
+        if (toRemove.isEmpty()) {
             return;
         }
-        for (Coordinate c : actor.getCrossCoordinates()) {
-            pathCrossCoords.remove(c);
+
+        // Try to disconnect
+        try {
+            sim.disconnectBuildings(from.getBuilding(), to.getBuilding());
+        } catch (Exception ignored) { }
+
+        // Remove path entries and cross coordinates
+        for (PathEntry entry : toRemove) {
+            pathEntries.remove(entry);
+            for (Coordinate c : entry.actor.getCrossCoordinates()) {
+                pathCrossCoords.remove(c);
+            }
         }
     }
 
