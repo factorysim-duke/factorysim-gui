@@ -27,9 +27,4 @@ public class Constants {
         VIEW_WIDTH = width;
         VIEW_HEIGHT = height;
     }
-
-    // Update cell size
-    public static void setCellSize(int size) {
-        CELL_SIZE = size;
-    }
 }
