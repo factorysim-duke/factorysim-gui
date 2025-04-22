@@ -71,11 +71,6 @@ public class SimulationScreen implements Screen {
         gridCols = gridDimensions[0];
         gridRows = gridDimensions[1];
 
-        // Calculate view dimensions based on grid size
-        int viewWidth = gridCols * Constants.DEFAULT_CELL_SIZE;
-        int viewHeight = gridRows * Constants.DEFAULT_CELL_SIZE;
-        Constants.setViewDimensions(viewWidth, viewHeight);
-
         // Create game world
         this.world = new GameWorld(gridCols, gridRows, Constants.CELL_SIZE, new StreamLogger(System.out), this,
             0f, 0f);
