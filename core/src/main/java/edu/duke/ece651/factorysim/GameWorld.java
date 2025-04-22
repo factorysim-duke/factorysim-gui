@@ -55,6 +55,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture factoryTexture;
     private final Texture storageTexture;
     private final Texture dronePortTexture;
+    private final Texture wasteDisposalTexture;
+
     private final Texture itemTexture;
     private final Texture droneTexture;
 
@@ -66,6 +68,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Texture selectFactoryTexture;
     private final Texture selectStorageTexture;
     private final Texture selectDronePortTexture;
+    private final Texture selectWasteDisposalTexture;
     private final Texture selectFromTexture;
     private final Texture selectToTexture;
 
@@ -76,17 +79,20 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     private final Animation<TextureRegion> factoryAnimation;
     private final Animation<TextureRegion> storageAnimation;
     private final Animation<TextureRegion> dronePortAnimation;
+    private final Animation<TextureRegion> wasteDisposalAnimation;
+
     private final Animator<TextureRegion> pathAnimator;
+
     private final Animation<TextureRegion> droneAnimation;
 
     // Path
     private static class PathEntry {
         public PathActor actor;
         public Path path;
-        public Building from;
-        public Building to;
+        public BuildingActor from;
+        public BuildingActor to;
 
-        public PathEntry(PathActor actor, Path path, Building from, Building to) {
+        public PathEntry(PathActor actor, Path path, BuildingActor from, BuildingActor to) {
             this.actor = actor;
             this.path = path;
             this.from = from;
@@ -138,6 +144,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.factoryTexture = new Texture("factory.png");
         this.storageTexture = new Texture("storage.png");
         this.dronePortTexture = new Texture("droneport.png");
+        this.wasteDisposalTexture = new Texture("wastedisposal.png");
 
         this.itemTexture = new Texture("item.png");
         this.droneTexture = new Texture("drone.png");
@@ -150,6 +157,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         this.selectFactoryTexture = new Texture("select_factory.png");
         this.selectStorageTexture = new Texture("select_storage.png");
         this.selectDronePortTexture = new Texture("select_droneport.png");
+        this.selectWasteDisposalTexture = new Texture("select_wastedisposal.png");
         this.selectFromTexture = new Texture("select_from.png");
         this.selectToTexture = new Texture("select_to.png");
 
@@ -164,6 +172,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             storageTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
         this.dronePortAnimation = createAnimation(dronePortTexture, dronePortTexture.getHeight() / 2,
             dronePortTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP);
+        this.wasteDisposalAnimation = createAnimation(wasteDisposalTexture,
+            wasteDisposalTexture.getHeight() / 2, wasteDisposalTexture.getHeight(), 0.1f,
+            Animation.PlayMode.LOOP);
 
         this.pathAnimator = new Animator<>(createAnimation(pathTexture, pathTexture.getHeight(),
             pathTexture.getHeight(), 0.1f, Animation.PlayMode.LOOP), true);
@@ -471,6 +482,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         factoryTexture.dispose();
         storageTexture.dispose();
         dronePortTexture.dispose();
+        wasteDisposalTexture.dispose();
         itemTexture.dispose();
         droneTexture.dispose();
         pathTexture.dispose();
@@ -479,6 +491,8 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         selectMineTexture.dispose();
         selectFactoryTexture.dispose();
         selectStorageTexture.dispose();
+        selectDronePortTexture.dispose();
+        selectWasteDisposalTexture.dispose();
         selectFromTexture.dispose();
         selectToTexture.dispose();
         removeTexture.dispose();
@@ -601,6 +615,9 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         if (building instanceof DronePortBuilding) {
             return actorizeBuilding(building, dronePortAnimation);
         }
+        if (building instanceof WasteDisposalBuilding) {
+            return actorizeBuilding(building, wasteDisposalAnimation);
+        }
         throw new IllegalArgumentException("Unsupported building type: " + building.getClass().getName());
     }
 
@@ -655,6 +672,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         return buildBuilding(dronePort, dronePortAnimation, coordinate);
     }
 
+    public BuildingActor buildWasteDisposal(String name,
+                                            LinkedHashMap<Item, Integer> wasteTypes,
+                                            LinkedHashMap<Item, Integer> disposalRateMaps,
+                                            LinkedHashMap<Item, Integer> timeSteps,
+                                            Coordinate coordinate) {
+        name = sim.getWorld().resolveBuildingNameConflict(name);
+        WasteDisposalBuilding wasteDisposal =
+            new WasteDisposalBuilding(name, wasteTypes, disposalRateMaps, timeSteps, sim);
+        return buildBuilding(wasteDisposal, wasteDisposalAnimation, coordinate);
+    }
+
     /**
      * Asks to remove a building and its actor.
      *
@@ -693,8 +721,18 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
      * @param buildingActor is the building actor to remove.
      */
     private void demolishBuilding(BuildingActor buildingActor) {
+        // Remove building actor
         buildingMap.remove(buildingActor.getBuilding().getLocation());
         buildingActors.remove(buildingActor);
+
+        // Disconnect paths associated with the building
+        for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
+            PathEntry entry = iterator.next();
+            if (entry.from == buildingActor || entry.to == buildingActor) {
+                disconnectPath(entry.from, entry.to);
+                iterator.remove();
+            }
+        }
     }
 
     /**
@@ -709,7 +747,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         // Create actor
         PathActor actor = new PathActor(path, sim.getWorld().getTileMap(), pathAnimator, pathCrossTexture,
             this::coordinateToWorld);
-        pathEntries.add(new PathEntry(actor, path, from.getBuilding(), to.getBuilding()));
+        pathEntries.add(new PathEntry(actor, path, from, to));
 
         // Cache and sort paths
         for (Coordinate c : actor.getCrossCoordinates()) {
@@ -750,7 +788,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         PathActor actor = null;
         for (Iterator<PathEntry> iterator = pathEntries.iterator(); iterator.hasNext(); ) {
             PathEntry entry = iterator.next();
-            if (entry.from == from.getBuilding() && entry.to == to.getBuilding()) {
+            if (entry.from == from && entry.to == to) {
                 iterator.remove();
                 actor = entry.actor;
             }
@@ -780,8 +818,10 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
     public interface Phase {
         default void onLeftClick(Coordinate c) { }
         default void onRightClick(Coordinate c) { }
-        default void onRelease(Coordinate c) { }
+        default void onLeftRelease(Coordinate c) { }
+        default void onRightRelease(Coordinate c) { }
         default void onEnter() { }
+        default void onExit() { }
     }
 
     public class DefaultPhase implements Phase {
@@ -907,147 +947,185 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
         }
     }
 
-    public class ConnectPhase implements Phase {
-        private BuildingActor from = null;
+    public class BuildWasteDisposalPhase extends BuildPhase {
+        private final LinkedHashMap<Item, Integer> wasteTypes;
+        private final LinkedHashMap<Item, Integer> disposalRateMaps;
+        private final LinkedHashMap<Item, Integer> timeSteps;
 
-        private boolean isConnecting = true;
-
-        private void onConnect(Coordinate c) {
-            // Get destination
-            BuildingActor to = getBuildingAt(c);
-            if (to == null) {
-                return;
-            }
-
-            // Try to connect
-            connectPath(from, to);
-            enterDefaultPhase(); // Connected successfully, resume to default phase
-        }
-
-        private void onDisconnect(Coordinate c) {
-            // Get destination
-            BuildingActor to = getBuildingAt(c);
-            if (to == null) {
-                return;
-            }
-
-            // Disconnect
-            disconnectPath(from, to);
-            enterDefaultPhase(); // Disconnected successfully, resume to default phase
+        public BuildWasteDisposalPhase(String name,
+                                       LinkedHashMap<Item, Integer> wasteTypes,
+                                       LinkedHashMap<Item, Integer> disposalRateMaps,
+                                       LinkedHashMap<Item, Integer> timeSteps) {
+            super(selectWasteDisposalTexture, name);
+            this.wasteTypes = wasteTypes;
+            this.disposalRateMaps = disposalRateMaps;
+            this.timeSteps = timeSteps;
         }
 
         @Override
         public void onLeftClick(Coordinate c) {
             try {
-                // Update flag to indicate is connecting
-                if (!isConnecting) {
-                    from = null; // Clear from
-                    grid.setSelectColor(Color.WHITE); // Update selection color
-                    isConnecting = true;
-                }
-
-                // Get source if not already
-                if (from == null) {
-                    from = getBuildingAt(c);
-                    if (from != null) {
-                        grid.setSelectTexture(selectToTexture); // Update select box texture
-                    }
-                    return; // Intentional. If clicked on a coordinate with no building, do nothing
-                }
-
-                // Try to connect to the coordinate
-                onConnect(c);
+                buildWasteDisposal(name, wasteTypes, disposalRateMaps, timeSteps, c);
             } catch (Exception e) {
-                // Log error and resume back to default phase on error
                 log(e.getMessage());
+            } finally {
                 enterDefaultPhase();
             }
+        }
+    }
+
+    public class ConnectPhase implements Phase {
+        private BuildingActor from = null;
+        private boolean isConnecting = true;
+
+        private boolean pressedLeft = true;
+        private boolean buttonPressed = false;
+
+        @Override
+        public void onLeftClick(Coordinate c) {
+            handleClick(c, true);
         }
 
         @Override
         public void onRightClick(Coordinate c) {
+            handleClick(c, false);
+        }
+
+        private void handleClick(Coordinate c, boolean connect) {
             try {
-                // Update flag to indicate is disconnecting
-                if (isConnecting) {
-                    from = null; // Clear from
-                    grid.setSelectColor(Color.RED); // Update selection color
-                    isConnecting = false;
+                pressedLeft = connect;
+                buttonPressed = true;
+
+                if (isConnecting != connect) {
+                    from = null;
+                    isConnecting = connect;
+                    grid.setSelectColor(connect ? Color.WHITE : Color.RED);
                 }
 
-                // Get source if not already
                 if (from == null) {
                     from = getBuildingAt(c);
                     if (from != null) {
-                        grid.setSelectTexture(selectToTexture); // Update select box texture
+                        grid.setSelectTexture(selectToTexture);
                     }
-                    return; // Intentional. If clicked on a coordinate with no building, do nothing
+                    return;
                 }
 
-                // Try to disconnect
-                onDisconnect(c);
-                grid.setSelectColor(Color.WHITE); // Resume color when success
+                performAction(c);
             } catch (Exception e) {
-                // Log error and resume back to default phase on error
                 log(e.getMessage());
-                enterDefaultPhase();
-
-                // Resume color when error
-                grid.setSelectColor(Color.WHITE);
+                resetState();
             }
         }
 
         @Override
-        public void onRelease(Coordinate c) {
+        public void onLeftRelease(Coordinate c) {
+            handleRelease(c, true);
+        }
+
+        @Override
+        public void onRightRelease(Coordinate c) {
+            handleRelease(c, false);
+        }
+
+        private void handleRelease(Coordinate c, boolean releasedLeft) {
             try {
-                // Ignore if no source or release coordinate is where source is
+                if (!buttonPressed || pressedLeft != releasedLeft) {
+                    return;
+                }
+
                 if (from == null || from.getBuilding().getLocation().equals(c)) {
                     return;
                 }
 
-                // Try to connect to the coordinate
-                onConnect(c);
+                performAction(c);
+                grid.setSelectColor(Color.WHITE);
             } catch (Exception e) {
-                // Log error and resume back to default phase on error
                 log(e.getMessage());
-                enterDefaultPhase();
+                resetState();
+            } finally {
+                buttonPressed = false;
             }
+        }
+
+        private void performAction(Coordinate c) {
+            BuildingActor to = getBuildingAt(c);
+            if (to == null) {
+                return;
+            }
+
+            if (isConnecting) {
+                connectPath(from, to);
+            } else {
+                disconnectPath(from, to);
+            }
+
+            enterDefaultPhase();
+        }
+
+        private void resetState() {
+            from = null;
+            isConnecting = true;
+            buttonPressed = false;
+            grid.setSelectColor(Color.WHITE);
+            enterDefaultPhase();
         }
 
         @Override
         public void onEnter() {
             grid.setSelectTexture(selectFromTexture);
         }
+
+        @Override
+        public void onExit() {
+            grid.setSelectColor(Color.WHITE);
+            grid.setSelectTexture(selectTexture);
+        }
     }
 
     private Phase phase = new DefaultPhase();
 
     public void enterDefaultPhase() {
+        phase.onExit();
         phase = new DefaultPhase();
         phase.onEnter();
     }
 
     public void enterConnectPhase() {
+        phase.onExit();
         phase = new ConnectPhase();
         phase.onEnter();
     }
 
     public void enterBuildMinePhase(String name, Recipe miningRecipe) {
+        phase.onExit();
         phase = new BuildMinePhase(name, miningRecipe);
         phase.onEnter();
     }
 
     public void enterBuildFactoryPhase(String name, Type factoryType) {
+        phase.onExit();
         phase = new BuildFactoryPhase(name, factoryType);
         phase.onEnter();
     }
 
     public void enterBuildStoragePhase(String name, Item storageItem, int maxCapacity, double priority) {
+        phase.onExit();
         phase = new BuildStoragePhase(name, storageItem, maxCapacity, priority);
         phase.onEnter();
     }
 
     public void enterBuildDronePortPhase(String name) {
+        phase.onExit();
         phase = new BuildDronePortPhase(name);
+        phase.onEnter();
+    }
+
+    public void enterBuildWasteDisposalPhase(String name,
+                                             LinkedHashMap<Item, Integer> wasteTypes,
+                                             LinkedHashMap<Item, Integer> disposalRateMaps,
+                                             LinkedHashMap<Item, Integer> timeSteps) {
+        phase.onExit();
+        phase = new BuildWasteDisposalPhase(name, wasteTypes, disposalRateMaps, timeSteps);
         phase.onEnter();
     }
 
@@ -1126,13 +1204,17 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        if (button == Input.Buttons.LEFT) {
+        if (button == Input.Buttons.LEFT || button == Input.Buttons.RIGHT) {
             // Get coordinate based on touch screen position
             Vector2 pos = screenToWorld(new Vector2(screenX, screenY));
             Coordinate c = worldToCoordinate(pos);
 
             // Invoke current phase's `onRelease` event
-            phase.onRelease(c);
+            if (button == Input.Buttons.LEFT) {
+                phase.onLeftRelease(c);
+            } else {
+                phase.onRightRelease(c);
+            }
         }
         return true;
     }

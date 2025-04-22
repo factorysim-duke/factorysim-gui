@@ -1,58 +1,100 @@
 {
-    "types" : [
-        {
-            "name" : "door",
-            "recipes" : [
-                "door"
-            ]
-        },
-        {
-            "name" : "handle",
-            "recipes" : [
-                "handle"
-            ]
-        },
-        {
-            "name" : "hinge",
-            "recipes" : [
-                "hinge"
-            ]
-        }
-    ],
-    "buildings" : [],
-    "recipes" : [
-        {
-            "output" : "door",
-            "ingredients" : {
-                "wood" : 1,
-                "handle" : 1,
-                "hinge" : 3
-            },
-            "latency" : 12
-        },
-        {
-            "output" : "handle",
-            "ingredients" : {
-                "metal" : 1
-            },
-            "latency" : 5
-        },
-        {
-            "output" : "hinge",
-            "ingredients" : {
-                "metal" : 1
-            },
-            "latency" : 1
-        },
-        {
-            "output" : "wood",
-            "ingredients" : {},
-            "latency" : 1
-        },
-        {
-            "output" : "metal",
-            "ingredients" : {},
-            "latency" : 1
-        }
-    ]
+  "types" : [
+    {
+      "name" : "door",
+      "recipes" : ["door"]
+    },
+    {
+      "name" : "handle",
+      "recipes" : ["handle"]
+    },
+    {
+      "name" : "hinge",
+      "recipes" : ["hinge"]
+    },
+    {
+      "name": "furniture",
+      "recipes": ["chair", "table"]
+    },
+    {
+      "name": "electronics",
+      "recipes": ["electronics"]
+    }
+  ],
+  "buildings" : [],
+  "recipes" : [
+    {
+      "output" : "door",
+      "ingredients" : {
+          "wood" : 1,
+          "handle" : 1,
+          "hinge" : 3
+      },
+      "latency" : 12,
+      "waste": {
+        "sawdust": 40
+      }
+    },
+    {
+      "output" : "handle",
+      "ingredients" : {
+          "metal" : 1
+      },
+      "latency" : 5
+    },
+    {
+      "output" : "hinge",
+      "ingredients" : {
+          "metal" : 1
+      },
+      "latency" : 1
+    },
+    {
+      "output" : "wood",
+      "ingredients" : {},
+      "latency" : 1
+    },
+    {
+      "output" : "metal",
+      "ingredients" : {},
+      "latency" : 1
+    },
+    {
+      "output": "plastic",
+      "ingredients": {},
+      "latency": 2
+    },
+    {
+      "output": "chair",
+      "ingredients": {
+        "wood": 2
+      },
+      "latency": 5,
+      "waste": {
+        "sawdust": 20
+      }
+    },
+    {
+      "output": "table",
+      "ingredients": {
+        "wood": 4
+      },
+      "latency": 8,
+      "waste": {
+        "sawdust": 35
+      }
+    },
+    {
+      "output": "electronics",
+      "ingredients": {
+        "metal": 2,
+        "plastic": 3
+      },
+      "latency": 10,
+      "waste": {
+        "electronic_waste": 15,
+        "plastic_scraps": 10
+      }
+    }
+  ]
 }

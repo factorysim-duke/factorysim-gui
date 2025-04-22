@@ -10,6 +10,8 @@ import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.*;
 
+import java.util.LinkedHashMap;
+
 /**
  * A panel containing building buttons for the simulation.
  */
@@ -20,6 +22,7 @@ public class BuildingButtonsPanel extends VisTable {
     private final Texture factoryTexture;
     private final Texture storageTexture;
     private final Texture dronePortTexture;
+    private final Texture wasteDisposalTexture;
     private final ButtonGroup<VisImageButton> buttonGroup;
     private final BuildingOutputDialog outputDialog;
     private final Stage stage;
@@ -30,6 +33,7 @@ public class BuildingButtonsPanel extends VisTable {
     private VisImageButton factoryButton;
     private VisImageButton storageButton;
     private VisImageButton dronePortButton;
+    private VisImageButton wasteDisposalButton;
 
     /**
      * Constructor for the BuildingButtonsPanel.
@@ -41,14 +45,16 @@ public class BuildingButtonsPanel extends VisTable {
      * @param factoryTexture is the texture for factory buildings
      * @param storageTexture is the texture for storage buildings
      * @param dronePortTexture is the texture for drone port buildings
+     * @param wasteDisposalTexture is the texture for waste disposal buildings
      */
     public BuildingButtonsPanel(GameWorld gameWorld,
-                               Stage stage,
-                               Texture selectTexture,
-                               Texture mineTexture,
-                               Texture factoryTexture,
-                               Texture storageTexture,
-                               Texture dronePortTexture) {
+                                Stage stage,
+                                Texture selectTexture,
+                                Texture mineTexture,
+                                Texture factoryTexture,
+                                Texture storageTexture,
+                                Texture dronePortTexture,
+                                Texture wasteDisposalTexture) {
         this.gameWorld = gameWorld;
         this.stage = stage;
         this.selectTexture = selectTexture;
@@ -56,6 +62,7 @@ public class BuildingButtonsPanel extends VisTable {
         this.factoryTexture = factoryTexture;
         this.storageTexture = storageTexture;
         this.dronePortTexture = dronePortTexture;
+        this.wasteDisposalTexture = wasteDisposalTexture;
         this.buttonGroup = new ButtonGroup<>();
         this.outputDialog = new BuildingOutputDialog(stage, gameWorld);
 
@@ -75,6 +82,7 @@ public class BuildingButtonsPanel extends VisTable {
         factoryButton = createImageButton(factoryTexture);
         storageButton = createImageButton(storageTexture);
         dronePortButton = createImageButton(dronePortTexture);
+        wasteDisposalButton = createImageButton(wasteDisposalTexture);
 
         // Add buttons to button group for exclusive selection
         buttonGroup.add(defaultButton);
@@ -83,6 +91,7 @@ public class BuildingButtonsPanel extends VisTable {
         buttonGroup.add(factoryButton);
         buttonGroup.add(storageButton);
         buttonGroup.add(dronePortButton);
+        buttonGroup.add(wasteDisposalButton);
 
         // Make default button checked initially
         defaultButton.setChecked(true);
@@ -116,7 +125,8 @@ public class BuildingButtonsPanel extends VisTable {
         add(mineButton).pad(5);
         add(factoryButton).pad(5);
         add(storageButton).pad(5);
-        add(dronePortButton).row();
+        add(dronePortButton).pad(5);
+        add(wasteDisposalButton).row();
 
         // Add labels under buttons
         add("Select").pad(2);
@@ -124,7 +134,8 @@ public class BuildingButtonsPanel extends VisTable {
         add("Mine").pad(2);
         add("Factory").pad(2);
         add("Storage").pad(2);
-        add("Drone Port").pad(2);
+        add("Port").pad(2);
+        add("Disposal").pad(2);
     }
 
     /**
@@ -210,7 +221,31 @@ public class BuildingButtonsPanel extends VisTable {
         dronePortButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                gameWorld.enterBuildDronePortPhase("DronePort");
+                gameWorld.enterBuildDronePortPhase("Port");
+            }
+        });
+
+        // Waste disposal building tool
+        wasteDisposalButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Skip if dialog is open
+                if (isDialogOpen()) {
+                    return;
+                }
+
+                // Show dialog to select factory configuration
+                outputDialog.showWasteDisposalOutputDialog((name, wasteConfig) -> {
+                    Item item = new Item(name);
+                    LinkedHashMap<Item, Integer> wasteTypes = new LinkedHashMap<>();
+                    wasteTypes.put(item, wasteConfig.capacity);
+                    LinkedHashMap<Item, Integer> disposalRateMaps = new LinkedHashMap<>();
+                    disposalRateMaps.put(item, wasteConfig.disposalRate);
+                    LinkedHashMap<Item, Integer> timeSteps = new LinkedHashMap<>();
+                    timeSteps.put(item, wasteConfig.timeSteps);
+                    gameWorld.enterBuildWasteDisposalPhase(name + "_Disposal", wasteTypes, disposalRateMaps,
+                        timeSteps);
+                });
             }
         });
 
@@ -247,6 +282,10 @@ public class BuildingButtonsPanel extends VisTable {
                         simulateClick(dronePortButton);
                         yield true;
                     }
+                    case Input.Keys.NUM_7 -> {
+                        simulateClick(wasteDisposalButton);
+                        yield true;
+                    }
                     default -> false;
                 };
             }
@@ -272,5 +311,8 @@ public class BuildingButtonsPanel extends VisTable {
         up.setType(InputEvent.Type.touchUp);
         up.setStage(stage);
         button.fire(up);
+
+        stage.unfocusAll();
+        stage.cancelTouchFocus();
     }
 }
