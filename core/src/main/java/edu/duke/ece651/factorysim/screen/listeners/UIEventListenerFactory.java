@@ -7,7 +7,6 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.VisSelectBox;
-import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.screen.ui.ControlPanel;
 import edu.duke.ece651.factorysim.screen.ui.TopBar;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
