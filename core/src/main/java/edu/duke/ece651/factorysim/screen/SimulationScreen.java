@@ -35,6 +35,8 @@ public class SimulationScreen implements Screen {
     private FileChooser createFileChooser;
     private FileChooser saveFileChooser;
     private RealTimeMenu realTimeMenu;
+    private boolean isRealTimeMenuVisible = false;
+
 
     // UI components
     private InfoPanelManager infoPanelManager;
@@ -192,8 +194,14 @@ public class SimulationScreen implements Screen {
         realTimeButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                realTimeMenu.updateButtonState();
-                realTimeMenu.showMenu(stage, realTimeButton);
+                if (isRealTimeMenuVisible) {
+                    realTimeMenu.remove();
+                    isRealTimeMenuVisible = false;
+                } else {
+                    realTimeMenu.updateButtonState();
+                    realTimeMenu.showMenu(stage, realTimeButton);
+                    isRealTimeMenuVisible = true;
+                }
             }
         });
     }
@@ -321,6 +329,7 @@ public class SimulationScreen implements Screen {
         sim.load(jsonPath);
         sim.setTileMapDimensions(gridCols, gridRows);
         realTimeMenu = new RealTimeMenu(this);
+        isRealTimeMenuVisible = false;
         this.world.setSimulation(sim);
     }
 
@@ -328,6 +337,7 @@ public class SimulationScreen implements Screen {
         Simulation sim = new Simulation(WorldBuilder.buildEmptyWorld(), 0, this.world.getLogger());
         sim.load(jsonPath);
         realTimeMenu = new RealTimeMenu(this);
+        isRealTimeMenuVisible = false;
         this.world.setSimulation(sim);
 
         logPanel.setVerbosity(sim.getVerbosity());
