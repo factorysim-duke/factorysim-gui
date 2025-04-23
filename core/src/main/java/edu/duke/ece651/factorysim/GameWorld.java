@@ -815,6 +815,11 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             return;
         }
 
+        // Can't remove the path if the two buildings are working
+        if (!from.getBuilding().canBeRemovedImmediately() || !to.getBuilding().canBeRemovedImmediately()) {
+            return;
+        }
+
         // Find matching path entries
         List<PathEntry> toRemove = new ArrayList<>();
         for (PathEntry entry : pathEntries) {
