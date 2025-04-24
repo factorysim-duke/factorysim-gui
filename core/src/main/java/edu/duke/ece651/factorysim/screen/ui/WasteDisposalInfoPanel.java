@@ -14,6 +14,9 @@ public class WasteDisposalInfoPanel extends InfoPanel {
     private final VisLabel titleLabel;
     private final VisTable wasteInfoTable;
     private final VisLabel totalWasteLabel;
+    
+    // Width for title label
+    private static final float TITLE_WIDTH = 200f;
 
     /**
      * Constructs the panel for a Waste Disposal building.
@@ -24,11 +27,9 @@ public class WasteDisposalInfoPanel extends InfoPanel {
         super();
         this.disposal = disposal;
 
-        // Title label
-        titleLabel = new VisLabel("Waste Disposal: " + disposal.getName());
-        titleLabel.setColor(Color.BLACK);
-        titleLabel.setFontScale(1.2f);
-        add(titleLabel).left().padBottom(10).row();
+        // Title label with wrapping
+        titleLabel = createWrappedTitleLabel("Waste Disposal: " + disposal.getName());
+        add(titleLabel).left().width(TITLE_WIDTH).padBottom(10).row();
 
         // Total waste summary label
         totalWasteLabel = new VisLabel();
