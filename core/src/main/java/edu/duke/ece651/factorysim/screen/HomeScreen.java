@@ -111,7 +111,7 @@ public class HomeScreen implements Screen {
         startGameButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setScreen(new SimulationScreen());
+                game.setScreen(new SimulationScreen(game));
                 dispose();
             }
         });

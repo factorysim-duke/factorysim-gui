@@ -37,7 +37,7 @@ public class SimulationScreen implements Screen {
     private FileChooser saveFileChooser;
     private RealTimeMenu realTimeMenu;
     private boolean isRealTimeMenuVisible = false;
-
+    private FactoryGame game;
 
     // UI components
     private InfoPanelManager infoPanelManager;
@@ -56,8 +56,18 @@ public class SimulationScreen implements Screen {
     /**
      * Constructor for SimulationScreen.
      */
-    public SimulationScreen() {}
+    public SimulationScreen() {
+        this(null);
+    }
 
+    /**
+     * Constructor for SimulationScreen with game reference.
+     * 
+     * @param game The main game instance
+     */
+    public SimulationScreen(FactoryGame game) {
+        this.game = game;
+    }
 
     @Override
     public void show() {
@@ -224,8 +234,33 @@ public class SimulationScreen implements Screen {
         // Center section with building buttons
         root.add(buildingButtonsPanel).bottom().padBottom(10);
 
-        // Right section with control panel
-        root.add(controlPanel).bottom().right().pad(10);
+        // Bottom-right section with back to home button and control panel in a vertical layout
+        VisTable bottomRightLayout = new VisTable();
+        
+        // Add back to home button
+        VisTextButton backToHomeButton = new VisTextButton("Back to Home", "blue");
+        backToHomeButton.pad(5, 10, 5, 10);
+        backToHomeButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Stop the real-time simulation if running
+                if (isRealTimeEnabled()) {
+                    stopRealTimeSimulation();
+                }
+                
+                // Return to home screen
+                if (game != null) {
+                    game.setScreen(new HomeScreen(game));
+                }
+            }
+        });
+        
+        // Add the back button to the bottom right layout, followed by the control panel
+        bottomRightLayout.add(backToHomeButton).right().padBottom(10).row();
+        bottomRightLayout.add(controlPanel).right();
+        
+        // Add the bottom right layout to the root
+        root.add(bottomRightLayout).bottom().right().pad(10);
 
         // Add real-time button listener
         realTimeButton.addListener(new ClickListener() {
