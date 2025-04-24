@@ -18,6 +18,9 @@ public class StorageInfoPanel extends InfoPanel {
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
     private final VisTextButton newRequestButton;
+    
+    // Width for title label
+    private static final float TITLE_WIDTH = 200f;
 
     /**
      * Constructor for the StorageInfoPanel class.
@@ -27,10 +30,9 @@ public class StorageInfoPanel extends InfoPanel {
         super();
         this.building = building;
 
-        buildingLabel = new VisLabel("Storage: " + building.getName());
-        buildingLabel.setColor(Color.BLACK);
-        buildingLabel.setFontScale(1.2f);
-        add(buildingLabel).left().padBottom(10).row();
+        // Storage title with wrapping
+        buildingLabel = createWrappedTitleLabel("Storage: " + building.getName());
+        add(buildingLabel).left().width(TITLE_WIDTH).padBottom(10).row();
 
         // Request policy
         requestPolicyLabel = new VisLabel("Request Policy:");

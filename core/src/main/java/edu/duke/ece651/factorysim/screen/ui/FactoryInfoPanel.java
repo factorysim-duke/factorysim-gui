@@ -25,6 +25,9 @@ public class FactoryInfoPanel extends InfoPanel {
 
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
+    
+    // Width for title label
+    private static final float TITLE_WIDTH = 200f;
 
     /**
      * Constructor for the FactoryInfoPanel class.
@@ -35,11 +38,9 @@ public class FactoryInfoPanel extends InfoPanel {
         super();
         this.building = building;
 
-        // Factory title
-        buildingLabel = new VisLabel("Factory: " + building.getName());
-        buildingLabel.setColor(Color.BLACK);
-        buildingLabel.setFontScale(1.2f);
-        add(buildingLabel).left().padBottom(10).row();
+        // Factory title with wrapping
+        buildingLabel = createWrappedTitleLabel("Factory: " + building.getName());
+        add(buildingLabel).left().width(TITLE_WIDTH).padBottom(10).row();
 
         // Request policy
         requestPolicyLabel = new VisLabel("Request Policy:");

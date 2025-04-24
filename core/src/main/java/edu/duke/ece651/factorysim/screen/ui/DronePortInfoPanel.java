@@ -17,15 +17,17 @@ public class DronePortInfoPanel extends InfoPanel {
     private final VisLabel droneCountLabel;
     private final VisLabel maxDronesLabel;
     private final VisTextButton addDroneButton;
+    
+    // Width for title label
+    private static final float TITLE_WIDTH = 200f;
 
     public DronePortInfoPanel(DronePortBuilding port) {
         super();
         this.port = port;
 
-        titleLabel = new VisLabel("Drone Port: " + port.getName());
-        titleLabel.setColor(Color.BLACK);
-        titleLabel.setFontScale(1.2f);
-        add(titleLabel).left().padBottom(10).row();
+        // Drone port title with wrapping
+        titleLabel = createWrappedTitleLabel("Drone Port: " + port.getName());
+        add(titleLabel).left().width(TITLE_WIDTH).padBottom(10).row();
 
         droneCountLabel = new VisLabel();
         droneCountLabel.setColor(Color.DARK_GRAY);
