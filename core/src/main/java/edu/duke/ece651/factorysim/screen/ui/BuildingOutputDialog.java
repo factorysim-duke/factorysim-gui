@@ -336,6 +336,15 @@ public class BuildingOutputDialog {
 
         final VisSelectBox<String> wasteTypeSelect = new VisSelectBox<>();
         wasteTypeSelect.setItems(wasteMap.keySet().toArray(new String[0]));
+        
+        int defaultCapacity = 200;
+        int defaultDisposalRate = 30;
+        int defaultTimeSteps = 2;
+        
+        // Add text fields for customizing the waste disposal parameters
+        final VisTextField capacityField = new VisTextField(String.valueOf(defaultCapacity));
+        final VisTextField disposalRateField = new VisTextField(String.valueOf(defaultDisposalRate));
+        final VisTextField timeStepsField = new VisTextField(String.valueOf(defaultTimeSteps));
 
         VisDialog dialog = new VisDialog("Configure Waste Disposal") {
             @Override
@@ -343,7 +352,39 @@ public class BuildingOutputDialog {
                 if (Boolean.TRUE.equals(result)) {
                     String selectedItem = wasteTypeSelect.getSelected();
                     if (selectedItem != null) {
-                        onSelect.accept(selectedItem, wasteMap.get(selectedItem));
+                        // Get the base configuration
+                        WasteDisposalDTO.WasteConfig baseConfig = wasteMap.get(selectedItem);
+                        
+                        // Create a new config with custom values
+                        WasteDisposalDTO.WasteConfig customConfig = new WasteDisposalDTO.WasteConfig();
+                        
+                        // Set default values
+                        customConfig.capacity = baseConfig != null ? baseConfig.capacity : defaultCapacity;
+                        customConfig.disposalRate = baseConfig != null ? baseConfig.disposalRate : defaultDisposalRate;
+                        customConfig.timeSteps = baseConfig != null ? baseConfig.timeSteps : defaultTimeSteps;
+                        
+                        // Try to parse the capacity value
+                        try {
+                            customConfig.capacity = Integer.parseInt(capacityField.getText());
+                        } catch (NumberFormatException e) {
+                            // Use default if parsing fails
+                        }
+                        
+                        // Try to parse the disposal rate value
+                        try {
+                            customConfig.disposalRate = Integer.parseInt(disposalRateField.getText());
+                        } catch (NumberFormatException e) {
+                            // Use default if parsing fails
+                        }
+                        
+                        // Try to parse the time steps value
+                        try {
+                            customConfig.timeSteps = Integer.parseInt(timeStepsField.getText());
+                        } catch (NumberFormatException e) {
+                            // Use default if parsing fails
+                        }
+                        
+                        onSelect.accept(selectedItem, customConfig);
                     }
                 }
             }
@@ -351,7 +392,19 @@ public class BuildingOutputDialog {
 
         VisTable contentTable = new VisTable(true);
         contentTable.add(new VisLabel("Waste type:")).padRight(10);
-        contentTable.add(wasteTypeSelect).growX();
+        contentTable.add(wasteTypeSelect).growX().row();
+        
+        // Add capacity row
+        contentTable.add(new VisLabel("Capacity (default " + defaultCapacity + "):")).padRight(10);
+        contentTable.add(capacityField).growX().row();
+        
+        // Add disposal rate row
+        contentTable.add(new VisLabel("Disposal rate (default " + defaultDisposalRate + "):")).padRight(10);
+        contentTable.add(disposalRateField).growX().row();
+        
+        // Add time steps row
+        contentTable.add(new VisLabel("Time steps (default " + defaultTimeSteps + "):")).padRight(10);
+        contentTable.add(timeStepsField).growX();
 
         dialog.getContentTable().add(contentTable).pad(10).growX();
 
