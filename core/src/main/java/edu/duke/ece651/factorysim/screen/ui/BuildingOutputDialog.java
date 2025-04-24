@@ -6,6 +6,7 @@ import com.kotcrab.vis.ui.widget.VisDialog;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisSelectBox;
 import com.kotcrab.vis.ui.widget.VisTable;
+import com.kotcrab.vis.ui.widget.VisTextField;
 
 import edu.duke.ece651.factorysim.*;
 
@@ -234,15 +235,32 @@ public class BuildingOutputDialog {
 
         final VisSelectBox<String> itemSelect = new VisSelectBox<>();
         itemSelect.setItems(itemTypes);
+        
+        // Add text fields for capacity and priority
+        final VisTextField capacityField = new VisTextField("10");
+        final VisTextField priorityField = new VisTextField("1.0");
 
         VisDialog dialog = new VisDialog("Configure Storage") {
             @Override
             protected void result(Object result) {
                 if (Boolean.TRUE.equals(result)) {
                     String selectedItem = itemSelect.getSelected();
-                    // Default values for capacity and priority
-                    int capacity = 10;
-                    double priority = 1.0;
+                    
+                    // Get values from text fields
+                    int capacity = 10; // Default
+                    double priority = 1.0; // Default
+                    
+                    try {
+                        capacity = Integer.parseInt(capacityField.getText());
+                    } catch (NumberFormatException e) {
+                        // Use default if parsing fails
+                    }
+                    
+                    try {
+                        priority = Double.parseDouble(priorityField.getText());
+                    } catch (NumberFormatException e) {
+                        // Use default if parsing fails
+                    }
 
                     // Create storage configuration
                     StorageConfig config = new StorageConfig(
@@ -255,11 +273,17 @@ public class BuildingOutputDialog {
             }
         };
 
-        // Maybe add fields for capacity and priority in the future
-
         VisTable contentTable = new VisTable(true);
         contentTable.add(new VisLabel("Store item:")).padRight(10);
-        contentTable.add(itemSelect).growX();
+        contentTable.add(itemSelect).growX().row();
+        
+        // Add capacity row
+        contentTable.add(new VisLabel("Max capacity (default 10):")).padRight(10);
+        contentTable.add(capacityField).growX().row();
+        
+        // Add priority row
+        contentTable.add(new VisLabel("Refill priority (default 1.0):")).padRight(10);
+        contentTable.add(priorityField).growX();
 
         dialog.getContentTable().add(contentTable).pad(10).growX();
 
