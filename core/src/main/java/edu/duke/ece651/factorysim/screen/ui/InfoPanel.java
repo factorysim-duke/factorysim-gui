@@ -1,11 +1,11 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.utils.Align;
 import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisLabel;
-import com.badlogic.gdx.utils.Align;
 
 /**
  * Generic panel base class.
@@ -38,10 +38,10 @@ public class InfoPanel extends VisTable {
     public VisTextButton getNewRequestButton() {
         return null;
     }
-    
+
     /**
      * Creates a title label with proper text wrapping configuration.
-     * 
+     *
      * @param text The title text
      * @return A properly configured VisLabel with text wrapping
      */

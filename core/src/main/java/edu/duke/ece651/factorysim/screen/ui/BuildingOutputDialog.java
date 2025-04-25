@@ -1,18 +1,22 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.Array;
 import com.kotcrab.vis.ui.widget.VisDialog;
 import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisSelectBox;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextField;
 
-import edu.duke.ece651.factorysim.*;
-
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import edu.duke.ece651.factorysim.GameWorld;
+import edu.duke.ece651.factorysim.Recipe;
+import edu.duke.ece651.factorysim.Item;
+import edu.duke.ece651.factorysim.Type;
+import edu.duke.ece651.factorysim.World;
+import edu.duke.ece651.factorysim.WasteDisposalDTO;
 
 /**
  * Dialog for selecting building outputs (recipes or factory types) when placing buildings.
@@ -235,7 +239,7 @@ public class BuildingOutputDialog {
 
         final VisSelectBox<String> itemSelect = new VisSelectBox<>();
         itemSelect.setItems(itemTypes);
-        
+
         // Add text fields for capacity and priority
         final VisTextField capacityField = new VisTextField("10");
         final VisTextField priorityField = new VisTextField("1.0");
@@ -245,17 +249,17 @@ public class BuildingOutputDialog {
             protected void result(Object result) {
                 if (Boolean.TRUE.equals(result)) {
                     String selectedItem = itemSelect.getSelected();
-                    
+
                     // Get values from text fields
                     int capacity = 10; // Default
                     double priority = 1.0; // Default
-                    
+
                     try {
                         capacity = Integer.parseInt(capacityField.getText());
                     } catch (NumberFormatException e) {
                         // Use default if parsing fails
                     }
-                    
+
                     try {
                         priority = Double.parseDouble(priorityField.getText());
                     } catch (NumberFormatException e) {
@@ -276,11 +280,11 @@ public class BuildingOutputDialog {
         VisTable contentTable = new VisTable(true);
         contentTable.add(new VisLabel("Store item:")).padRight(10);
         contentTable.add(itemSelect).growX().row();
-        
+
         // Add capacity row
         contentTable.add(new VisLabel("Max capacity (default 10):")).padRight(10);
         contentTable.add(capacityField).growX().row();
-        
+
         // Add priority row
         contentTable.add(new VisLabel("Refill priority (default 1.0):")).padRight(10);
         contentTable.add(priorityField).growX();
@@ -336,11 +340,11 @@ public class BuildingOutputDialog {
 
         final VisSelectBox<String> wasteTypeSelect = new VisSelectBox<>();
         wasteTypeSelect.setItems(wasteMap.keySet().toArray(new String[0]));
-        
+
         int defaultCapacity = 200;
         int defaultDisposalRate = 30;
         int defaultTimeSteps = 2;
-        
+
         // Add text fields for customizing the waste disposal parameters
         final VisTextField capacityField = new VisTextField(String.valueOf(defaultCapacity));
         final VisTextField disposalRateField = new VisTextField(String.valueOf(defaultDisposalRate));
@@ -354,36 +358,36 @@ public class BuildingOutputDialog {
                     if (selectedItem != null) {
                         // Get the base configuration
                         WasteDisposalDTO.WasteConfig baseConfig = wasteMap.get(selectedItem);
-                        
+
                         // Create a new config with custom values
                         WasteDisposalDTO.WasteConfig customConfig = new WasteDisposalDTO.WasteConfig();
-                        
+
                         // Set default values
                         customConfig.capacity = baseConfig != null ? baseConfig.capacity : defaultCapacity;
                         customConfig.disposalRate = baseConfig != null ? baseConfig.disposalRate : defaultDisposalRate;
                         customConfig.timeSteps = baseConfig != null ? baseConfig.timeSteps : defaultTimeSteps;
-                        
+
                         // Try to parse the capacity value
                         try {
                             customConfig.capacity = Integer.parseInt(capacityField.getText());
                         } catch (NumberFormatException e) {
                             // Use default if parsing fails
                         }
-                        
+
                         // Try to parse the disposal rate value
                         try {
                             customConfig.disposalRate = Integer.parseInt(disposalRateField.getText());
                         } catch (NumberFormatException e) {
                             // Use default if parsing fails
                         }
-                        
+
                         // Try to parse the time steps value
                         try {
                             customConfig.timeSteps = Integer.parseInt(timeStepsField.getText());
                         } catch (NumberFormatException e) {
                             // Use default if parsing fails
                         }
-                        
+
                         onSelect.accept(selectedItem, customConfig);
                     }
                 }
@@ -393,15 +397,15 @@ public class BuildingOutputDialog {
         VisTable contentTable = new VisTable(true);
         contentTable.add(new VisLabel("Waste type:")).padRight(10);
         contentTable.add(wasteTypeSelect).growX().row();
-        
+
         // Add capacity row
         contentTable.add(new VisLabel("Capacity (default " + defaultCapacity + "):")).padRight(10);
         contentTable.add(capacityField).growX().row();
-        
+
         // Add disposal rate row
         contentTable.add(new VisLabel("Disposal rate (default " + defaultDisposalRate + "):")).padRight(10);
         contentTable.add(disposalRateField).growX().row();
-        
+
         // Add time steps row
         contentTable.add(new VisLabel("Time steps (default " + defaultTimeSteps + "):")).padRight(10);
         contentTable.add(timeStepsField).growX();

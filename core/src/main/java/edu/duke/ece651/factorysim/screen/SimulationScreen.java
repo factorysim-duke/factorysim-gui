@@ -62,7 +62,7 @@ public class SimulationScreen implements Screen {
 
     /**
      * Constructor for SimulationScreen with game reference.
-     * 
+     *
      * @param game The main game instance
      */
     public SimulationScreen(FactoryGame game) {
@@ -171,7 +171,7 @@ public class SimulationScreen implements Screen {
         saveFileChooser = FileDialogUtil.saveFileChooser(this);
 
         // Create UI panels
-        topBar = new TopBar(currentStep);
+        topBar = new TopBar(currentStep, stage);
         logPanel = new LogPanel();
         infoPanelContainer = new VisTable();
         infoPanelContainer.setVisible(false);
@@ -234,31 +234,12 @@ public class SimulationScreen implements Screen {
         // Center section with building buttons
         root.add(buildingButtonsPanel).bottom().padBottom(10);
 
-        // Bottom-right section with back to home button and control panel in a vertical layout
+        // Bottom-right section with control panel only
         VisTable bottomRightLayout = new VisTable();
-        
-        // Add back to home button
-        VisTextButton backToHomeButton = new VisTextButton("Back to Home", "blue");
-        backToHomeButton.pad(5, 10, 5, 10);
-        backToHomeButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                // Stop the real-time simulation if running
-                if (isRealTimeEnabled()) {
-                    stopRealTimeSimulation();
-                }
-                
-                // Return to home screen
-                if (game != null) {
-                    game.setScreen(new HomeScreen(game));
-                }
-            }
-        });
-        
-        // Add the back button to the bottom right layout, followed by the control panel
-        bottomRightLayout.add(backToHomeButton).right().padBottom(10).row();
+
+        // Add the control panel to the bottom right layout
         bottomRightLayout.add(controlPanel).right();
-        
+
         // Add the bottom right layout to the root
         root.add(bottomRightLayout).bottom().right().pad(10);
 
@@ -285,6 +266,22 @@ public class SimulationScreen implements Screen {
         // Top bar listeners
         topBar.getLoadButton().addListener(listenerFactory.createLoadButtonListener(stage, createFileChooser, topBar));
         topBar.getSaveButton().addListener(listenerFactory.createSaveButtonListener(stage, saveFileChooser, topBar));
+
+        // Add listener to the back to home button
+        topBar.getBackToHomeButton().addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Stop the real-time simulation if running
+                if (isRealTimeEnabled()) {
+                    stopRealTimeSimulation();
+                }
+
+                // Return to home screen
+                if (game != null) {
+                    game.setScreen(new HomeScreen(game));
+                }
+            }
+        });
 
         // Log panel listeners
         logPanel.getVerbosityBox().addListener(listenerFactory.createVerbosityChangeListener(this));

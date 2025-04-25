@@ -1,11 +1,12 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.VisTable;
+
 import edu.duke.ece651.factorysim.Building;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
 import edu.duke.ece651.factorysim.screen.listeners.PolicyChangeListener;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 /**
  * Manager for info panels.

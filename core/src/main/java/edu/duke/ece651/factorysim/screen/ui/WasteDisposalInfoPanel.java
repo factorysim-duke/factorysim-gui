@@ -2,6 +2,7 @@ package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.widget.*;
+
 import edu.duke.ece651.factorysim.Item;
 import edu.duke.ece651.factorysim.WasteDisposalBuilding;
 import edu.duke.ece651.factorysim.Building;
@@ -14,7 +15,7 @@ public class WasteDisposalInfoPanel extends InfoPanel {
     private final VisLabel titleLabel;
     private final VisTable wasteInfoTable;
     private final VisLabel totalWasteLabel;
-    
+
     // Width for title label
     private static final float TITLE_WIDTH = 200f;
 

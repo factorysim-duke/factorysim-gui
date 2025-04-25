@@ -2,6 +2,7 @@ package edu.duke.ece651.factorysim.screen.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.widget.*;
+
 import edu.duke.ece651.factorysim.MineBuilding;
 import edu.duke.ece651.factorysim.Building;
 
@@ -18,7 +19,7 @@ public class MineInfoPanel extends InfoPanel {
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
     private final VisTextButton newRequestButton;
-    
+
     // Width for title label
     private static final float TITLE_WIDTH = 200f;
 

@@ -14,6 +14,7 @@ import com.kotcrab.vis.ui.widget.VisLabel;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+
 import edu.duke.ece651.factorysim.Constants;
 import edu.duke.ece651.factorysim.FactoryGame;
 import edu.duke.ece651.factorysim.screen.ui.LoginDialog;

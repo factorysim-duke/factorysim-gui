@@ -1,13 +1,13 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.badlogic.gdx.graphics.Color;
 import com.kotcrab.vis.ui.widget.*;
 import edu.duke.ece651.factorysim.FactoryBuilding;
 import edu.duke.ece651.factorysim.Recipe;
 import edu.duke.ece651.factorysim.Building;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Factory info panel.
@@ -25,7 +25,7 @@ public class FactoryInfoPanel extends InfoPanel {
 
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
-    
+
     // Width for title label
     private static final float TITLE_WIDTH = 200f;
 

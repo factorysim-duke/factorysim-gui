@@ -1,9 +1,9 @@
 package edu.duke.ece651.factorysim.screen.util;
 
+import com.badlogic.gdx.Gdx;
+
 import edu.duke.ece651.factorysim.Logger;
 import edu.duke.ece651.factorysim.screen.ui.LogPanel;
-
-import com.badlogic.gdx.Gdx;
 
 public class PanelLogger implements Logger {
     private final LogPanel logPanel;

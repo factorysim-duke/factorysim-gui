@@ -1,6 +1,11 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
-import edu.duke.ece651.factorysim.*;
+import edu.duke.ece651.factorysim.Building;
+import edu.duke.ece651.factorysim.FactoryBuilding;
+import edu.duke.ece651.factorysim.MineBuilding;
+import edu.duke.ece651.factorysim.StorageBuilding;
+import edu.duke.ece651.factorysim.DronePortBuilding;
+import edu.duke.ece651.factorysim.WasteDisposalBuilding;
 
 /**
  * Factory for creating info panels for buildings.
