@@ -13,6 +13,7 @@ public class LoginDialog extends VisWindow {
     private VisTextField usernameField;
     private VisTextField passwordField;
     private VisTextButton loginButton;
+    private VisTextButton signUpButton;
     private VisTextButton cancelButton;
     private LoginCallback callback;
 
@@ -82,6 +83,15 @@ public class LoginDialog extends VisWindow {
             }
         });
 
+        // Sign-up button
+        signUpButton = new VisTextButton("Sign Up", "blue");
+        signUpButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                attemptSignUp();
+            }
+        });
+
         // Cancel button
         cancelButton = new VisTextButton("Cancel");
         cancelButton.addListener(new ClickListener() {
@@ -93,7 +103,8 @@ public class LoginDialog extends VisWindow {
 
 
         buttonTable.add(cancelButton).padRight(10);
-        buttonTable.add(loginButton);
+        buttonTable.add(loginButton).padRight(10);
+        buttonTable.add(signUpButton);
 
         contentTable.add(buttonTable).colspan(2).right().padTop(20);
 
@@ -114,6 +125,21 @@ public class LoginDialog extends VisWindow {
 
         // For demo purposes, any non-empty username/password will work
         // In a real application, this would validate against a server or database
+        // TODO
+        callback.onLoginSuccess(username);
+        close();
+    }
+
+    private void attemptSignUp() {
+        String username = usernameField.getText();
+        String password = passwordField.getText();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            Dialogs.showErrorDialog(getStage(), "Username and password cannot be empty.");
+            return;
+        }
+
+        // TODO
         callback.onLoginSuccess(username);
         close();
     }
