@@ -1,10 +1,15 @@
 package edu.duke.ece651.factorysim.screen.ui;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.util.dialog.Dialogs;
 import com.kotcrab.vis.ui.widget.*;
+import edu.duke.ece651.factorysim.ServerConnectionManager;
+import edu.duke.ece651.factorysim.Tuple;
+import edu.duke.ece651.factorysim.screen.SettingsScreen;
 
 /**
  * Dialog for user login.
@@ -115,33 +120,52 @@ public class LoginDialog extends VisWindow {
      * Attempt to log in with the provided credentials.
      */
     private void attemptLogin() {
+        // Get and check username and password
         String username = usernameField.getText();
         String password = passwordField.getText();
-
         if (username.isEmpty() || password.isEmpty()) {
             Dialogs.showErrorDialog(getStage(), "Username and password cannot be empty.");
             return;
         }
 
-        // For demo purposes, any non-empty username/password will work
-        // In a real application, this would validate against a server or database
-        // TODO
+        // Try to connect (log into) the server
+        Tuple<String, Integer> hostAndPort = SettingsScreen.getStoredHostAndPort();
+        String host = hostAndPort.first();
+        int port = hostAndPort.second();
+        try {
+            ServerConnectionManager.getInstance().connect(host, port, username, password);
+        } catch (Exception e) {
+            Dialogs.showErrorDialog(getStage(), e.getMessage());
+            return;
+        }
+
+        // Success
         callback.onLoginSuccess(username);
         close();
     }
 
     private void attemptSignUp() {
+        // Get and check username and password
         String username = usernameField.getText();
         String password = passwordField.getText();
-
         if (username.isEmpty() || password.isEmpty()) {
             Dialogs.showErrorDialog(getStage(), "Username and password cannot be empty.");
             return;
         }
 
-        // TODO
-        callback.onLoginSuccess(username);
-        close();
+        // Try to sign up
+        Tuple<String, Integer> hostAndPort = SettingsScreen.getStoredHostAndPort();
+        String host = hostAndPort.first();
+        int port = hostAndPort.second();
+        try {
+            ServerConnectionManager.getInstance().signup(host, port, username, password);
+        } catch (Exception e) {
+            Dialogs.showErrorDialog(getStage(), e.getMessage());
+            return;
+        }
+
+        // Display a dialog to the user indicating success
+        Dialogs.showOKDialog(getStage(), "Success", "Successfully signed up");
     }
 
     /**

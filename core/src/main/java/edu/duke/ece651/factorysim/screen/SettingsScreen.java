@@ -13,6 +13,7 @@ import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.Constants;
 import edu.duke.ece651.factorysim.FactoryGame;
+import edu.duke.ece651.factorysim.Tuple;
 
 /**
  * This class represents the settings screen of the application.
@@ -24,6 +25,10 @@ public class SettingsScreen implements Screen {
 
     // Settings options
     private VisSelectBox<String> mapSizeSelectBox;
+
+    // Host and port fields
+    private VisTextField hostField;
+    private VisTextField portField;
 
     // Map size options
     private final String[] mapSizeOptions = {
@@ -50,6 +55,8 @@ public class SettingsScreen implements Screen {
     public static final String PREFS_NAME = "factorysim";
     public static final String GRID_COLS_KEY = "grid_cols";
     public static final String GRID_ROWS_KEY = "grid_rows";
+    public static final String HOST_KEY = "server_host";
+    public static final String PORT_KEY = "server_port";
 
     public SettingsScreen(FactoryGame game) {
         this.game = game;
@@ -118,6 +125,21 @@ public class SettingsScreen implements Screen {
         mapSizeSelectBox.setSelectedIndex(defaultSizeIndex);
         settingsTable.add(mapSizeSelectBox).expandX().fillX().padBottom(10).row();
 
+        // Host input
+        settingsTable.add(new VisLabel("Host:")).left().padRight(10);
+        hostField = new VisTextField();
+        settingsTable.add(hostField).expandX().fillX().padBottom(10).row();
+
+        // Port input
+        settingsTable.add(new VisLabel("Port:")).left().padRight(10);
+        portField = new VisTextField();
+        settingsTable.add(portField).expandX().fillX().padBottom(10).row();
+
+        // Set default host and port inputs
+        Tuple<String, Integer> hostAndPort = getStoredHostAndPort();
+        hostField.setText(hostAndPort.first());
+        portField.setText(Integer.toString(hostAndPort.second()));
+
         // Buttons
         VisTextButton backButton = new VisTextButton("Back", "blue");
         backButton.addListener(new ClickListener() {
@@ -158,6 +180,10 @@ public class SettingsScreen implements Screen {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
         prefs.putInteger(GRID_COLS_KEY, cols);
         prefs.putInteger(GRID_ROWS_KEY, rows);
+        String host = hostField.getText();
+        int port = Integer.parseInt(portField.getText());
+        prefs.putString(HOST_KEY, host);
+        prefs.putInteger(PORT_KEY, port);
         prefs.flush();
 
         Gdx.app.log("SettingsScreen",
@@ -213,5 +239,12 @@ public class SettingsScreen implements Screen {
         }
 
         return new int[] {defaultCols, defaultRows};
+    }
+
+    public static Tuple<String, Integer> getStoredHostAndPort() {
+        Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
+        String host = prefs.getString(HOST_KEY, "localhost");
+        int port = prefs.getInteger(PORT_KEY, 6510);
+        return new Tuple<>(host, port);
     }
 }
