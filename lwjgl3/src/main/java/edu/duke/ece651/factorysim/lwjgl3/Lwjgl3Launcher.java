@@ -2,12 +2,30 @@ package edu.duke.ece651.factorysim.lwjgl3;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import edu.duke.ece651.factorysim.AppWrapper;
 import edu.duke.ece651.factorysim.Constants;
 import edu.duke.ece651.factorysim.FactoryGame;
+import java.io.IOException;
 
 /** Launches the desktop (LWJGL3) application. */
 public class Lwjgl3Launcher {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        if (args.length > 0) {
+            if (!(args[0].equals("-nw")) || args.length == 1) {
+                System.err.println("Usage: app");
+                System.err.println("       app -nw <file_path>");
+                System.err.println("       app -nw <host> <port> <preset_path>");
+                System.err.println("       app -nw <host> <port> <username> <password>");
+                System.exit(1);
+                return;
+            }
+
+            String[] wrappedArgs = new String[args.length - 1];
+            System.arraycopy(args, 1, wrappedArgs, 0, wrappedArgs.length);
+            AppWrapper.mainWrapper(wrappedArgs);
+            return;
+        }
+
         if (StartupHelper.startNewJvmIfRequired()) return; // This handles macOS support and helps on Windows.
         createApplication();
     }
