@@ -346,6 +346,17 @@ public class SimulationScreen implements Screen {
             updateStepCount();
         }
 
+        // Update the info panel if it is visible
+        if (currentInfoPanel != null && infoPanelContainer.isVisible()) {
+            // Get the building from the current info panel
+            Building building = currentInfoPanel.getBuilding();
+
+            // Update the info panel data with the current building state
+            if (building != null) {
+                currentInfoPanel.updateData(building);
+            }
+        }
+
         stage.act(delta);
         stage.draw();
     }

@@ -18,7 +18,7 @@ public class StorageInfoPanel extends InfoPanel {
     private final VisLabel sourcePolicyLabel;
     private final VisSelectBox<String> sourcePolicyBox;
     private final VisTextButton newRequestButton;
-    
+
     // Width for title label
     private static final float TITLE_WIDTH = 200f;
 
@@ -79,6 +79,17 @@ public class StorageInfoPanel extends InfoPanel {
     public void updateData(StorageBuilding building) {
         capacityLabel.setText("Capacity: " + building.getMaxCapacity());
         currentLoadLabel.setText("Current Load: " + building.getCurrentStockNum());
+    }
+
+    /**
+     * Update the data for the storage info panel.
+     * Override the parent class method to handle different data types.
+     *
+     * @param data the object containing building data
+     */
+    @Override
+    public void updateData(Object data) {
+        updateData((StorageBuilding) data);
     }
 
     /**

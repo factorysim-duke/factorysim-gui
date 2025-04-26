@@ -83,6 +83,16 @@ public class MineInfoPanel extends InfoPanel {
     }
 
     /**
+     * Update the data for the mine info panel.
+     * Override the parent class method to handle Building and Object types.
+     * @param data the object containing building data
+     */
+    @Override
+    public void updateData(Object data) {
+        updateData((MineBuilding) data);
+    }
+
+    /**
      * Get the request policy box.
      * @return the request policy box
      */

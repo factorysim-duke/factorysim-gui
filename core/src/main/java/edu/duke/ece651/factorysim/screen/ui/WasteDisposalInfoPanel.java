@@ -76,10 +76,22 @@ public class WasteDisposalInfoPanel extends InfoPanel {
     }
 
     /**
+     * Update the data for the waste disposal info panel.
+     * Override the parent class method to handle different data types.
+     *
+     * @param data the object containing building data
+     */
+    @Override
+    public void updateData(Object data) {
+        updateData((WasteDisposalBuilding) data);
+    }
+
+    /**
      * Gets the WasteDisposalBuilding shown in this panel.
      *
      * @return the WasteDisposalBuilding
      */
+    @Override
     public Building getBuilding() {
         return disposal;
     }

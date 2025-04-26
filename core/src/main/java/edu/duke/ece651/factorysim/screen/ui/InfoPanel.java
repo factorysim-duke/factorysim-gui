@@ -6,6 +6,7 @@ import com.kotcrab.vis.ui.VisUI;
 import com.kotcrab.vis.ui.widget.VisTable;
 import com.kotcrab.vis.ui.widget.VisTextButton;
 import com.kotcrab.vis.ui.widget.VisLabel;
+import edu.duke.ece651.factorysim.Building;
 
 /**
  * Generic panel base class.
@@ -24,10 +25,32 @@ public class InfoPanel extends VisTable {
     }
 
     /**
-     * Show specific building information.
+     * Update building information in the panel.
+     * This method should be overridden by subclasses to update their
+     * specific UI components with the latest building data.
+     *
+     * @param data The building data to update with (can be Building or specific building type)
      */
     public void updateData(Object data) {
+    }
 
+    /**
+     * Update building information with a specific Building instance.
+     * This is a convenience method for type safety.
+     *
+     * @param building The building to update with
+     */
+    public void updateData(Building building) {
+        updateData((Object)building);
+    }
+
+    /**
+     * Get the building associated with this info panel.
+     *
+     * @return The building or null if not applicable
+     */
+    public Building getBuilding() {
+        return null;
     }
 
     /**

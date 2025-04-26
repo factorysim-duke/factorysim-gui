@@ -6,6 +6,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.DronePortBuilding;
+import edu.duke.ece651.factorysim.Building;
 
 /**
  * Info panel for drone ports.
@@ -17,7 +18,7 @@ public class DronePortInfoPanel extends InfoPanel {
     private final VisLabel droneCountLabel;
     private final VisLabel maxDronesLabel;
     private final VisTextButton addDroneButton;
-    
+
     // Width for title label
     private static final float TITLE_WIDTH = 200f;
 
@@ -62,10 +63,22 @@ public class DronePortInfoPanel extends InfoPanel {
         maxDronesLabel.setText("Max Drones: " + port.getMaxDrones());
     }
 
+    /**
+     * Update the data for the drone port info panel.
+     * Override the parent class method to handle different data types.
+     *
+     * @param data the object containing building data
+     */
+    @Override
+    public void updateData(Object data) {
+        updateData((DronePortBuilding) data);
+    }
+
     public VisTextButton getAddDroneButton() {
         return addDroneButton;
     }
 
+    @Override
     public DronePortBuilding getBuilding() {
         return port;
     }
