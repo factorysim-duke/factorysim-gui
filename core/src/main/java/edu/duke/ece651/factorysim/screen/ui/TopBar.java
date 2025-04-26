@@ -15,6 +15,9 @@ public class TopBar extends VisTable {
     private VisTextButton saveButton;
     private VisTextButton loadButton;
     private VisTextButton backToHomeButton;
+    private VisTextButton dbSaveButton;
+    private VisTextButton dbLoadButton;
+
     /**
      * Constructor for the TopBar class.
      * @param initialStep the initial step
@@ -33,31 +36,34 @@ public class TopBar extends VisTable {
         VisLabel titleLabel = new VisLabel("Factorysim");
         titleLabel.setFontScale(2.2f);
 
-        // top bar height
-        float topBarHeight = titleLabel.getPrefHeight();
-
         // step count
         stepCountLabel = new VisLabel("Current Step: " + currentStep);
 
-        // back to home button
+        // buttons
         backToHomeButton = new VisTextButton("Back to Home", "blue");
         backToHomeButton.pad(5, 10, 5, 10);
 
-        // save button
         saveButton = new VisTextButton("Save", "orange");
         saveButton.pad(5, 10, 5, 10);
 
-        // load button
         loadButton = new VisTextButton("Load", "orange");
         loadButton.pad(5, 10, 5, 10);
+
+        dbSaveButton = new VisTextButton("DB Save", "orange");
+        dbSaveButton.pad(5, 10, 5, 10);
+
+        dbLoadButton = new VisTextButton("DB Load", "orange");
+        dbLoadButton.pad(5, 10, 5, 10);
 
         // create left side with title
         VisTable leftSide = new VisTable();
         leftSide.add(titleLabel).padLeft(20).left();
 
-        // create right side with buttons
+        // create right side with all buttons in one row
         VisTable rightSide = new VisTable();
         rightSide.add(backToHomeButton).padRight(20);
+        rightSide.add(dbLoadButton).padRight(20);
+        rightSide.add(dbSaveButton).padRight(20);
         rightSide.add(loadButton).padRight(20);
         rightSide.add(saveButton).padRight(5);
 
@@ -65,8 +71,8 @@ public class TopBar extends VisTable {
         add(leftSide).expandX().left();
         stage.addActor(stepCountLabel);
         stepCountLabel.setPosition(
-          (Constants.WINDOW_WIDTH - stepCountLabel.getPrefWidth()) / 2,
-          Constants.WINDOW_HEIGHT - topBarHeight/2 - stepCountLabel.getPrefHeight()/2
+            (Constants.WINDOW_WIDTH - stepCountLabel.getPrefWidth()) / 2,
+            Constants.WINDOW_HEIGHT - titleLabel.getPrefHeight() / 2 - stepCountLabel.getPrefHeight() / 2
         );
         add(rightSide).expandX().right();
     }
@@ -101,5 +107,21 @@ public class TopBar extends VisTable {
      */
     public VisTextButton getBackToHomeButton() {
         return backToHomeButton;
+    }
+
+    /**
+     * Get the DB save button.
+     * @return the DB save button.
+     */
+    public VisTextButton getDBSaveButton() {
+        return dbSaveButton;
+    }
+
+    /**
+     * Get the DB load button.
+     * @return the DB load button.
+     */
+    public VisTextButton getDBLoadButton() {
+        return dbLoadButton;
     }
 }

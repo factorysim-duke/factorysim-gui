@@ -54,6 +54,14 @@ public class SimulationScreen implements Screen {
     private Texture wasteDisposalTexture;
 
     /**
+     * Get the GameWorld instance.
+     * @return the GameWorld instance used by the screen.
+     */
+    public GameWorld getWorld() {
+        return world;
+    }
+
+    /**
      * Constructor for SimulationScreen.
      */
     public SimulationScreen() {
@@ -282,6 +290,10 @@ public class SimulationScreen implements Screen {
                 }
             }
         });
+
+        // Add DB save/load listeners
+        topBar.getDBSaveButton().addListener(listenerFactory.createDBSaveButtonListener(stage, topBar));
+        topBar.getDBLoadButton().addListener(listenerFactory.createDBLoadButtonListener(stage, topBar));
 
         // Log panel listeners
         logPanel.getVerbosityBox().addListener(listenerFactory.createVerbosityChangeListener(this));

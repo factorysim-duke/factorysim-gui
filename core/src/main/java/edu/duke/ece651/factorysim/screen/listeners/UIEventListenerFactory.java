@@ -8,9 +8,15 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.VisSelectBox;
 
+import edu.duke.ece651.factorysim.App;
+import edu.duke.ece651.factorysim.client.ServerConnectionManager;
 import edu.duke.ece651.factorysim.screen.ui.ControlPanel;
 import edu.duke.ece651.factorysim.screen.ui.TopBar;
 import edu.duke.ece651.factorysim.screen.SimulationScreen;
+
+import java.io.File;
+
+import static com.kotcrab.vis.ui.util.dialog.Dialogs.showErrorDialog;
 
 /**
  * Event listeners for the UI components.
@@ -55,6 +61,50 @@ public class UIEventListenerFactory {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 stage.addActor(fileChooser.fadeIn());
+                topBar.updateStepCount(screen.getCurrentStep());
+            }
+        };
+    }
+
+    /**
+     * Create a listener for the DB save button.
+     * @param stage is the Stage instance
+     * @param topBar is the TopBar instance
+     * @return a ChangeListener instance
+     */
+    public ChangeListener createDBLoadButtonListener(Stage stage, TopBar topBar) {
+        return new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                try {
+                    String json = ServerConnectionManager.getInstance().loadUserSave();
+                    File tempFile = App.createTempFile("temp", ".json", json);
+                    screen.loadSimulation(tempFile.getAbsolutePath());
+                    App.deleteTempFile(tempFile);
+                } catch (Exception e) {
+                    showErrorDialog(stage, e.getMessage());
+                }
+                topBar.updateStepCount(screen.getCurrentStep());
+            }
+        };
+    }
+
+    /**
+     * Create a listener for the DB load button.
+     * @param stage is the Stage instance
+     * @param topBar is the TopBar instance
+     * @return a ChangeListener instance
+     */
+    public ChangeListener createDBSaveButtonListener(Stage stage, TopBar topBar) {
+        return new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                try {
+                    String json = screen.getWorld().getSim().toJson();
+                    ServerConnectionManager.getInstance().saveUserSave(json);
+                } catch (Exception e) {
+                    showErrorDialog(stage, e.getMessage());
+                }
                 topBar.updateStepCount(screen.getCurrentStep());
             }
         };
