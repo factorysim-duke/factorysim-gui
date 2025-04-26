@@ -358,7 +358,7 @@ public class GameWorld implements Disposable, InputProcessor, DeliveryListener {
             try {
                 realTime.update(dt);
             } catch (Exception e) {
-                log(e.getMessage());
+                System.err.println(e.getMessage());
             }
         }
 
