@@ -12,9 +12,12 @@ import com.kotcrab.vis.ui.widget.file.FileChooser;
 import com.kotcrab.vis.ui.widget.*;
 
 import edu.duke.ece651.factorysim.*;
+import edu.duke.ece651.factorysim.client.ServerConnectionManager;
 import edu.duke.ece651.factorysim.screen.ui.*;
 import edu.duke.ece651.factorysim.screen.util.*;
 import edu.duke.ece651.factorysim.screen.listeners.UIEventListenerFactory;
+
+import java.io.File;
 
 /**
  * This class is responsible for displaying the simulation screen and handling user input.
@@ -145,6 +148,20 @@ public class SimulationScreen implements Screen {
         initializeUI();
         setupLayout();
         attachEventListeners();
+
+        // Try to load preset if specified
+        String preset = SettingsScreen.getStoredPreset();
+        if (preset != null && !preset.isEmpty()) {
+            try {
+                Tuple<String, Integer> hostAndPort = SettingsScreen.getStoredHostAndPort();
+                String host = hostAndPort.first();
+                int port = hostAndPort.second();
+                String json = ServerConnectionManager.getInstance().loadPreset(host, port, preset);
+                File tempFile = App.createTempFile("temp", ".json", json);
+                loadSimulation(tempFile.getAbsolutePath());
+                App.deleteTempFile(tempFile);
+            } catch (Exception ignored) { }
+        }
     }
 
     /**

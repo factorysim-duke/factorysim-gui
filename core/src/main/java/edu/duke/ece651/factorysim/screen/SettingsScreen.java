@@ -30,6 +30,9 @@ public class SettingsScreen implements Screen {
     private VisTextField hostField;
     private VisTextField portField;
 
+    // Server preset field
+    private VisTextField presetField;
+
     // Map size options
     private final String[] mapSizeOptions = {
         "Tiny (16x9 grid)",
@@ -57,6 +60,7 @@ public class SettingsScreen implements Screen {
     public static final String GRID_ROWS_KEY = "grid_rows";
     public static final String HOST_KEY = "server_host";
     public static final String PORT_KEY = "server_port";
+    public static final String PRESET_KEY = "server_preset";
 
     public SettingsScreen(FactoryGame game) {
         this.game = game;
@@ -140,6 +144,12 @@ public class SettingsScreen implements Screen {
         hostField.setText(hostAndPort.first());
         portField.setText(Integer.toString(hostAndPort.second()));
 
+        // Preset input
+        settingsTable.add(new VisLabel("Preset:")).left().padRight(10);
+        presetField = new VisTextField();
+        settingsTable.add(presetField).expandX().fillX().padBottom(10).row();
+        presetField.setText(getStoredPreset());
+
         // Buttons
         VisTextButton backButton = new VisTextButton("Back", "blue");
         backButton.addListener(new ClickListener() {
@@ -180,10 +190,9 @@ public class SettingsScreen implements Screen {
         Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
         prefs.putInteger(GRID_COLS_KEY, cols);
         prefs.putInteger(GRID_ROWS_KEY, rows);
-        String host = hostField.getText();
-        int port = Integer.parseInt(portField.getText());
-        prefs.putString(HOST_KEY, host);
-        prefs.putInteger(PORT_KEY, port);
+        prefs.putString(HOST_KEY, hostField.getText());
+        prefs.putInteger(PORT_KEY, Integer.parseInt(portField.getText()));
+        prefs.putString(PRESET_KEY, presetField.getText());
         prefs.flush();
 
         Gdx.app.log("SettingsScreen",
@@ -246,5 +255,10 @@ public class SettingsScreen implements Screen {
         String host = prefs.getString(HOST_KEY, "localhost");
         int port = prefs.getInteger(PORT_KEY, 6510);
         return new Tuple<>(host, port);
+    }
+
+    public static String getStoredPreset() {
+        Preferences prefs = Gdx.app.getPreferences(PREFS_NAME);
+        return prefs.getString(PRESET_KEY, "");
     }
 }
