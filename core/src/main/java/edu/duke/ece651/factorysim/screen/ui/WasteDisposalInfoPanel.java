@@ -83,7 +83,7 @@ public class WasteDisposalInfoPanel extends InfoPanel {
      */
     @Override
     public void updateData(Object data) {
-        updateData((WasteDisposalBuilding) data);
+        updateData();
     }
 
     /**

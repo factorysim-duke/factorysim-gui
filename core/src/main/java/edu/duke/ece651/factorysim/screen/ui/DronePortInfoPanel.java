@@ -71,7 +71,7 @@ public class DronePortInfoPanel extends InfoPanel {
      */
     @Override
     public void updateData(Object data) {
-        updateData((DronePortBuilding) data);
+        updateData();
     }
 
     public VisTextButton getAddDroneButton() {
